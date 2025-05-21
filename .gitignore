@@ -1,0 +1,32 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Build artifacts
+cache/
+artifacts/
+dist/
+build/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# IDE-specific
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+coverage.json
+coverage/
+
+# TypeScript
+*.tsbuildinfo
