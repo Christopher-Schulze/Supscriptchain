@@ -3,44 +3,117 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol"; // Changed from Ownable
+import "./interfaces/AggregatorV3Interface.sol"; // Changed to local import
 
-contract Subscription is Ownable {
+contract Subscription is Ownable2Step { // Changed from Ownable
     using SafeERC20 for IERC20;
 
+    /**
+     * @title Subscription Plan Details
+     * @notice Defines the structure for a subscription plan.
+     * @param merchant The address that receives payments for this plan.
+     * @param token The ERC20 token used for payments.
+     * @param tokenDecimals The number of decimals for the payment token.
+     * @param price The price in the smallest unit of the token (if not USD based).
+     * @param billingCycle The duration of one billing cycle in seconds.
+     * @param priceInUsd True if the price is denominated in USD cents.
+     * @param usdPrice The price in USD cents (e.g., 1000 for $10.00), used if priceInUsd is true.
+     * @param priceFeedAddress The Chainlink price feed address for token/USD, required if priceInUsd is true.
+     */
     struct SubscriptionPlan {
         address merchant;
-        address token; // Address of the ERC20 token for payment
-        uint256 price; // Price in the smallest unit of the token (used if not USD based)
-        uint256 billingCycle; // Duration in seconds
-        bool priceInUsd; // True if price is set in USD cents
-        uint256 usdPrice; // Price in USD cents (e.g., 1000 for $10.00)
-        address priceFeedAddress; // Address of the Chainlink price feed for token/USD
+        address token;
+        uint8 tokenDecimals;
+        uint256 price;
+        uint256 billingCycle;
+        bool priceInUsd;
+        uint256 usdPrice;
+        address priceFeedAddress;
     }
 
+    /// @notice Mapping from plan ID to SubscriptionPlan details.
     mapping(uint256 => SubscriptionPlan) public plans;
+    /// @notice Counter for the next available plan ID.
     uint256 public nextPlanId;
 
+    /**
+     * @title User Subscription Details
+     * @notice Defines the structure for a user's specific subscription to a plan.
+     * @param subscriber The address of the user subscribed to the plan.
+     * @param planId The ID of the plan the user is subscribed to.
+     * @param startTime Timestamp of when the subscription initially started.
+     * @param nextPaymentDate Timestamp of when the next payment is due.
+     * @param isActive True if the subscription is currently active.
+     */
     struct UserSubscription {
        address subscriber;
        uint256 planId;
-       uint256 startTime; // Timestamp of when the subscription started
+       uint256 startTime;
        uint256 nextPaymentDate;
        bool isActive;
     }
 
-    // User address => planId => subscription details
+    /// @notice Mapping from user address to (mapping of plan ID to UserSubscription details).
     mapping(address => mapping(uint256 => UserSubscription)) public userSubscriptions;
 
-    event PlanCreated(uint256 planId, address indexed merchant, address indexed token, uint256 price, uint256 billingCycle, bool priceInUsd, uint256 usdPrice, address priceFeedAddress);
+    /**
+     * @notice Emitted when a new subscription plan is created.
+     * @param planId The ID of the newly created plan.
+     * @param merchant The address of the merchant for this plan.
+     * @param token The address of the ERC20 token for payment.
+     * @param tokenDecimals The decimals of the payment token.
+     * @param price The price in token units (if not USD based).
+     * @param billingCycle The billing cycle duration in seconds.
+     * @param priceInUsd True if the price is in USD cents.
+     * @param usdPrice The price in USD cents (if priceInUsd is true).
+     * @param priceFeedAddress The Chainlink price feed address (if priceInUsd is true).
+     */
+    event PlanCreated(uint256 planId, address indexed merchant, address indexed token, uint8 tokenDecimals, uint256 price, uint256 billingCycle, bool priceInUsd, uint256 usdPrice, address priceFeedAddress);
+
+    /**
+     * @notice Emitted when a user subscribes to a plan.
+     * @param user The address of the subscriber.
+     * @param planId The ID of the plan subscribed to.
+     * @param nextPaymentDate Timestamp for the next payment.
+     */
     event Subscribed(address indexed user, uint256 indexed planId, uint256 nextPaymentDate);
+
+    /**
+     * @notice Emitted when a recurring payment is successfully processed.
+     * @param user The address of the subscriber.
+     * @param planId The ID of the plan for which payment was processed.
+     * @param amount The amount paid in token units.
+     * @param newNextPaymentDate The new timestamp for the next payment.
+     */
     event PaymentProcessed(address indexed user, uint256 indexed planId, uint256 amount, uint256 newNextPaymentDate);
 
-    // Add constructor for Ownable if using OZ 5.x:
-    // constructor() Ownable(initialOwner) {} // Where initialOwner is an address
+    /**
+     * @notice Emitted when a user cancels their subscription to a plan.
+     * @param user The address of the user who cancelled.
+     * @param planId The ID of the plan that was cancelled.
+     */
+    event SubscriptionCancelled(address indexed user, uint256 indexed planId);
 
+    /**
+     * @notice Contract constructor. Initializes Ownable2Step with the deployer as the initial owner.
+     */
+    constructor() Ownable2Step(msg.sender) {}
+
+    /**
+     * @notice Creates a new subscription plan.
+     * @dev Can only be called by the contract owner.
+     * Fetches and stores token decimals. Merchant defaults to owner if _merchantAddress is address(0).
+     * @param _merchantAddress The address to receive payments. If address(0), defaults to contract owner.
+     * @param _token The ERC20 token for payments.
+     * @param _price Price in the smallest unit of the token (if not USD based).
+     * @param _billingCycle Duration of one billing cycle in seconds.
+     * @param _priceInUsd True if price is in USD cents.
+     * @param _usdPrice Price in USD cents (if _priceInUsd is true).
+     * @param _priceFeedAddress Chainlink price feed for token/USD (if _priceInUsd is true).
+     */
     function createPlan(
+        address _merchantAddress,
         address _token,
         uint256 _price,
         uint256 _billingCycle,
@@ -51,57 +124,67 @@ contract Subscription is Ownable {
         if (_priceInUsd) {
             require(_priceFeedAddress != address(0), "Price feed address required for USD pricing");
         }
+        require(_token != address(0), "Token address cannot be zero");
+
+        IERC20 tokenContract = IERC20(_token);
+        uint8 tokenDecimals = tokenContract.decimals();
+
+        address merchant = (_merchantAddress == address(0)) ? msg.sender : _merchantAddress;
+
         uint256 planId = nextPlanId;
         plans[planId] = SubscriptionPlan({
-            merchant: msg.sender, // Initially, merchant is the caller
+            merchant: merchant,
             token: _token,
-            price: _price, // Used if not USD based
+            tokenDecimals: tokenDecimals,
+            price: _price,
             billingCycle: _billingCycle,
             priceInUsd: _priceInUsd,
             usdPrice: _usdPrice,
             priceFeedAddress: _priceFeedAddress
         });
         nextPlanId++;
-        emit PlanCreated(planId, msg.sender, _token, _price, _billingCycle, _priceInUsd, _usdPrice, _priceFeedAddress);
+        emit PlanCreated(planId, merchant, _token, tokenDecimals, _price, _billingCycle, _priceInUsd, _usdPrice, _priceFeedAddress);
     }
 
-    function getPaymentAmount(uint256 _planId) internal view returns (uint256) {
+    /**
+     * @notice Calculates the payment amount for a given plan.
+     * @dev For USD-based plans, uses Chainlink price feed. Otherwise, uses fixed token price.
+     * @param _planId The ID of the subscription plan.
+     * @return amount The payment amount in the smallest unit of the plan's token.
+     */
+    function getPaymentAmount(uint256 _planId) internal view returns (uint256 amount) {
         SubscriptionPlan storage plan = plans[_planId];
         if (plan.priceInUsd) {
-            require(plan.priceFeedAddress != address(0), "Price feed not set");
+            require(plan.priceFeedAddress != address(0), "Price feed not set for USD plan");
             AggregatorV3Interface priceFeed = AggregatorV3Interface(plan.priceFeedAddress);
-            (, int256 latestPrice, , , ) = priceFeed.latestRoundData();
+            (, int256 latestPrice, , , ) = priceFeed.latestRoundData(); // Note: Consider checking roundId, answeredInRound, etc. for stale prices.
             
-            // This is a simplification. Ideally, token decimals should be fetched from the token contract
-            // or stored in the SubscriptionPlan struct during its creation.
-            uint8 tokenDecimals = 18; // Placeholder for token decimals (e.g., 18 for WETH)
+            uint8 tokenDecimals = plan.tokenDecimals;
             uint8 priceFeedDecimals = priceFeed.decimals();
 
             require(uint256(latestPrice) > 0, "Oracle price must be positive");
-            // Formula: (plan.usdPrice * (10**tokenDecimals) * (10**priceFeedDecimals)) / (100 * uint256(latestPrice))
-            // plan.usdPrice is in cents, so we divide by 100 to get dollars.
-            // (target_USD_in_cents / 100) * (10^token_decimals) / (oracle_price_in_USD_per_token / 10^oracle_decimals)
-            // = (plan.usdPrice * 10^token_decimals * 10^priceFeedDecimals) / (100 * latestPrice)
-            uint256 tokenAmount = (plan.usdPrice * (10**tokenDecimals) * (10**priceFeedDecimals)) / (100 * uint256(latestPrice));
-            return tokenAmount;
+            // Formula: (plan.usdPrice (cents) / 100) * (10^tokenDecimals) / (oraclePriceInUSD / 10^priceFeedDecimals)
+            // This can be rewritten as: (plan.usdPrice * 10^tokenDecimals * 10^priceFeedDecimals) / (100 * oraclePriceInUSD)
+            amount = (plan.usdPrice * (10**tokenDecimals) * (10**priceFeedDecimals)) / (100 * uint256(latestPrice));
+            return amount;
         } else {
             return plan.price;
         }
     }
 
+    /**
+     * @notice Allows a user to subscribe to a plan.
+     * @dev Transfers initial payment from user to merchant. User must approve contract for token spending.
+     * @param _planId The ID of the plan to subscribe to.
+     */
     function subscribe(uint256 _planId) public {
-        // Ensure the plan exists
         require(plans[_planId].merchant != address(0), "Plan does not exist"); 
-        // Ensure user is not already actively subscribed to this plan
-        require(!userSubscriptions[msg.sender][_planId].isActive, "Already subscribed to this plan");
+        require(!userSubscriptions[msg.sender][_planId].isActive, "Already actively subscribed to this plan");
 
         SubscriptionPlan storage plan = plans[_planId];
         IERC20 token = IERC20(plan.token);
 
         uint256 amountToPay = getPaymentAmount(_planId);
-
-        // Transfer the initial payment from the user to the merchant
-        // Assumes user has already approved the contract to spend tokens
         token.safeTransferFrom(msg.sender, plan.merchant, amountToPay);
 
         uint256 startTime = block.timestamp;
@@ -118,34 +201,44 @@ contract Subscription is Ownable {
         emit Subscribed(msg.sender, _planId, nextPaymentDate);
     }
 
+    /**
+     * @notice Processes a recurring payment for a user's subscription.
+     * @dev Can only be called by the plan's merchant. Transfers payment from user to merchant.
+     * User must maintain token approval. Updates next payment date.
+     * @param _user The address of the subscriber whose payment is being processed.
+     * @param _planId The ID of the plan for which payment is processed.
+     */
     function processPayment(address _user, uint256 _planId) public {
        UserSubscription storage userSub = userSubscriptions[_user][_planId];
        SubscriptionPlan storage plan = plans[_planId];
 
-       // Ensure the subscription is active
        require(userSub.isActive, "Subscription is not active");
-       // Ensure the plan exists (sanity check, though covered by isActive)
-       require(plan.merchant != address(0), "Plan does not exist");
-       // Ensure the caller is authorized (for now, public, but could be restricted)
-       // For example, restrict to merchant or an authorized automation service.
-       // require(msg.sender == plan.merchant || msg.sender == automationAddress, "Not authorized to process payment");
+       require(plan.merchant != address(0), "Plan does not exist"); // Sanity check
+       require(msg.sender == plan.merchant, "Only plan merchant can process payment");
 
-       // Check if payment is due
        require(block.timestamp >= userSub.nextPaymentDate, "Payment not due yet");
 
        IERC20 token = IERC20(plan.token);
-
        uint256 amountToPay = getPaymentAmount(_planId);
 
-       // Transfer the payment from the user to the merchant
-       // Assumes user has maintained approval for the contract
-       // SafeERC20 will revert on failure.
        token.safeTransferFrom(_user, plan.merchant, amountToPay); 
 
-       userSub.nextPaymentDate = block.timestamp + plan.billingCycle; // Or userSub.nextPaymentDate + plan.billingCycle to be more precise to original schedule
+       userSub.nextPaymentDate = userSub.nextPaymentDate + plan.billingCycle; // Maintain original billing cadence
        emit PaymentProcessed(_user, _planId, amountToPay, userSub.nextPaymentDate);
-       
-       // The old 'else' block for deactivation is removed. 
-       // If safeTransferFrom fails, the whole transaction reverts.
    }
+
+    /**
+     * @notice Allows a subscriber to cancel their active subscription.
+     * @dev Sets the subscription to inactive. No refunds for the current billing cycle.
+     * @param _planId The ID of the plan to cancel.
+     */
+    function cancelSubscription(uint256 _planId) public {
+        UserSubscription storage userSub = userSubscriptions[msg.sender][_planId];
+
+        require(userSub.subscriber == msg.sender, "Not subscribed to this plan or subscription data mismatch");
+        require(userSub.isActive, "Subscription is already inactive");
+
+        userSub.isActive = false;
+        emit SubscriptionCancelled(msg.sender, _planId);
+    }
 }

@@ -57,12 +57,15 @@ describe("Subscription Contract", function () {
     });
 
     describe("createPlan", function () {
-        it("Should allow owner to create a fixed price plan and emit PlanCreated event", async function () {
+        const mockTokenDecimals = 18; // Defined here for use in tests
+
+        it("Should allow owner to create a fixed price plan (merchant is owner) and emit PlanCreated event", async function () {
             const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
-            const fixedPrice = ethers.utils.parseUnits("10", 18); // 10 MTK
+            const fixedPrice = ethers.utils.parseUnits("10", mockTokenDecimals);
             const billingCycle = THIRTY_DAYS_IN_SECS;
 
             await expect(subscriptionContract.connect(owner).createPlan(
+                owner.address, // merchantAddress
                 mockToken.address,
                 fixedPrice,
                 billingCycle,
@@ -71,11 +74,12 @@ describe("Subscription Contract", function () {
                 ethers.constants.AddressZero // priceFeedAddress
             ))
                 .to.emit(subscriptionContract, "PlanCreated")
-                .withArgs(0, owner.address, mockToken.address, fixedPrice, billingCycle, false, 0, ethers.constants.AddressZero);
+                .withArgs(0, owner.address, mockToken.address, mockTokenDecimals, fixedPrice, billingCycle, false, 0, ethers.constants.AddressZero);
 
             const plan = await subscriptionContract.plans(0);
             expect(plan.merchant).to.equal(owner.address);
             expect(plan.token).to.equal(mockToken.address);
+            expect(plan.tokenDecimals).to.equal(mockTokenDecimals);
             expect(plan.price).to.equal(fixedPrice);
             expect(plan.billingCycle).to.equal(billingCycle);
             expect(plan.priceInUsd).to.be.false;
@@ -84,12 +88,13 @@ describe("Subscription Contract", function () {
             expect(await subscriptionContract.nextPlanId()).to.equal(1);
         });
 
-        it("Should allow owner to create a USD priced plan and emit PlanCreated event", async function () {
-            const { subscriptionContract, mockToken, mockAggregator, owner } = await loadFixture(deploySubscriptionFixture);
+        it("Should allow owner to create a USD priced plan with a different merchant and emit PlanCreated event", async function () {
+            const { subscriptionContract, mockToken, mockAggregator, owner, merchant } = await loadFixture(deploySubscriptionFixture);
             const usdPriceCents = 1000; // $10.00
             const billingCycle = THIRTY_DAYS_IN_SECS;
 
             await expect(subscriptionContract.connect(owner).createPlan(
+                merchant.address, // merchantAddress
                 mockToken.address,
                 0, // fixedPrice (not used)
                 billingCycle,
@@ -98,17 +103,30 @@ describe("Subscription Contract", function () {
                 mockAggregator.address
             ))
                 .to.emit(subscriptionContract, "PlanCreated")
-                .withArgs(0, owner.address, mockToken.address, 0, billingCycle, true, usdPriceCents, mockAggregator.address);
+                .withArgs(0, merchant.address, mockToken.address, mockTokenDecimals, 0, billingCycle, true, usdPriceCents, mockAggregator.address);
 
             const plan = await subscriptionContract.plans(0);
+            expect(plan.merchant).to.equal(merchant.address);
+            expect(plan.tokenDecimals).to.equal(mockTokenDecimals);
             expect(plan.priceInUsd).to.be.true;
             expect(plan.usdPrice).to.equal(usdPriceCents);
             expect(plan.priceFeedAddress).to.equal(mockAggregator.address);
         });
 
+        it("Should default merchant to owner if address(0) is provided for merchantAddress", async function () {
+            const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
+            const fixedPrice = ethers.utils.parseUnits("5", mockTokenDecimals);
+            await subscriptionContract.connect(owner).createPlan(
+                ethers.constants.AddressZero, // merchantAddress
+                mockToken.address, fixedPrice, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+            );
+            const plan = await subscriptionContract.plans(0);
+            expect(plan.merchant).to.equal(owner.address);
+        });
+
         it("Should prevent non-owner from creating a plan", async function () {
-            const { subscriptionContract, mockToken, user1 } = await loadFixture(deploySubscriptionFixture);
-            await expect(subscriptionContract.connect(user1).createPlan(mockToken.address, 10, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero))
+            const { subscriptionContract, mockToken, user1, owner } = await loadFixture(deploySubscriptionFixture);
+            await expect(subscriptionContract.connect(user1).createPlan(owner.address, mockToken.address, 10, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero))
                 .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
                 .withArgs(user1.address);
         });
@@ -116,19 +134,28 @@ describe("Subscription Contract", function () {
         it("Should revert if creating a USD plan with zero address for price feed", async function () {
             const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
             await expect(subscriptionContract.connect(owner).createPlan(
-                mockToken.address, 0, THIRTY_DAYS_IN_SECS, true, 1000, ethers.constants.AddressZero
+                owner.address, mockToken.address, 0, THIRTY_DAYS_IN_SECS, true, 1000, ethers.constants.AddressZero
             )).to.be.revertedWith("Price feed address required for USD pricing");
+        });
+
+        it("Should revert if creating a plan with zero address for token", async function () {
+            const { subscriptionContract, owner } = await loadFixture(deploySubscriptionFixture);
+            await expect(subscriptionContract.connect(owner).createPlan(
+                owner.address, ethers.constants.AddressZero, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+            )).to.be.revertedWith("Token address cannot be zero");
         });
     });
 
     describe("subscribe (Fixed Price Plan)", function () {
         const planId = 0;
-        const fixedPrice = ethers.utils.parseUnits("10", 18); // 10 MTK
+        const fixedPrice = ethers.utils.parseUnits("10", 18); // mockTokenDecimals is 18
         const billingCycle = THIRTY_DAYS_IN_SECS;
 
         async function fixtureWithFixedPlan() {
             const setup = await loadFixture(deploySubscriptionFixture);
+            // Merchant for this plan will be 'owner'
             await setup.subscriptionContract.connect(setup.owner).createPlan(
+                setup.owner.address, // Merchant is owner
                 setup.mockToken.address, fixedPrice, billingCycle, false, 0, ethers.constants.AddressZero
             );
             return setup;
@@ -162,17 +189,29 @@ describe("Subscription Contract", function () {
 
         async function fixtureWithUsdPlan() {
             const setup = await loadFixture(deploySubscriptionFixture);
-            // Oracle price: $2000 / MTK
-            await setup.mockAggregator.setLatestAnswer(ethers.BigNumber.from("2000").mul(ethers.BigNumber.from("10").pow(oracleDecimals)));
+            // Oracle price: $2000 / MTK (initialOraclePrice from deploySubscriptionFixture)
+            // Ensure mockAggregator has the initial price set correctly if not already by deploy fixture.
+            // await setup.mockAggregator.setLatestAnswer(setup.initialOraclePrice); // Already set in deploy fixture
+
+            // Merchant for this plan will be 'owner'
             await setup.subscriptionContract.connect(setup.owner).createPlan(
-                setup.mockToken.address, 0, billingCycle, true, usdPriceCents, setup.mockAggregator.address
+                setup.owner.address, // Merchant is owner
+                setup.mockToken.address,
+                0,
+                billingCycle,
+                true,
+                usdPriceCents,
+                setup.mockAggregator.address
             );
             return setup;
         }
 
         it("Should allow user to subscribe, calculating correct token amount based on oracle price", async function () {
-            const { subscriptionContract, mockToken, user1, owner, mockAggregator } = await loadFixture(fixtureWithUsdPlan);
-            const merchantAddress = owner.address;
+            const { subscriptionContract, mockToken, user1, owner, mockAggregator, initialOraclePrice } = await loadFixture(fixtureWithUsdPlan);
+            const planDetails = await subscriptionContract.plans(planId);
+            const merchantAddress = planDetails.merchant; // Will be owner.address from fixture
+            expect(merchantAddress).to.equal(owner.address);
+
 
             const user1BalanceBefore = await mockToken.balanceOf(user1.address);
             const merchantBalanceBefore = await mockToken.balanceOf(merchantAddress);
@@ -223,56 +262,121 @@ describe("Subscription Contract", function () {
 
         async function fixtureWithActiveFixedSubscription() {
             const setup = await loadFixture(deploySubscriptionFixture);
+            // Plan merchant is owner
             await setup.subscriptionContract.connect(setup.owner).createPlan(
-                setup.mockToken.address, fixedPrice, billingCycle, false, 0, ethers.constants.AddressZero
+                setup.owner.address, // merchant
+                setup.mockToken.address,
+                fixedPrice,
+                billingCycle,
+                false, 0, ethers.constants.AddressZero
             );
             await setup.subscriptionContract.connect(setup.user1).subscribe(planId);
             return setup;
         }
 
-        it("Should process fixed price payment and emit PaymentProcessed", async function () {
-            const { subscriptionContract, mockToken, user1, owner, anotherUser } = await loadFixture(fixtureWithActiveFixedSubscription);
-            const merchantAddress = owner.address;
+        it("Should process fixed price payment by merchant and emit PaymentProcessed with correct next payment date", async function () {
+            const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithActiveFixedSubscription);
+            const planDetails = await subscriptionContract.plans(planId);
+            const merchantAddress = planDetails.merchant;
+            expect(merchantAddress).to.equal(owner.address); // Verify merchant is owner as set in fixture
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            const originalNextPaymentDate = subDetails.nextPaymentDate;
             await time.increaseTo(subDetails.nextPaymentDate.add(1));
 
             const user1BalanceBefore = await mockToken.balanceOf(user1.address);
             const merchantBalanceBefore = await mockToken.balanceOf(merchantAddress);
 
-            await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
+            // Process payment by owner (who is the merchant for this plan)
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.emit(subscriptionContract, "PaymentProcessed")
-                .withArgs(user1.address, planId, fixedPrice, (val: any) => val.gt(subDetails.nextPaymentDate));
+                .withArgs(user1.address, planId, fixedPrice, originalNextPaymentDate.add(billingCycle));
 
             expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore.sub(fixedPrice));
             expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore.add(fixedPrice));
+            const newSubDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            expect(newSubDetails.nextPaymentDate).to.equal(originalNextPaymentDate.add(billingCycle));
         });
-        // ... other fixed price processPayment tests (not active, not due, insufficient funds/allowance)
+
+        it("Should prevent non-merchant from processing fixed price payment", async function () {
+            const { subscriptionContract, user1, anotherUser, merchant } = await loadFixture(fixtureWithActiveFixedSubscription);
+            // In fixtureWithActiveFixedSubscription, 'owner' is the merchant.
+            // 'merchant' signer is a different entity here.
+            let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+
+            await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
+                .to.be.revertedWith("Only merchant can process payment");
+            await expect(subscriptionContract.connect(user1).processPayment(user1.address, planId))
+                .to.be.revertedWith("Only merchant can process payment");
+            // Test with the 'merchant' signer who is not the plan's merchant for this specific plan
+            await expect(subscriptionContract.connect(merchant).processPayment(user1.address, planId))
+                .to.be.revertedWith("Only merchant can process payment");
+        });
+
+        it("Should revert if user has insufficient balance for fixed price payment", async function () {
+            const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithActiveFixedSubscription);
+            // Drain user1's balance
+            const user1Balance = await mockToken.balanceOf(user1.address);
+            await mockToken.connect(user1).transfer(owner.address, user1Balance); // Transfer all to owner
+
+            let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
+                .to.be.reverted; // ERC20: transfer amount exceeds balance (or SafeERC20ex: TransactionExecutionError)
+        });
+
+        it("Should revert if contract has insufficient allowance for fixed price payment", async function () {
+            const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithActiveFixedSubscription);
+            // Revoke allowance
+            await mockToken.connect(user1).approve(subscriptionContract.address, 0);
+
+            let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
+                .to.be.reverted; // ERC20: insufficient allowance (or SafeERC20ex: TransactionExecutionError)
+        });
+
+        // TODO: Add similar insufficient balance/allowance tests for USD priced plans if calculations differ significantly,
+        // or confirm these general SafeERC20 revert reasons cover both. Given SafeERC20 behavior, they should.
     });
 
     describe("processPayment (USD Priced Plan)", function () {
         const planId = 0;
         const usdPriceCents = 1000; // $10.00
         const billingCycle = THIRTY_DAYS_IN_SECS;
-        const mockTokenDecimals = 18;
-        const oracleDecimals = 8;
+        // mockTokenDecimals and oracleDecimals are defined in the outer scope of subscribe tests
+        // We can rely on plan.tokenDecimals and mockAggregator.decimals() fetched dynamically if needed
 
         async function fixtureWithActiveUsdSubscription() {
             const setup = await loadFixture(deploySubscriptionFixture);
-            // Initial oracle price: $2000 / MTK
-            await setup.mockAggregator.setLatestAnswer(ethers.BigNumber.from("2000").mul(ethers.BigNumber.from("10").pow(oracleDecimals)));
+            // Initial oracle price: $2000 / MTK is set in deploySubscriptionFixture by default
+            // Plan merchant is owner
             await setup.subscriptionContract.connect(setup.owner).createPlan(
-                setup.mockToken.address, 0, billingCycle, true, usdPriceCents, setup.mockAggregator.address
+                setup.owner.address, // merchant
+                setup.mockToken.address,
+                0, // price
+                billingCycle,
+                true, // priceInUsd
+                usdPriceCents,
+                setup.mockAggregator.address
             );
             await setup.subscriptionContract.connect(setup.user1).subscribe(planId); // Initial payment based on $2000/MTK
             return setup;
         }
 
-        it("Should process USD payment with updated oracle price, calculating new token amount", async function () {
-            const { subscriptionContract, mockToken, mockAggregator, user1, owner, anotherUser } = await loadFixture(fixtureWithActiveUsdSubscription);
-            const merchantAddress = owner.address;
+        it("Should process USD payment by merchant with updated oracle price, new token amount, and correct next payment date", async function () {
+            const { subscriptionContract, mockToken, mockAggregator, user1, owner } = await loadFixture(fixtureWithActiveUsdSubscription);
+            const planDetails = await subscriptionContract.plans(planId);
+            const merchantAddress = planDetails.merchant;
+            expect(merchantAddress).to.equal(owner.address); // Verify merchant
+            const tokenDecimals = planDetails.tokenDecimals;
+            const oracleDecimals = await mockAggregator.decimals();
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            const originalNextPaymentDate = subDetails.nextPaymentDate;
             await time.increaseTo(subDetails.nextPaymentDate.add(1));
 
             // Update oracle price: $2500 / MTK
@@ -283,40 +387,199 @@ describe("Subscription Contract", function () {
             const merchantBalanceBefore = await mockToken.balanceOf(merchantAddress);
 
             // Expected amount calculation with new price:
-            // (1000 * 10^18 * 10^8) / (100 * 2500 * 10^8)
-            // = (1000 * 10^18) / (100 * 2500) = 10^18 / 250 = 0.004 * 10^18
+            // (usdPriceCents * (10**tokenDecimals) * (10**oracleFeedDecimals)) / (100 * oraclePriceInDollars * 10**oracleFeedDecimals)
+            // = (usdPriceCents * 10**tokenDecimals) / (100 * oraclePriceInDollars)
+            // Here, newOraclePrice is already price * 10**oracleDecimals
+            // So, (usdPriceCents * 10**tokenDecimals * 10**oracleDecimals) / (100 * newOraclePrice)
             const expectedTokenAmount = ethers.BigNumber.from(usdPriceCents)
                 .mul(ethers.BigNumber.from("10").pow(mockTokenDecimals))
-                .mul(ethers.BigNumber.from("10").pow(oracleDecimals))
+                .mul(ethers.BigNumber.from("10").pow(oracleDecimals)) // for consistency with contract formula
                 .div(
-                    ethers.BigNumber.from(100)
-                    .mul(newOraclePrice)
+                    ethers.BigNumber.from(100) // To convert cents to dollars
+                    .mul(newOraclePrice) // newOraclePrice is already price * 10^oracleDecimals
                 );
-            expect(expectedTokenAmount).to.equal(ethers.utils.parseUnits("0.004", 18));
+            expect(expectedTokenAmount).to.equal(ethers.utils.parseUnits("0.004", tokenDecimals)); // 0.004 MTK for $10 at $2500/MTK
 
-            await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
+            // Process payment by owner (who is the merchant for this plan)
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.emit(subscriptionContract, "PaymentProcessed")
-                .withArgs(user1.address, planId, expectedTokenAmount, (val: any) => val.gt(subDetails.nextPaymentDate));
+                .withArgs(user1.address, planId, expectedTokenAmount, originalNextPaymentDate.add(billingCycle));
             
             expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore.sub(expectedTokenAmount));
             expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore.add(expectedTokenAmount));
 
             const newSubDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            const currentTime = await time.latest();
-            expect(newSubDetails.nextPaymentDate).to.be.closeTo(currentTime + billingCycle, 5);
+            expect(newSubDetails.nextPaymentDate).to.equal(originalNextPaymentDate.add(billingCycle));
         });
 
-        it("Should revert processPayment if oracle price is zero", async function () {
-            const { subscriptionContract, mockAggregator, user1, anotherUser } = await loadFixture(fixtureWithActiveUsdSubscription);
+        it("Should prevent non-merchant from processing USD priced payment", async function () {
+            const { subscriptionContract, user1, anotherUser, merchant } = await loadFixture(fixtureWithActiveUsdSubscription);
+            // In fixtureWithActiveUsdSubscription, 'owner' is the merchant.
+            let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+
+            await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
+                .to.be.revertedWith("Only merchant can process payment");
+            await expect(subscriptionContract.connect(user1).processPayment(user1.address, planId))
+                .to.be.revertedWith("Only merchant can process payment");
+            await expect(subscriptionContract.connect(merchant).processPayment(user1.address, planId))
+                .to.be.revertedWith("Only merchant can process payment");
+        });
+
+        it("Should revert processPayment by merchant if oracle price is zero", async function () {
+            const { subscriptionContract, mockAggregator, user1, owner } = await loadFixture(fixtureWithActiveUsdSubscription);
+            // 'owner' is the merchant for this plan
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
             await time.increaseTo(subDetails.nextPaymentDate.add(1));
             await mockAggregator.setLatestAnswer(0);
-            await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.revertedWith("Oracle price must be positive");
         });
     });
-    // Keep existing general failure tests for subscribe/processPayment (non-existent plan, not active, not due, insufficient funds)
+    // Keep existing general failure tests for subscribe/processPayment (non-existent plan, not active, not due, insufficient funds/allowance)
     // and adapt them if necessary or duplicate for USD plans if behavior might differ.
     // For example, "Should revert if subscribing to a non-existent plan" is generic.
     // "Should revert if token transfer fails (insufficient balance)" needs to be tested for both fixed and dynamic pricing.
+});
+
+
+describe("cancelSubscription", function () {
+    const planId = 0;
+    const fixedPrice = ethers.utils.parseUnits("10", 18);
+    const billingCycle = THIRTY_DAYS_IN_SECS;
+
+    async function fixtureWithActiveSubscriptionForCancel() {
+        const setup = await loadFixture(deploySubscriptionFixture);
+        // Plan merchant is owner
+        await setup.subscriptionContract.connect(setup.owner).createPlan(
+            setup.owner.address, // merchant
+            setup.mockToken.address,
+            fixedPrice,
+            billingCycle,
+            false, 0, ethers.constants.AddressZero
+        );
+        // user1 subscribes
+        await setup.subscriptionContract.connect(setup.user1).subscribe(planId);
+        return setup;
+    }
+
+    it("Should allow a subscriber to cancel their active subscription", async function () {
+        const { subscriptionContract, user1 } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
+
+        await expect(subscriptionContract.connect(user1).cancelSubscription(planId))
+            .to.emit(subscriptionContract, "SubscriptionCancelled")
+            .withArgs(user1.address, planId);
+
+        const userSub = await subscriptionContract.userSubscriptions(user1.address, planId);
+        expect(userSub.isActive).to.be.false;
+    });
+
+    it("Should prevent cancelling an already inactive subscription", async function () {
+        const { subscriptionContract, user1 } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
+        // Cancel it once
+        await subscriptionContract.connect(user1).cancelSubscription(planId);
+        // Try to cancel again
+        await expect(subscriptionContract.connect(user1).cancelSubscription(planId))
+            .to.be.revertedWith("Subscription is already inactive");
+    });
+
+    it("Should prevent cancelling a subscription one is not subscribed to (or does not exist for user)", async function () {
+        const { subscriptionContract, anotherUser } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
+        // anotherUser tries to cancel user1's subscription planId, but for their own account
+        await expect(subscriptionContract.connect(anotherUser).cancelSubscription(planId))
+            .to.be.revertedWith("Not subscribed to this plan"); // Or "Subscription is already inactive" if it defaults to false
+    });
+
+    it("Should prevent cancelling a non-existent plan ID for the user", async function () {
+        const { subscriptionContract, user1 } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
+        const nonExistentPlanId = 99;
+        await expect(subscriptionContract.connect(user1).cancelSubscription(nonExistentPlanId))
+             .to.be.revertedWith("Not subscribed to this plan"); // Or "Subscription is already inactive"
+    });
+
+
+    it("Should prevent processing payment for a cancelled subscription", async function () {
+        const { subscriptionContract, user1, owner } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
+
+        // Cancel the subscription
+        await subscriptionContract.connect(user1).cancelSubscription(planId);
+
+        let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+        await time.increaseTo(subDetails.nextPaymentDate.add(1)); // Advance time to when payment would be due
+
+        // Owner (merchant) tries to process payment
+        await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
+            .to.be.revertedWith("Subscription is not active");
+    });
+});
+
+describe("Ownable2Step Behavior", function () {
+    it("Should have correct initial owner", async function () {
+        const { subscriptionContract, owner } = await loadFixture(deploySubscriptionFixture);
+        expect(await subscriptionContract.owner()).to.equal(owner.address);
+    });
+
+    it("Should allow owner to transfer ownership in two steps", async function () {
+        const { subscriptionContract, owner, anotherUser } = await loadFixture(deploySubscriptionFixture);
+
+        // Owner starts ownership transfer to anotherUser
+        await expect(subscriptionContract.connect(owner).transferOwnership(anotherUser.address))
+            .to.emit(subscriptionContract, "OwnershipTransferStarted")
+            .withArgs(owner.address, anotherUser.address);
+
+        expect(await subscriptionContract.pendingOwner()).to.equal(anotherUser.address);
+        expect(await subscriptionContract.owner()).to.equal(owner.address); // Owner remains the same
+
+        // anotherUser (new owner) accepts ownership
+        await expect(subscriptionContract.connect(anotherUser).acceptOwnership())
+            .to.emit(subscriptionContract, "OwnershipTransferred")
+            .withArgs(owner.address, anotherUser.address);
+
+        expect(await subscriptionContract.owner()).to.equal(anotherUser.address);
+        expect(await subscriptionContract.pendingOwner()).to.equal(ethers.constants.AddressZero);
+    });
+
+    it("Should prevent non-owner from initiating ownership transfer", async function () {
+        const { subscriptionContract, user1, anotherUser } = await loadFixture(deploySubscriptionFixture);
+        await expect(subscriptionContract.connect(user1).transferOwnership(anotherUser.address))
+            .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+            .withArgs(user1.address);
+    });
+
+    it("Should prevent non-pending-owner from accepting ownership", async function () {
+        const { subscriptionContract, owner, user1, anotherUser } = await loadFixture(deploySubscriptionFixture);
+        await subscriptionContract.connect(owner).transferOwnership(anotherUser.address); // Owner initiates
+
+        // User1 (not pending owner) tries to accept
+        await expect(subscriptionContract.connect(user1).acceptOwnership())
+            .to.be.revertedWithCustomError(subscriptionContract, "OwnableInvalidAccount")
+            .withArgs(user1.address);
+    });
+
+    it("Owner should still be able to call onlyOwner functions while ownership transfer is pending", async function () {
+        const { subscriptionContract, mockToken, owner, anotherUser } = await loadFixture(deploySubscriptionFixture);
+        await subscriptionContract.connect(owner).transferOwnership(anotherUser.address);
+
+        // Owner can still create plans
+        await expect(subscriptionContract.connect(owner).createPlan(
+            owner.address, mockToken.address, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+        )).to.not.be.reverted;
+    });
+
+    it("onlyOwner functions should be callable by new owner after transfer", async function () {
+        const { subscriptionContract, mockToken, owner, anotherUser } = await loadFixture(deploySubscriptionFixture);
+        await subscriptionContract.connect(owner).transferOwnership(anotherUser.address);
+        await subscriptionContract.connect(anotherUser).acceptOwnership();
+
+        // New owner (anotherUser) can create plans
+        await expect(subscriptionContract.connect(anotherUser).createPlan(
+            anotherUser.address, mockToken.address, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+        )).to.not.be.reverted;
+
+        // Old owner cannot
+        await expect(subscriptionContract.connect(owner).createPlan(
+            owner.address, mockToken.address, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+        )).to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+        .withArgs(owner.address);
+    });
 });
