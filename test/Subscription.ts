@@ -251,6 +251,73 @@ describe("Subscription Contract", function () {
         // ... other fixed price subscribe tests (non-existent plan, insufficient balance/allowance, already subscribed)
     });
 
+    describe("subscribeWithPermit", function () {
+        const planId = 0;
+        const price = ethers.utils.parseUnits("5", 18);
+        const billingCycle = THIRTY_DAYS_IN_SECS;
+
+        async function fixtureWithPermitPlan() {
+            const [owner, user1] = await ethers.getSigners();
+            const PermitFactory = await ethers.getContractFactory("PermitToken", owner);
+            const permitToken = await PermitFactory.deploy("Permit Token", "PTK");
+
+            const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
+            const subscription = await SubscriptionFactory.deploy();
+
+            const amount = ethers.utils.parseUnits("1000", 18);
+            await permitToken.mint(user1.address, amount);
+
+            await subscription.connect(owner).createPlan(
+                owner.address,
+                permitToken.address,
+                price,
+                billingCycle,
+                false,
+                0,
+                ethers.constants.AddressZero
+            );
+
+            return { owner, user1, subscription, permitToken };
+        }
+
+        it("Subscribes using permit", async function () {
+            const { owner, user1, subscription, permitToken } = await loadFixture(fixtureWithPermitPlan);
+
+            const nonce = await permitToken.nonces(user1.address);
+            const deadline = (await time.latest()) + 3600;
+
+            const domain = {
+                name: await permitToken.name(),
+                version: "1",
+                chainId: await user1.getChainId(),
+                verifyingContract: permitToken.address,
+            };
+            const types = {
+                Permit: [
+                    { name: "owner", type: "address" },
+                    { name: "spender", type: "address" },
+                    { name: "value", type: "uint256" },
+                    { name: "nonce", type: "uint256" },
+                    { name: "deadline", type: "uint256" },
+                ],
+            };
+            const values = {
+                owner: user1.address,
+                spender: subscription.address,
+                value: price,
+                nonce,
+                deadline,
+            };
+            const signature = await user1.signTypedData(domain, types, values);
+            const { v, r, s } = ethers.Signature.from(signature);
+
+            const balBefore = await permitToken.balanceOf(user1.address);
+            await expect(subscription.connect(user1).subscribeWithPermit(planId, deadline, v, r, s))
+                .to.emit(subscription, "Subscribed");
+            expect(await permitToken.balanceOf(user1.address)).to.equal(balBefore.sub(price));
+        });
+    });
+
     describe("subscribe (USD Priced Plan)", function () {
         const planId = 0;
         const usdPriceCents = 1000; // $10.00
