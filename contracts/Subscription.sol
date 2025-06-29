@@ -80,6 +80,24 @@ contract Subscription is Ownable2Step, AccessControl, Pausable { // Changed from
     event PlanCreated(uint256 planId, address indexed merchant, address indexed token, uint8 tokenDecimals, uint256 price, uint256 billingCycle, bool priceInUsd, uint256 usdPrice, address priceFeedAddress);
 
     /**
+     * @notice Emitted when a subscription plan is updated.
+     * @param planId The ID of the plan that was updated.
+     * @param billingCycle The new billing cycle duration in seconds.
+     * @param price The new fixed token price (if priceInUsd is false).
+     * @param priceInUsd True if the plan is now priced in USD cents.
+     * @param usdPrice The new USD price in cents (if priceInUsd is true).
+     * @param priceFeedAddress The Chainlink price feed address for USD pricing.
+     */
+    event PlanUpdated(
+        uint256 planId,
+        uint256 billingCycle,
+        uint256 price,
+        bool priceInUsd,
+        uint256 usdPrice,
+        address priceFeedAddress
+    );
+
+    /**
      * @notice Emitted when a user subscribes to a plan.
      * @param user The address of the subscriber.
      * @param planId The ID of the plan subscribed to.
@@ -167,6 +185,40 @@ contract Subscription is Ownable2Step, AccessControl, Pausable { // Changed from
         });
         nextPlanId++;
         emit PlanCreated(planId, merchant, _token, tokenDecimals, _price, _billingCycle, _priceInUsd, _usdPrice, _priceFeedAddress);
+    }
+
+    /**
+     * @notice Updates an existing subscription plan.
+     * @dev Only the contract owner can call this function.
+     * @param _planId The ID of the plan to update.
+     * @param _billingCycle New billing cycle duration in seconds.
+     * @param _price New fixed token price (ignored if _priceInUsd is true).
+     * @param _priceInUsd Whether pricing is denominated in USD cents.
+     * @param _usdPrice New USD price in cents (if _priceInUsd is true).
+     * @param _priceFeedAddress Chainlink price feed address for USD pricing.
+     */
+    function updatePlan(
+        uint256 _planId,
+        uint256 _billingCycle,
+        uint256 _price,
+        bool _priceInUsd,
+        uint256 _usdPrice,
+        address _priceFeedAddress
+    ) public onlyOwner whenNotPaused {
+        SubscriptionPlan storage plan = plans[_planId];
+        require(plan.merchant != address(0), "Plan does not exist");
+
+        if (_priceInUsd) {
+            require(_priceFeedAddress != address(0), "Price feed address required for USD pricing");
+        }
+
+        plan.billingCycle = _billingCycle;
+        plan.price = _price;
+        plan.priceInUsd = _priceInUsd;
+        plan.usdPrice = _usdPrice;
+        plan.priceFeedAddress = _priceFeedAddress;
+
+        emit PlanUpdated(_planId, _billingCycle, _price, _priceInUsd, _usdPrice, _priceFeedAddress);
     }
 
     /**

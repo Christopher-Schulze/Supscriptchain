@@ -73,6 +73,12 @@ npm run solhint
 
 Additional documentation can be found in the [docs](docs/) directory.
 
+## Updating Plans
+
+The contract owner can modify existing subscription plans using `updatePlan`.
+This function lets you change the billing cycle, price, USD price and price feed
+address. A `PlanUpdated` event is emitted when a plan is changed.
+
 ## License
 
 Released under the MIT License. See [LICENSE](LICENSE).
