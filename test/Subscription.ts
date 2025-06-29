@@ -2,6 +2,7 @@ import { ethers, BigNumber } from "hardhat"; // BigNumber may be needed for calc
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
+import type { Subscription } from "../typechain";
 
 const ONE_DAY_IN_SECS = 24 * 60 * 60;
 const THIRTY_DAYS_IN_SECS = 30 * ONE_DAY_IN_SECS;
@@ -22,7 +23,7 @@ describe("Subscription Contract", function () {
 
         // Deploy Subscription contract
         const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner); // Deploy with owner
-        const subscriptionContract = await SubscriptionFactory.deploy();
+        const subscriptionContract = (await SubscriptionFactory.deploy()) as Subscription;
         
         // User1 approves the subscription contract to spend their mock tokens
         // Approve a large amount for simplicity in tests
@@ -262,7 +263,7 @@ describe("Subscription Contract", function () {
             const permitToken = await PermitFactory.deploy("Permit Token", "PTK");
 
             const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
-            const subscription = await SubscriptionFactory.deploy();
+            const subscription = (await SubscriptionFactory.deploy()) as Subscription;
 
             const amount = ethers.utils.parseUnits("1000", 18);
             await permitToken.mint(user1.address, amount);
@@ -817,7 +818,7 @@ describe("Reentrancy protection", function () {
         const maliciousToken = await MaliciousTokenFactory.deploy("Malicious Token", "MAL", 18);
 
         const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
-        const subscriptionContract = await SubscriptionFactory.deploy();
+        const subscriptionContract = (await SubscriptionFactory.deploy()) as Subscription;
 
         const amount = ethers.utils.parseUnits("100", 18);
         await maliciousToken.mint(user1.address, amount);

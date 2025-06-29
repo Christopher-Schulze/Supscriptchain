@@ -9,7 +9,9 @@
     "prettier": "^3.6.2",
     "@types/node": "^24.0.7",
     "hardhat-coverage": "^0.9.19",
-    "@openzeppelin/hardhat-upgrades": "^3.0.0"
+    "@openzeppelin/hardhat-upgrades": "^3.0.0",
+    "typechain": "^8.3.2",
+    "@typechain/ethers-v6": "^0.5.1"
   },
   "scripts": {
     "compile": "hardhat compile",
@@ -17,6 +19,7 @@
     "lint": "eslint --ext .ts .",
     "format": "prettier --write .",
     "solhint": "solhint 'contracts/**/*.sol'",
+    "typechain": "typechain --target ethers-v6 --out-dir typechain ./artifacts/**/*.json",
     "codegen": "graph codegen subgraph/subgraph.yaml",
     "build-subgraph": "graph build subgraph/subgraph.yaml",
     "coverage": "hardhat coverage"
