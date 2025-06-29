@@ -54,6 +54,14 @@ slither .
 
 CI will fail if Slither reports any high severity findings.
 
+## Linting
+
+Run Solhint to check Solidity style and best practices:
+
+```bash
+npm run solhint
+```
+
 ## Contracts
 
 - `Subscription.sol` – core subscription logic. Uses `Ownable2Step` and `SafeERC20`.
