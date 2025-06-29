@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol"; // Changed from Ownable
 import "./interfaces/AggregatorV3Interface.sol"; // Changed to local import
@@ -98,7 +99,7 @@ contract Subscription is Ownable2Step { // Changed from Ownable
     /**
      * @notice Contract constructor. Initializes Ownable2Step with the deployer as the initial owner.
      */
-    constructor() Ownable2Step(msg.sender) {}
+    constructor() Ownable(msg.sender) {}
 
     /**
      * @notice Creates a new subscription plan.
@@ -126,7 +127,7 @@ contract Subscription is Ownable2Step { // Changed from Ownable
         }
         require(_token != address(0), "Token address cannot be zero");
 
-        IERC20 tokenContract = IERC20(_token);
+        IERC20Metadata tokenContract = IERC20Metadata(_token);
         uint8 tokenDecimals = tokenContract.decimals();
 
         address merchant = (_merchantAddress == address(0)) ? msg.sender : _merchantAddress;

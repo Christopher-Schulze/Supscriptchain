@@ -19,7 +19,7 @@ npm install
 npm test
 ```
 
-Note: downloading the Solidity compiler requires network access. In restricted environments the tests may fail to compile.
+Tests use a locally installed Solidity compiler and no longer require network access.
 
 ## Contracts
 
