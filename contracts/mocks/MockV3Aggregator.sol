@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "../interfaces/AggregatorV3Interface.sol";
 
 contract MockV3Aggregator is AggregatorV3Interface {
     int256 public latestAnswer;
