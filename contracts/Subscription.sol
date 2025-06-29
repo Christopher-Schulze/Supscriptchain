@@ -37,6 +37,9 @@ contract Subscription is Ownable2Step { // Changed from Ownable
     /// @notice Counter for the next available plan ID.
     uint256 public nextPlanId;
 
+    /// @dev Price data older than this value is considered stale.
+    uint256 private constant MAX_STALE_TIME = 1 hours;
+
     /**
      * @title User Subscription Details
      * @notice Defines the structure for a user's specific subscription to a plan.
@@ -157,7 +160,8 @@ contract Subscription is Ownable2Step { // Changed from Ownable
         if (plan.priceInUsd) {
             require(plan.priceFeedAddress != address(0), "Price feed not set for USD plan");
             AggregatorV3Interface priceFeed = AggregatorV3Interface(plan.priceFeedAddress);
-            (, int256 latestPrice, , , ) = priceFeed.latestRoundData(); // Note: Consider checking roundId, answeredInRound, etc. for stale prices.
+            (, int256 latestPrice, , uint256 updatedAt, ) = priceFeed.latestRoundData();
+            require(block.timestamp - updatedAt < MAX_STALE_TIME, "Price feed stale");
             
             uint8 tokenDecimals = plan.tokenDecimals;
             uint8 priceFeedDecimals = priceFeed.decimals();

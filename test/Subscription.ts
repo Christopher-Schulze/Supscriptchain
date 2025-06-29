@@ -247,11 +247,18 @@ describe("Subscription Contract", function () {
             await expect(subscriptionContract.connect(user1).subscribe(planId))
                 .to.be.revertedWith("Oracle price must be positive");
         });
-         it("Should revert if oracle price is negative", async function () {
+        it("Should revert if oracle price is negative", async function () {
             const { subscriptionContract, user1, mockAggregator } = await loadFixture(fixtureWithUsdPlan);
             await mockAggregator.setLatestAnswer(-1); // Negative price
             await expect(subscriptionContract.connect(user1).subscribe(planId))
                 .to.be.revertedWith("Oracle price must be positive"); // Or other error if SafeCast fails first
+        });
+
+        it("Should revert if price feed data is stale", async function () {
+            const { subscriptionContract, user1 } = await loadFixture(fixtureWithUsdPlan);
+            await time.increase(3601); // advance time beyond allowed freshness
+            await expect(subscriptionContract.connect(user1).subscribe(planId))
+                .to.be.revertedWith("Price feed stale");
         });
     });
 
@@ -434,6 +441,14 @@ describe("Subscription Contract", function () {
             await mockAggregator.setLatestAnswer(0);
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.revertedWith("Oracle price must be positive");
+        });
+
+        it("Should revert processPayment if price feed is stale", async function () {
+            const { subscriptionContract, user1, owner } = await loadFixture(fixtureWithActiveUsdSubscription);
+            let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
+                .to.be.revertedWith("Price feed stale");
         });
     });
     // Keep existing general failure tests for subscribe/processPayment (non-existent plan, not active, not due, insufficient funds/allowance)
