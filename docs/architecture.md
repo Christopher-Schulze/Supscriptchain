@@ -22,3 +22,6 @@ The project also contains `MockToken.sol` and `MockV3Aggregator.sol` for local t
 `Subscription.sol` relies on OpenZeppelin's `AccessControl`. The deployer
 receives `DEFAULT_ADMIN_ROLE` and `PAUSER_ROLE`. Accounts with `PAUSER_ROLE`
 can pause or unpause the contract when needed.
+
+The contract also inherits from `ReentrancyGuard` and uses the `nonReentrant`
+modifier on subscription-related functions to protect against reentrant calls.

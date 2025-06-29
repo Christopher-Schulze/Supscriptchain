@@ -7,7 +7,7 @@ const config: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.26",
+        version: "0.8.30",
         path: path.resolve(__dirname, "node_modules/solc/soljson.js"),
       },
     ],
