@@ -21,7 +21,7 @@ export default function Plans() {
   useEffect(() => {
     async function load() {
       try {
-        const contract = getContract();
+        const contract = await getContract();
         const nextId: bigint = await contract.nextPlanId();
         const list: Plan[] = [];
         for (let i = 0n; i < nextId; i++) {
