@@ -79,6 +79,10 @@ Additional documentation can be found in the [docs](docs/) directory.
 functions. The deployer is granted both `DEFAULT_ADMIN_ROLE` and `PAUSER_ROLE`.
 Accounts with the pauser role can pause or unpause the contract.
 
+`Subscription.sol` also inherits from `ReentrancyGuard`. The subscription,
+payment and cancellation functions are marked with `nonReentrant` to prevent
+reentrancy attacks.
+
 Grant the role to another account:
 
 ```bash

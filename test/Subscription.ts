@@ -782,4 +782,19 @@ describe("Reentrancy protection", function () {
         await expect(subscriptionContract.connect(user1).subscribe(0))
             .to.be.revertedWithCustomError(subscriptionContract, "ReentrancyGuardReentrantCall");
     });
+
+    it("processPayment rejects reentrancy", async function () {
+        const { subscriptionContract, maliciousToken, owner, user1 } = await loadFixture(deployMaliciousFixture);
+        // Disable reentrancy for initial subscribe
+        await maliciousToken.setReentrancy(ethers.constants.AddressZero, "0x");
+        await subscriptionContract.connect(user1).subscribe(0);
+
+        // Now attempt reentrancy during processPayment
+        const data = subscriptionContract.interface.encodeFunctionData("subscribe", [0]);
+        await maliciousToken.setReentrancy(subscriptionContract.address, data);
+
+        await time.increase(THIRTY_DAYS_IN_SECS + 1);
+        await expect(subscriptionContract.connect(owner).processPayment(user1.address, 0))
+            .to.be.revertedWithCustomError(subscriptionContract, "ReentrancyGuardReentrantCall");
+    });
 });
