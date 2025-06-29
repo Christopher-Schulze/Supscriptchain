@@ -1,0 +1,27 @@
+type Plan @entity {
+  id: ID!
+  merchant: Bytes!
+  token: Bytes!
+  tokenDecimals: Int!
+  price: BigInt!
+  billingCycle: BigInt!
+  priceInUsd: Boolean!
+  usdPrice: BigInt!
+  priceFeedAddress: Bytes!
+}
+
+type Subscription @entity {
+  id: ID!
+  user: Bytes!
+  planId: BigInt!
+  nextPaymentDate: BigInt
+  cancelled: Boolean
+}
+
+type Payment @entity {
+  id: ID!
+  user: Bytes!
+  planId: BigInt!
+  amount: BigInt!
+  newNextPaymentDate: BigInt!
+}
