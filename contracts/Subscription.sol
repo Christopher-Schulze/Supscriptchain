@@ -123,7 +123,12 @@ contract Subscription is Ownable2Step { // Changed from Ownable
     ) public onlyOwner {
         if (_priceInUsd) {
             require(_priceFeedAddress != address(0), "Price feed address required for USD pricing");
+            require(_usdPrice > 0, "Price must be greater than zero");
+        } else {
+            require(_price > 0, "Price must be greater than zero");
         }
+
+        require(_billingCycle > 0, "Billing cycle must be greater than zero");
         require(_token != address(0), "Token address cannot be zero");
 
         IERC20 tokenContract = IERC20(_token);

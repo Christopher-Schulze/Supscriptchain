@@ -144,6 +144,42 @@ describe("Subscription Contract", function () {
                 owner.address, ethers.constants.AddressZero, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
             )).to.be.revertedWith("Token address cannot be zero");
         });
+
+        it("Should revert if billing cycle is zero", async function () {
+            const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
+            await expect(subscriptionContract.connect(owner).createPlan(
+                owner.address,
+                mockToken.address,
+                10,
+                0,
+                false,
+                0,
+                ethers.constants.AddressZero
+            )).to.be.revertedWith("Billing cycle must be greater than zero");
+        });
+
+        it("Should revert if price is zero", async function () {
+            const { subscriptionContract, mockToken, owner, mockAggregator } = await loadFixture(deploySubscriptionFixture);
+            await expect(subscriptionContract.connect(owner).createPlan(
+                owner.address,
+                mockToken.address,
+                0,
+                THIRTY_DAYS_IN_SECS,
+                false,
+                0,
+                ethers.constants.AddressZero
+            )).to.be.revertedWith("Price must be greater than zero");
+
+            await expect(subscriptionContract.connect(owner).createPlan(
+                owner.address,
+                mockToken.address,
+                0,
+                THIRTY_DAYS_IN_SECS,
+                true,
+                0,
+                mockAggregator.address
+            )).to.be.revertedWith("Price must be greater than zero");
+        });
     });
 
     describe("subscribe (Fixed Price Plan)", function () {
@@ -176,6 +212,13 @@ describe("Subscription Contract", function () {
             expect(subscription.isActive).to.be.true;
             expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore.sub(fixedPrice));
             expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore.add(fixedPrice));
+        });
+
+        it("Should revert if subscribing twice to the same plan", async function () {
+            const { subscriptionContract, user1 } = await loadFixture(fixtureWithFixedPlan);
+            await subscriptionContract.connect(user1).subscribe(planId);
+            await expect(subscriptionContract.connect(user1).subscribe(planId))
+                .to.be.revertedWith("Already actively subscribed to this plan");
         });
         // ... other fixed price subscribe tests (non-existent plan, insufficient balance/allowance, already subscribed)
     });
@@ -462,6 +505,21 @@ describe("cancelSubscription", function () {
         await setup.subscriptionContract.connect(setup.user1).subscribe(planId);
         return setup;
     }
+
+    it("Should revert when cancelling a subscription that was never active", async function () {
+        const { subscriptionContract, user1, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
+        await subscriptionContract.connect(owner).createPlan(
+            owner.address,
+            mockToken.address,
+            fixedPrice,
+            billingCycle,
+            false,
+            0,
+            ethers.constants.AddressZero
+        );
+        await expect(subscriptionContract.connect(user1).cancelSubscription(planId))
+            .to.be.revertedWith("Not subscribed to this plan or subscription data mismatch");
+    });
 
     it("Should allow a subscriber to cancel their active subscription", async function () {
         const { subscriptionContract, user1 } = await loadFixture(fixtureWithActiveSubscriptionForCancel);

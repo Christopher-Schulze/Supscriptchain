@@ -2,11 +2,13 @@
   "name": "hardhat-project",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.4"
+    "hardhat": "^2.22.4",
+    "solidity-coverage": "^0.8.2"
   },
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "coverage": "hardhat coverage"
   },
   "dependencies": {
     "@chainlink/contracts": "^1.4.0",
