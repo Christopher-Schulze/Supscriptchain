@@ -417,8 +417,6 @@ describe("Subscription Contract", function () {
                 .to.be.reverted; // ERC20: insufficient allowance (or SafeERC20ex: TransactionExecutionError)
         });
 
-        // TODO: Add similar insufficient balance/allowance tests for USD priced plans if calculations differ significantly,
-        // or confirm these general SafeERC20 revert reasons cover both. Given SafeERC20 behavior, they should.
     });
 
     describe("processPayment (USD Priced Plan)", function () {
