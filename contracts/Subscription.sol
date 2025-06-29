@@ -6,9 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol"; // Changed from Ownable
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./interfaces/AggregatorV3Interface.sol"; // Changed to local import
 
-contract Subscription is Ownable2Step, AccessControl, Pausable { // Changed from Ownable
+contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard { // Changed from Ownable
     using SafeERC20 for IERC20;
 
     /**
@@ -253,7 +254,7 @@ contract Subscription is Ownable2Step, AccessControl, Pausable { // Changed from
      * @dev Transfers initial payment from user to merchant. User must approve contract for token spending.
      * @param _planId The ID of the plan to subscribe to.
      */
-    function subscribe(uint256 _planId) public whenNotPaused {
+    function subscribe(uint256 _planId) public whenNotPaused nonReentrant {
         require(plans[_planId].merchant != address(0), "Plan does not exist"); 
         require(!userSubscriptions[msg.sender][_planId].isActive, "Already actively subscribed to this plan");
 
@@ -284,7 +285,7 @@ contract Subscription is Ownable2Step, AccessControl, Pausable { // Changed from
      * @param _user The address of the subscriber whose payment is being processed.
      * @param _planId The ID of the plan for which payment is processed.
      */
-    function processPayment(address _user, uint256 _planId) public whenNotPaused {
+    function processPayment(address _user, uint256 _planId) public whenNotPaused nonReentrant {
        UserSubscription storage userSub = userSubscriptions[_user][_planId];
        SubscriptionPlan storage plan = plans[_planId];
 
@@ -308,7 +309,7 @@ contract Subscription is Ownable2Step, AccessControl, Pausable { // Changed from
      * @dev Sets the subscription to inactive. No refunds for the current billing cycle.
      * @param _planId The ID of the plan to cancel.
      */
-    function cancelSubscription(uint256 _planId) public whenNotPaused {
+    function cancelSubscription(uint256 _planId) public whenNotPaused nonReentrant {
         UserSubscription storage userSub = userSubscriptions[msg.sender][_planId];
 
         require(userSub.subscriber == msg.sender, "Not subscribed to this plan or subscription data mismatch");
