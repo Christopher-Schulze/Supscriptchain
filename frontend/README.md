@@ -11,7 +11,11 @@ Install dependencies:
 npm install
 ```
 
-Create a `.env.local` file with the contract address and an optional RPC URL:
+Copy `.env.local.example` to `.env.local` and enter the contract address and an optional RPC URL:
+
+```bash
+cp .env.local.example .env.local
+```
 
 ```bash
 NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourContractAddress

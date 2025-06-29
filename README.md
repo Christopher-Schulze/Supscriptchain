@@ -16,6 +16,12 @@ npm install
 npm install --save-dev solc
 ```
 
+Copy `.env.example` to `.env` and adjust the values for your deployment:
+
+```bash
+cp .env.example .env
+```
+
 ## Running Tests
 
 ```bash
