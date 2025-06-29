@@ -743,3 +743,43 @@ describe("Pausable", function () {
         await expect(subscriptionContract.connect(user1).cancelSubscription(0)).to.be.revertedWith("Pausable: paused");
     });
 });
+
+describe("Reentrancy protection", function () {
+    async function deployMaliciousFixture() {
+        const [owner, user1] = await ethers.getSigners();
+
+        const MaliciousTokenFactory = await ethers.getContractFactory("MaliciousToken", owner);
+        const maliciousToken = await MaliciousTokenFactory.deploy("Malicious Token", "MAL", 18);
+
+        const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
+        const subscriptionContract = await SubscriptionFactory.deploy();
+
+        const amount = ethers.utils.parseUnits("100", 18);
+        await maliciousToken.mint(user1.address, amount);
+
+        await maliciousToken.connect(user1).approve(subscriptionContract.address, amount);
+
+        const fixedPrice = ethers.utils.parseUnits("10", 18);
+        await subscriptionContract.connect(owner).createPlan(
+            owner.address,
+            maliciousToken.address,
+            fixedPrice,
+            THIRTY_DAYS_IN_SECS,
+            false,
+            0,
+            ethers.constants.AddressZero
+        );
+
+        // Configure token to attempt reentrancy during subscribe
+        const data = subscriptionContract.interface.encodeFunctionData("cancelSubscription", [0]);
+        await maliciousToken.setReentrancy(subscriptionContract.address, data);
+
+        return { subscriptionContract, maliciousToken, owner, user1 };
+    }
+
+    it("subscribe rejects reentrant token", async function () {
+        const { subscriptionContract, user1 } = await loadFixture(deployMaliciousFixture);
+        await expect(subscriptionContract.connect(user1).subscribe(0))
+            .to.be.revertedWithCustomError(subscriptionContract, "ReentrancyGuardReentrantCall");
+    });
+});
