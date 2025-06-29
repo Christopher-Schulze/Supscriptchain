@@ -598,3 +598,54 @@ describe("Ownable2Step Behavior", function () {
         .withArgs(owner.address);
     });
 });
+
+describe("Pausable", function () {
+    async function fixtureWithPlanAndSubscription() {
+        const setup = await loadFixture(deploySubscriptionFixture);
+        const fixedPrice = ethers.utils.parseUnits("10", 18);
+        await setup.subscriptionContract.connect(setup.owner).createPlan(
+            setup.owner.address,
+            setup.mockToken.address,
+            fixedPrice,
+            THIRTY_DAYS_IN_SECS,
+            false,
+            0,
+            ethers.constants.AddressZero
+        );
+        await setup.subscriptionContract.connect(setup.user1).subscribe(0);
+        return { ...setup, fixedPrice };
+    }
+
+    it("Only owner or pauser role can pause and unpause", async function () {
+        const { subscriptionContract, owner, anotherUser } = await loadFixture(deploySubscriptionFixture);
+        const pauserRole = await subscriptionContract.PAUSER_ROLE();
+
+        await expect(subscriptionContract.connect(owner).pause()).to.not.be.reverted;
+        await expect(subscriptionContract.connect(owner).unpause()).to.not.be.reverted;
+
+        await expect(subscriptionContract.connect(anotherUser).pause()).to.be.revertedWith("Not pauser or owner");
+
+        await subscriptionContract.connect(owner).grantRole(pauserRole, anotherUser.address);
+        await expect(subscriptionContract.connect(anotherUser).pause()).to.not.be.reverted;
+        await expect(subscriptionContract.connect(anotherUser).unpause()).to.not.be.reverted;
+    });
+
+    it("Paused contract rejects subscription and payment functions", async function () {
+        const { subscriptionContract, owner, user1, fixedPrice } = await loadFixture(fixtureWithPlanAndSubscription);
+        await subscriptionContract.connect(owner).pause();
+
+        await expect(subscriptionContract.connect(owner).createPlan(
+            owner.address,
+            ethers.constants.AddressZero,
+            fixedPrice,
+            THIRTY_DAYS_IN_SECS,
+            false,
+            0,
+            ethers.constants.AddressZero
+        )).to.be.revertedWith("Pausable: paused");
+
+        await expect(subscriptionContract.connect(user1).subscribe(0)).to.be.revertedWith("Pausable: paused");
+        await expect(subscriptionContract.connect(owner).processPayment(user1.address, 0)).to.be.revertedWith("Pausable: paused");
+        await expect(subscriptionContract.connect(user1).cancelSubscription(0)).to.be.revertedWith("Pausable: paused");
+    });
+});
