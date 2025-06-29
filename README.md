@@ -126,6 +126,18 @@ To automate processing, add a cron entry. This example runs hourly:
 0 * * * * cd /path/to/project && npx hardhat run scripts/process-due-payments.ts --network <network> >> cron.log 2>&1
 ```
 
+## Upgradeprozess
+
+Der Vertrag `SubscriptionUpgradeable` wird über einen Transparent Proxy bereitgestellt. 
+Beim Upgrade wird ein neuer Implementierungsvertrag bereitgestellt und der Proxy 
+auf diesen aktualisiert. Beispiel für ein Upgrade:
+
+```bash
+npx hardhat run scripts/deploy-testnet.ts --network sepolia
+# neue Version erstellen und dann
+npx hardhat run scripts/upgrade.ts --network sepolia
+```
+
 ## License
 
 Released under the MIT License. See [LICENSE](LICENSE).
