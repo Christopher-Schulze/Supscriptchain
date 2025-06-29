@@ -9,7 +9,10 @@ const config: HardhatUserConfig = {
     compilers: [
       {
         version: "0.8.26",
-        path: path.resolve(__dirname, "node_modules/solc/soljson.js"),
+        path: path.resolve(
+          __dirname,
+          "node_modules/hardhat/node_modules/solc/soljson.js"
+        ),
       },
     ],
   },
