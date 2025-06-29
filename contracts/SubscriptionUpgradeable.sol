@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20MetadataUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/IERC20PermitUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
@@ -77,7 +78,8 @@ contract SubscriptionUpgradeable is
 
     /// @notice Initializer instead of constructor for upgradeable contracts
     function initialize(address initialOwner) public initializer {
-        __Ownable2Step_init(initialOwner);
+        __Ownable2Step_init();
+        _transferOwnership(initialOwner);
         __Pausable_init();
         __AccessControl_init();
         __ReentrancyGuard_init();
@@ -110,7 +112,7 @@ contract SubscriptionUpgradeable is
         }
         require(_token != address(0), "Token address cannot be zero");
 
-        IERC20Upgradeable tokenContract = IERC20Upgradeable(_token);
+        IERC20MetadataUpgradeable tokenContract = IERC20MetadataUpgradeable(_token);
         uint8 tokenDecimals = tokenContract.decimals();
 
         address merchant = (_merchantAddress == address(0)) ? msg.sender : _merchantAddress;
