@@ -583,3 +583,50 @@ describe("Ownable2Step Behavior", function () {
         .withArgs(owner.address);
     });
 });
+
+describe("Pausable", function () {
+    const planId = 0;
+    const fixedPrice = ethers.utils.parseUnits("10", 18);
+    const billingCycle = THIRTY_DAYS_IN_SECS;
+
+    async function fixtureWithPlan() {
+        const setup = await loadFixture(deploySubscriptionFixture);
+        await setup.subscriptionContract.connect(setup.owner).createPlan(
+            setup.owner.address,
+            setup.mockToken.address,
+            fixedPrice,
+            billingCycle,
+            false,
+            0,
+            ethers.constants.AddressZero
+        );
+        return setup;
+    }
+
+    it("PAUSER_ROLE can pause and unpause", async function () {
+        const { subscriptionContract, owner } = await loadFixture(fixtureWithPlan);
+
+        await expect(subscriptionContract.connect(owner).pause()).to.emit(subscriptionContract, "Paused").withArgs(owner.address);
+        await expect(subscriptionContract.connect(owner).unpause()).to.emit(subscriptionContract, "Unpaused").withArgs(owner.address);
+    });
+
+    it("Non-pauser cannot pause", async function () {
+        const { subscriptionContract, user1 } = await loadFixture(fixtureWithPlan);
+        await expect(subscriptionContract.connect(user1).pause()).to.be.revertedWith(/AccessControl/);
+    });
+
+    it("Should block subscribe when paused", async function () {
+        const { subscriptionContract, user1, owner } = await loadFixture(fixtureWithPlan);
+        await subscriptionContract.connect(owner).pause();
+        await expect(subscriptionContract.connect(user1).subscribe(planId)).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("Should block processPayment when paused", async function () {
+        const { subscriptionContract, user1, owner } = await loadFixture(fixtureWithPlan);
+        await subscriptionContract.connect(user1).subscribe(planId);
+        await subscriptionContract.connect(owner).pause();
+        let sub = await subscriptionContract.userSubscriptions(user1.address, planId);
+        await time.increaseTo(sub.nextPaymentDate.add(1));
+        await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId)).to.be.revertedWith("Pausable: paused");
+    });
+});
