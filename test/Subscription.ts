@@ -451,12 +451,12 @@ describe("Subscription Contract", function () {
             await time.increaseTo(subDetails.nextPaymentDate.add(1));
 
             await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
-                .to.be.revertedWith("Only merchant can process payment");
+                .to.be.revertedWith("Only plan merchant can process payment");
             await expect(subscriptionContract.connect(user1).processPayment(user1.address, planId))
-                .to.be.revertedWith("Only merchant can process payment");
+                .to.be.revertedWith("Only plan merchant can process payment");
             // Test with the 'merchant' signer who is not the plan's merchant for this specific plan
             await expect(subscriptionContract.connect(merchant).processPayment(user1.address, planId))
-                .to.be.revertedWith("Only merchant can process payment");
+                .to.be.revertedWith("Only plan merchant can process payment");
         });
 
         it("Should revert if user has insufficient balance for fixed price payment", async function () {
@@ -562,11 +562,11 @@ describe("Subscription Contract", function () {
             await time.increaseTo(subDetails.nextPaymentDate.add(1));
 
             await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
-                .to.be.revertedWith("Only merchant can process payment");
+                .to.be.revertedWith("Only plan merchant can process payment");
             await expect(subscriptionContract.connect(user1).processPayment(user1.address, planId))
-                .to.be.revertedWith("Only merchant can process payment");
+                .to.be.revertedWith("Only plan merchant can process payment");
             await expect(subscriptionContract.connect(merchant).processPayment(user1.address, planId))
-                .to.be.revertedWith("Only merchant can process payment");
+                .to.be.revertedWith("Only plan merchant can process payment");
         });
 
         it("Should revert processPayment by merchant if oracle price is zero", async function () {
@@ -661,14 +661,14 @@ describe("cancelSubscription", function () {
         const { subscriptionContract, anotherUser } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
         // anotherUser tries to cancel user1's subscription planId, but for their own account
         await expect(subscriptionContract.connect(anotherUser).cancelSubscription(planId))
-            .to.be.revertedWith("Not subscribed to this plan"); // Or "Subscription is already inactive" if it defaults to false
+            .to.be.revertedWith("Not subscribed to this plan or subscription data mismatch"); // Or "Subscription is already inactive" if it defaults to false
     });
 
     it("Should prevent cancelling a non-existent plan ID for the user", async function () {
         const { subscriptionContract, user1 } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
         const nonExistentPlanId = 99;
         await expect(subscriptionContract.connect(user1).cancelSubscription(nonExistentPlanId))
-             .to.be.revertedWith("Not subscribed to this plan"); // Or "Subscription is already inactive"
+             .to.be.revertedWith("Not subscribed to this plan or subscription data mismatch"); // Or "Subscription is already inactive"
     });
 
 
