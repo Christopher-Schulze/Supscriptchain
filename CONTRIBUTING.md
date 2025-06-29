@@ -14,3 +14,7 @@ slither .
 ```
 
 Pull requests should not introduce any high severity Slither findings.
+
+The `package-lock.json` file tracks exact dependency versions and must remain
+committed to the repository. If you add or update dependencies, make sure to
+commit the updated lockfile in the same pull request.
