@@ -4,9 +4,11 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol"; // Changed from Ownable
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./interfaces/AggregatorV3Interface.sol"; // Changed to local import
 
-contract Subscription is Ownable2Step { // Changed from Ownable
+contract Subscription is Ownable2Step, AccessControl, Pausable { // Changed from Ownable
     using SafeERC20 for IERC20;
 
     /**
@@ -36,6 +38,9 @@ contract Subscription is Ownable2Step { // Changed from Ownable
     mapping(uint256 => SubscriptionPlan) public plans;
     /// @notice Counter for the next available plan ID.
     uint256 public nextPlanId;
+
+    /// @notice Role that allows pausing and unpausing the contract.
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     /// @dev Price data older than this value is considered stale.
     uint256 private constant MAX_STALE_TIME = 1 hours;
@@ -99,9 +104,24 @@ contract Subscription is Ownable2Step { // Changed from Ownable
     event SubscriptionCancelled(address indexed user, uint256 indexed planId);
 
     /**
-     * @notice Contract constructor. Initializes Ownable2Step with the deployer as the initial owner.
+     * @notice Contract constructor. Initializes Ownable2Step and grants roles to the deployer.
      */
-    constructor() Ownable2Step(msg.sender) {}
+    constructor() Ownable2Step(msg.sender) {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(PAUSER_ROLE, msg.sender);
+    }
+
+    /// @notice Pauses subscription related functions.
+    function pause() public {
+        require(hasRole(PAUSER_ROLE, msg.sender) || msg.sender == owner(), "Not pauser or owner");
+        _pause();
+    }
+
+    /// @notice Unpauses subscription related functions.
+    function unpause() public {
+        require(hasRole(PAUSER_ROLE, msg.sender) || msg.sender == owner(), "Not pauser or owner");
+        _unpause();
+    }
 
     /**
      * @notice Creates a new subscription plan.
@@ -123,7 +143,7 @@ contract Subscription is Ownable2Step { // Changed from Ownable
         bool _priceInUsd,
         uint256 _usdPrice,
         address _priceFeedAddress
-    ) public onlyOwner {
+    ) public onlyOwner whenNotPaused {
         if (_priceInUsd) {
             require(_priceFeedAddress != address(0), "Price feed address required for USD pricing");
         }
@@ -181,7 +201,7 @@ contract Subscription is Ownable2Step { // Changed from Ownable
      * @dev Transfers initial payment from user to merchant. User must approve contract for token spending.
      * @param _planId The ID of the plan to subscribe to.
      */
-    function subscribe(uint256 _planId) public {
+    function subscribe(uint256 _planId) public whenNotPaused {
         require(plans[_planId].merchant != address(0), "Plan does not exist"); 
         require(!userSubscriptions[msg.sender][_planId].isActive, "Already actively subscribed to this plan");
 
@@ -212,7 +232,7 @@ contract Subscription is Ownable2Step { // Changed from Ownable
      * @param _user The address of the subscriber whose payment is being processed.
      * @param _planId The ID of the plan for which payment is processed.
      */
-    function processPayment(address _user, uint256 _planId) public {
+    function processPayment(address _user, uint256 _planId) public whenNotPaused {
        UserSubscription storage userSub = userSubscriptions[_user][_planId];
        SubscriptionPlan storage plan = plans[_planId];
 
@@ -236,7 +256,7 @@ contract Subscription is Ownable2Step { // Changed from Ownable
      * @dev Sets the subscription to inactive. No refunds for the current billing cycle.
      * @param _planId The ID of the plan to cancel.
      */
-    function cancelSubscription(uint256 _planId) public {
+    function cancelSubscription(uint256 _planId) public whenNotPaused {
         UserSubscription storage userSub = userSubscriptions[msg.sender][_planId];
 
         require(userSub.subscriber == msg.sender, "Not subscribed to this plan or subscription data mismatch");
