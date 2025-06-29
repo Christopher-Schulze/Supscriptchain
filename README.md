@@ -104,6 +104,28 @@ The contract owner can modify existing subscription plans using `updatePlan`.
 This function lets you change the billing cycle, price, USD price and price feed
 address. A `PlanUpdated` event is emitted when a plan is changed.
 
+## Processing Due Payments
+
+The script `scripts/process-due-payments.ts` reads a list of subscribers and
+executes `processPayment` for those whose `nextPaymentDate` has passed. Any
+failures are logged to the console.
+
+### Running via Hardhat
+
+Use Hardhat to execute the script:
+
+```bash
+npx hardhat run scripts/process-due-payments.ts --network <network>
+```
+
+### Cron Example
+
+To automate processing, add a cron entry. This example runs hourly:
+
+```cron
+0 * * * * cd /path/to/project && npx hardhat run scripts/process-due-payments.ts --network <network> >> cron.log 2>&1
+```
+
 ## License
 
 Released under the MIT License. See [LICENSE](LICENSE).
