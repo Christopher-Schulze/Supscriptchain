@@ -13,6 +13,7 @@ Clone the repository and install dependencies:
 
 ```bash
 npm install
+npm install --save-dev solc
 ```
 
 ## Running Tests
@@ -21,7 +22,9 @@ npm install
 npm test
 ```
 
-_The Solidity compiler and dependencies are fetched during the first run. In network-restricted environments these steps can fail._
+The project now includes a local Solidity compiler. Hardhat will compile using
+`node_modules/solc/soljson.js`, so no network access is required during
+compilation.
 
 ## Deployment
 

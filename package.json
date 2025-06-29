@@ -3,7 +3,8 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.22.4",
-    "solhint": "^5.2.0"
+    "solhint": "^5.2.0",
+    "solc": "^0.8.26"
   },
   "scripts": {
     "compile": "hardhat compile",
