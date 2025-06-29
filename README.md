@@ -73,6 +73,27 @@ npm run solhint
 
 Additional documentation can be found in the [docs](docs/) directory.
 
+## Access Control
+
+`Subscription.sol` uses OpenZeppelin's `AccessControl` to manage privileged
+functions. The deployer is granted both `DEFAULT_ADMIN_ROLE` and `PAUSER_ROLE`.
+Accounts with the pauser role can pause or unpause the contract.
+
+Grant the role to another account:
+
+```bash
+npx hardhat console --network <network>
+> const sub = await ethers.getContractAt("Subscription", "<address>")
+> const role = await sub.PAUSER_ROLE()
+> await sub.grantRole(role, "0xPAUSER")
+```
+
+Revoke it when no longer needed:
+
+```bash
+> await sub.revokeRole(role, "0xPAUSER")
+```
+
 ## Updating Plans
 
 The contract owner can modify existing subscription plans using `updatePlan`.
