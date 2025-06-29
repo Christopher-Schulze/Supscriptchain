@@ -38,6 +38,22 @@ Example deployment to a testnet network configured in `hardhat.config.ts`:
 npx hardhat run scripts/deploy-testnet.ts --network sepolia
 ```
 
+## Static Analysis
+
+Install [Slither](https://github.com/crytic/slither) using `pip`:
+
+```bash
+pip install slither-analyzer
+```
+
+Run the analyzer against the project:
+
+```bash
+slither .
+```
+
+CI will fail if Slither reports any high severity findings.
+
 ## Contracts
 
 - `Subscription.sol` – core subscription logic. Uses `Ownable2Step` and `SafeERC20`.
