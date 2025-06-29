@@ -16,3 +16,9 @@ The core of this repository is `Subscription.sol`. The contract lets merchants c
   - `cancelSubscription` – subscriber function to cancel an active plan.
 
 The project also contains `MockToken.sol` and `MockV3Aggregator.sol` for local testing. These mocks emulate an ERC20 token and a Chainlink price feed.
+
+### Access Control
+
+`Subscription.sol` relies on OpenZeppelin's `AccessControl`. The deployer
+receives `DEFAULT_ADMIN_ROLE` and `PAUSER_ROLE`. Accounts with `PAUSER_ROLE`
+can pause or unpause the contract when needed.
