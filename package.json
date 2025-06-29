@@ -8,9 +8,8 @@
     "eslint": "^9.30.0",
     "prettier": "^3.6.2",
     "@types/node": "^24.0.7",
-    "@graphprotocol/graph-cli": "^0.47.0",
-    "@graphprotocol/graph-ts": "^0.31.0",
-    "hardhat-coverage": "^0.9.19"
+    "hardhat-coverage": "^0.9.19",
+    "@openzeppelin/hardhat-upgrades": "^3.0.0"
   },
   "scripts": {
     "compile": "hardhat compile",

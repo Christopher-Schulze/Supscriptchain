@@ -138,6 +138,12 @@ To automate processing, add a cron entry. This example runs hourly:
 0 * * * * cd /path/to/project && npx hardhat run scripts/process-due-payments.ts --network <network> >> cron.log 2>&1
 ```
 
+## Upgradeprozess
+
+Der Vertrag `SubscriptionUpgradeable` wird über einen Transparent Proxy bereitgestellt. 
+Mit dem Hardhat-Upgrades-Plugin kann ein neues Implementierungscontract einfach über `upgradeProxy` eingespielt werden. 
+Ein Beispiel findet sich im Test `test/SubscriptionUpgradeable.ts`.
+
 ## License
 
 Released under the MIT License. See [LICENSE](LICENSE).
