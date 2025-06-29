@@ -10,7 +10,7 @@ export default function Payment() {
 
   async function trigger() {
     try {
-      const contract = getContract();
+      const contract = await getContract();
       await contract.processPayment(user, BigInt(planId));
     } catch (err) {
       console.error(err);

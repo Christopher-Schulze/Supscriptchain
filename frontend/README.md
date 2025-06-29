@@ -3,9 +3,9 @@
 This directory contains a simple Next.js application that interacts with the
 `Subscription` smart contract using [`ethers.js`](https://docs.ethers.org/).
 
-## Setup
+## Installation
 
-Install dependencies:
+Install dependencies in this directory:
 
 ```bash
 npm install
@@ -22,6 +22,8 @@ NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourContractAddress
 # Optional RPC provider used when MetaMask is not available
 NEXT_PUBLIC_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
 ```
+
+## Start
 
 Run the development server:
 

@@ -9,7 +9,7 @@ export default function Manage() {
 
   async function subscribe() {
     try {
-      const contract = getContract();
+      const contract = await getContract();
       await contract.subscribe(BigInt(planId));
     } catch (err) {
       console.error(err);
@@ -18,7 +18,7 @@ export default function Manage() {
 
   async function cancel() {
     try {
-      const contract = getContract();
+      const contract = await getContract();
       await contract.cancelSubscription(BigInt(planId));
     } catch (err) {
       console.error(err);
