@@ -106,9 +106,13 @@ address. A `PlanUpdated` event is emitted when a plan is changed.
 
 ## Processing Due Payments
 
-The script `scripts/process-due-payments.ts` reads a list of subscribers and
-executes `processPayment` for those whose `nextPaymentDate` has passed. Any
-failures are logged to the console.
+The script `scripts/process-due-payments.ts` reads a list of subscribers from a
+JSON file and executes `processPayment` for those whose `nextPaymentDate` has
+passed. Any failures are logged to the console.
+
+The file must contain a JSON array of Ethereum addresses. See
+[`scripts/subscribers.example.json`](scripts/subscribers.example.json) for an
+example.
 
 ### Running via Hardhat
 
