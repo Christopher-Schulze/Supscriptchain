@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable2Step.sol"; // Changed from Ownable
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -255,13 +256,55 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard 
      * @param _planId The ID of the plan to subscribe to.
      */
     function subscribe(uint256 _planId) public whenNotPaused nonReentrant {
-        require(plans[_planId].merchant != address(0), "Plan does not exist"); 
+        require(plans[_planId].merchant != address(0), "Plan does not exist");
         require(!userSubscriptions[msg.sender][_planId].isActive, "Already actively subscribed to this plan");
 
         SubscriptionPlan storage plan = plans[_planId];
         IERC20 token = IERC20(plan.token);
 
         uint256 amountToPay = getPaymentAmount(_planId);
+        token.safeTransferFrom(msg.sender, plan.merchant, amountToPay);
+
+        uint256 startTime = block.timestamp;
+        uint256 nextPaymentDate = startTime + plan.billingCycle;
+
+        userSubscriptions[msg.sender][_planId] = UserSubscription({
+            subscriber: msg.sender,
+            planId: _planId,
+            startTime: startTime,
+            nextPaymentDate: nextPaymentDate,
+            isActive: true
+        });
+
+        emit Subscribed(msg.sender, _planId, nextPaymentDate);
+    }
+
+    /**
+     * @notice Allows a user to subscribe to a plan using an ERC20 permit.
+     * @dev Calls permit on the token then transfers the payment.
+     * @param _planId The ID of the plan to subscribe to.
+     * @param _deadline Expiration time for the permit signature.
+     * @param v Signature v value.
+     * @param r Signature r value.
+     * @param s Signature s value.
+     */
+    function subscribeWithPermit(
+        uint256 _planId,
+        uint256 _deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public whenNotPaused nonReentrant {
+        require(plans[_planId].merchant != address(0), "Plan does not exist");
+        require(!userSubscriptions[msg.sender][_planId].isActive, "Already actively subscribed to this plan");
+
+        SubscriptionPlan storage plan = plans[_planId];
+        uint256 amountToPay = getPaymentAmount(_planId);
+
+        IERC20Permit permitToken = IERC20Permit(plan.token);
+        permitToken.permit(msg.sender, address(this), amountToPay, _deadline, v, r, s);
+
+        IERC20 token = IERC20(plan.token);
         token.safeTransferFrom(msg.sender, plan.merchant, amountToPay);
 
         uint256 startTime = block.timestamp;

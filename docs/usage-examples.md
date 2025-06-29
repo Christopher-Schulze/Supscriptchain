@@ -21,6 +21,19 @@ await subscription.createPlan(
 await subscription.connect(user).subscribe(0);
 ```
 
+## Subscribing with Permit
+```ts
+const deadline = Math.floor(Date.now() / 1000) + 3600;
+const { v, r, s } = await getPermitSignature(
+  user,
+  token,
+  subscription.address,
+  price,
+  deadline
+);
+await subscription.connect(user).subscribeWithPermit(0, deadline, v, r, s);
+```
+
 ## Processing Recurring Payment
 ```ts
 await subscription.connect(merchant).processPayment(user.address, 0);
