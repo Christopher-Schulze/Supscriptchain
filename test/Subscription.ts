@@ -450,6 +450,29 @@ describe("Subscription Contract", function () {
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.revertedWith("Price feed stale");
         });
+
+        it("Should revert if user has insufficient balance for USD priced payment", async function () {
+            const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithActiveUsdSubscription);
+            const user1Balance = await mockToken.balanceOf(user1.address);
+            await mockToken.connect(user1).transfer(owner.address, user1Balance);
+
+            let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
+                .to.be.reverted;
+        });
+
+        it("Should revert if contract has insufficient allowance for USD priced payment", async function () {
+            const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithActiveUsdSubscription);
+            await mockToken.connect(user1).approve(subscriptionContract.address, 0);
+
+            let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
+            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
+                .to.be.reverted;
+        });
     });
     // Keep existing general failure tests for subscribe/processPayment (non-existent plan, not active, not due, insufficient funds/allowance)
     // and adapt them if necessary or duplicate for USD plans if behavior might differ.
