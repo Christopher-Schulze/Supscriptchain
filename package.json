@@ -9,7 +9,8 @@
     "prettier": "^3.6.2",
     "@types/node": "^24.0.7",
     "@graphprotocol/graph-cli": "^0.47.0",
-    "@graphprotocol/graph-ts": "^0.31.0"
+    "@graphprotocol/graph-ts": "^0.31.0",
+    "hardhat-coverage": "^0.9.19"
   },
   "scripts": {
     "compile": "hardhat compile",
@@ -18,7 +19,8 @@
     "format": "prettier --write .",
     "solhint": "solhint 'contracts/**/*.sol'",
     "codegen": "graph codegen subgraph/subgraph.yaml",
-    "build-subgraph": "graph build subgraph/subgraph.yaml"
+    "build-subgraph": "graph build subgraph/subgraph.yaml",
+    "coverage": "hardhat coverage"
   },
   "dependencies": {
     "@chainlink/contracts": "^1.4.0",
