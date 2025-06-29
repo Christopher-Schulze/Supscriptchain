@@ -2,12 +2,15 @@
   "name": "hardhat-project",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.4",
-    "solhint": "^5.2.0",
-    "solc": "^0.8.26",
+    "@openzeppelin/contracts-upgradeable": "^4.9.6",
+    "@openzeppelin/hardhat-upgrades": "^3.9.0",
+    "@types/node": "^24.0.7",
     "eslint": "^9.30.0",
+    "hardhat": "^2.22.4",
     "prettier": "^3.6.2",
-    "@types/node": "^24.0.7"
+    "solc": "^0.8.26",
+    "solhint": "^5.2.0",
+    "typescript": "^5.8.3"
   },
   "scripts": {
     "compile": "hardhat compile",

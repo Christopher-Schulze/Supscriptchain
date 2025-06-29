@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
 async function main() {
   const merchant = process.env.MERCHANT_ADDRESS || ethers.constants.AddressZero;
@@ -9,9 +9,11 @@ async function main() {
   const fixedPrice = process.env.FIXED_PRICE || "0";
   const usdPrice = parseInt(process.env.USD_PRICE || "0", 10);
 
-  const SubscriptionFactory = await ethers.getContractFactory("Subscription");
-  const subscription = await SubscriptionFactory.deploy();
-  console.log("Subscription deployed to:", subscription.address);
+  const [deployer] = await ethers.getSigners();
+  const SubscriptionFactory = await ethers.getContractFactory("SubscriptionUpgradeable");
+  const subscription = await upgrades.deployProxy(SubscriptionFactory, [deployer.address]);
+  await subscription.deployed();
+  console.log("Subscription proxy deployed to:", subscription.address);
 
   if (token !== ethers.constants.AddressZero) {
     const tx = await subscription.createPlan(

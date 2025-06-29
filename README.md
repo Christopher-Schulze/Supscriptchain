@@ -33,13 +33,30 @@ Two deployment scripts are provided under `scripts/`.
 - **Testnet** – `scripts/deploy-testnet.ts`
 - **Mainnet** – `scripts/deploy-mainnet.ts`
 
-Both scripts read configuration from environment variables such as `MERCHANT_ADDRESS`, `TOKEN_ADDRESS`, `PRICE_FEED`, `BILLING_CYCLE`, `PRICE_IN_USD`, `FIXED_PRICE` and `USD_PRICE`.
+Both scripts deploy `SubscriptionUpgradeable` behind an OpenZeppelin Transparent
+Proxy. Configuration is read from environment variables such as
+`MERCHANT_ADDRESS`, `TOKEN_ADDRESS`, `PRICE_FEED`, `BILLING_CYCLE`,
+`PRICE_IN_USD`, `FIXED_PRICE` and `USD_PRICE`.
 
 Example deployment to a testnet network configured in `hardhat.config.ts`:
 
 ```bash
 npx hardhat run scripts/deploy-testnet.ts --network sepolia
 ```
+
+### Upgrading
+
+Deploy a new implementation and upgrade the proxy using Hardhat Upgrades:
+
+```bash
+npx hardhat compile
+npx hardhat run scripts/deploy-mainnet.ts --network sepolia
+# later, after implementing `SubscriptionUpgradeableV2`
+npx hardhat deploy --network sepolia # or upgrades.upgradeProxy in a script
+```
+
+The proxy address stays the same while its logic contract is replaced. State
+stored in the proxy remains intact across upgrades.
 
 ## Static Analysis
 
