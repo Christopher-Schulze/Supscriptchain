@@ -21,6 +21,22 @@ npm test
 
 Note: downloading the Solidity compiler requires network access. In restricted environments the tests may fail to compile.
 
+## Static Analysis
+
+Install [Slither](https://github.com/crytic/slither) using `pip`:
+
+```bash
+pip install slither-analyzer
+```
+
+Run the analyzer against the project:
+
+```bash
+slither .
+```
+
+CI will fail if Slither reports any high severity findings.
+
 ## Contracts
 
 - `Subscription.sol` – core subscription logic. Uses `Ownable2Step` and `SafeERC20`.
