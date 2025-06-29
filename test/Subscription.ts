@@ -146,6 +146,77 @@ describe("Subscription Contract", function () {
         });
     });
 
+    describe("updatePlan", function () {
+        async function fixtureWithExistingPlan() {
+            const setup = await loadFixture(deploySubscriptionFixture);
+            const fixedPrice = ethers.utils.parseUnits("10", 18);
+            await setup.subscriptionContract.connect(setup.owner).createPlan(
+                setup.owner.address,
+                setup.mockToken.address,
+                fixedPrice,
+                THIRTY_DAYS_IN_SECS,
+                false,
+                0,
+                ethers.constants.AddressZero
+            );
+            return { ...setup, fixedPrice };
+        }
+
+        it("Owner can update plan parameters and event emitted", async function () {
+            const { subscriptionContract, owner, fixedPrice } = await loadFixture(fixtureWithExistingPlan);
+            const newPrice = ethers.utils.parseUnits("15", 18);
+            const newBilling = THIRTY_DAYS_IN_SECS * 2;
+
+            await expect(
+                subscriptionContract.connect(owner).updatePlan(
+                    0,
+                    newBilling,
+                    newPrice,
+                    false,
+                    0,
+                    ethers.constants.AddressZero
+                )
+            )
+                .to.emit(subscriptionContract, "PlanUpdated")
+                .withArgs(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero);
+
+            const plan = await subscriptionContract.plans(0);
+            expect(plan.price).to.equal(newPrice);
+            expect(plan.billingCycle).to.equal(newBilling);
+        });
+
+        it("Updated price is used when subscribing", async function () {
+            const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithExistingPlan);
+            const newPrice = ethers.utils.parseUnits("20", 18);
+            const newBilling = THIRTY_DAYS_IN_SECS / 2;
+            await subscriptionContract.connect(owner).updatePlan(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero);
+
+            const userBalBefore = await mockToken.balanceOf(user1.address);
+            await subscriptionContract.connect(user1).subscribe(0);
+            const userBalAfter = await mockToken.balanceOf(user1.address);
+            expect(userBalBefore.sub(userBalAfter)).to.equal(newPrice);
+
+            const sub = await subscriptionContract.userSubscriptions(user1.address, 0);
+            expect(sub.nextPaymentDate).to.equal(sub.startTime.add(newBilling));
+        });
+
+        it("Non-owner cannot update plan", async function () {
+            const { subscriptionContract, user1 } = await loadFixture(fixtureWithExistingPlan);
+            await expect(
+                subscriptionContract.connect(user1).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, false, 0, ethers.constants.AddressZero)
+            )
+                .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+                .withArgs(user1.address);
+        });
+
+        it("Reverts when enabling USD pricing without feed", async function () {
+            const { subscriptionContract, owner } = await loadFixture(fixtureWithExistingPlan);
+            await expect(
+                subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, 1000, ethers.constants.AddressZero)
+            ).to.be.revertedWith("Price feed address required for USD pricing");
+        });
+    });
+
     describe("subscribe (Fixed Price Plan)", function () {
         const planId = 0;
         const fixedPrice = ethers.utils.parseUnits("10", 18); // mockTokenDecimals is 18

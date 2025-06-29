@@ -30,3 +30,15 @@ await subscription.connect(merchant).processPayment(user.address, 0);
 ```ts
 await subscription.connect(user).cancelSubscription(0);
 ```
+
+## Updating a Plan
+```ts
+await subscription.updatePlan(
+  0,                              // planId
+  60 * 60 * 24 * 60,             // new billing cycle
+  ethers.utils.parseUnits("20", 18), // new price
+  false,                         // priceInUsd
+  0,
+  ethers.constants.AddressZero
+);
+```
