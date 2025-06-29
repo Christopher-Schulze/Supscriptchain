@@ -26,4 +26,4 @@ jobs:
     - run: npm run lint
     - run: npm run solhint
     - run: npm test
-    - run: npx hardhat coverage
+    - run: npm run coverage
