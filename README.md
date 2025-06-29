@@ -112,7 +112,15 @@ passed. Any failures are logged to the console.
 
 The file must contain a JSON array of Ethereum addresses. See
 [`scripts/subscribers.example.json`](scripts/subscribers.example.json) for an
-example.
+example. The required schema is simply an array of strings, e.g.
+
+```json
+[
+  "0x1111111111111111111111111111111111111111",
+  "0x2222222222222222222222222222222222222222",
+  "0x3333333333333333333333333333333333333333"
+]
+```
 
 ### Running via Hardhat
 
