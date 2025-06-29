@@ -7,14 +7,18 @@
     "solc": "^0.8.26",
     "eslint": "^9.30.0",
     "prettier": "^3.6.2",
-    "@types/node": "^24.0.7"
+    "@types/node": "^24.0.7",
+    "@graphprotocol/graph-cli": "^0.47.0",
+    "@graphprotocol/graph-ts": "^0.31.0"
   },
   "scripts": {
     "compile": "hardhat compile",
-    "test": "hardhat test",
+    "test": "HARDHAT_DISABLE_DOWNLOAD_COMPILERS=true hardhat test",
     "lint": "eslint --ext .ts .",
     "format": "prettier --write .",
-    "solhint": "solhint 'contracts/**/*.sol'"
+    "solhint": "solhint 'contracts/**/*.sol'",
+    "codegen": "graph codegen subgraph/subgraph.yaml",
+    "build-subgraph": "graph build subgraph/subgraph.yaml"
   },
   "dependencies": {
     "@chainlink/contracts": "^1.4.0",
