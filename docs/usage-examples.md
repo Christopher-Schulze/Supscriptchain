@@ -77,15 +77,18 @@ query the data, follow these steps:
    docker compose up
    ```
 
-3. In another terminal, generate and deploy the subgraph:
+3. In another terminal, generate and deploy the subgraph. First create a
+   local manifest by replacing the placeholders in `subgraph.yaml`:
 
    ```bash
+   NETWORK=<network> CONTRACT_ADDRESS=<address> \
+     npx ts-node scripts/prepare-subgraph.ts
    npm run codegen
-   npm run build-subgraph
+   graph build subgraph/subgraph.local.yaml
    graph deploy \
      --node http://localhost:8020/ \
      --ipfs http://localhost:5001/ \
-     subscription-subgraph subgraph/subgraph.yaml
+     subscription-subgraph subgraph/subgraph.local.yaml
    ```
 
 4. Query the subgraph via GraphiQL at

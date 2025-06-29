@@ -4,9 +4,9 @@ schema:
 dataSources:
   - kind: ethereum
     name: Subscription
-    network: mainnet
+    network: {{NETWORK}}
     source:
-      address: "0x0000000000000000000000000000000000000000"
+      address: "{{CONTRACT_ADDRESS}}"
       abi: Subscription
       startBlock: 0
     mapping:
