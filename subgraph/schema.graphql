@@ -1,4 +1,4 @@
-type Plan @entity {
+type Plan @entity(immutable: false) {
   id: ID!
   merchant: Bytes!
   token: Bytes!
@@ -10,7 +10,7 @@ type Plan @entity {
   priceFeedAddress: Bytes!
 }
 
-type Subscription @entity {
+type Subscription @entity(immutable: false) {
   id: ID!
   user: Bytes!
   planId: BigInt!
@@ -18,7 +18,7 @@ type Subscription @entity {
   cancelled: Boolean
 }
 
-type Payment @entity {
+type Payment @entity(immutable: false) {
   id: ID!
   user: Bytes!
   planId: BigInt!
