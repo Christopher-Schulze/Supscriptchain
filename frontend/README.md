@@ -11,13 +11,13 @@ Install dependencies in this directory:
 npm install
 ```
 
-Copy `.env.local.example` to `.env.local` and enter the contract address and an optional RPC URL:
+## Environment Variables
+
+Copy `.env.local.example` to `.env.local` and set the required contract address. Optionally provide an RPC URL used when no wallet is available:
 
 ```bash
 cp .env.local.example .env.local
-```
 
-```bash
 NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourContractAddress
 # Optional RPC provider used when MetaMask is not available
 NEXT_PUBLIC_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY

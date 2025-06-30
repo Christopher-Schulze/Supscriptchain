@@ -181,6 +181,12 @@ npm run build-subgraph
 
 See [docs/usage-examples.md](docs/usage-examples.md) for instructions on running a local Graph node.
 
+## Frontend
+
+The repository also contains a simple Next.js application under
+[`frontend/`](frontend/). Follow the instructions in
+[`frontend/README.md`](frontend/README.md) to run the interface.
+
 ## License
 
 Released under the MIT License. See [LICENSE](LICENSE).
