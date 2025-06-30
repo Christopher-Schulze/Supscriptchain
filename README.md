@@ -71,6 +71,14 @@ Run Solhint to check Solidity style and best practices:
 npm run solhint
 ```
 
+## Coverage
+
+Generate a test coverage report using:
+
+```bash
+npm run coverage
+```
+
 ## Contracts
 
 - `Subscription.sol` – core subscription logic. Uses `Ownable2Step` and `SafeERC20`.
@@ -149,6 +157,17 @@ To automate processing, add a cron entry. This example runs hourly:
 Der Vertrag `SubscriptionUpgradeable` wird über einen Transparent Proxy bereitgestellt. 
 Mit dem Hardhat-Upgrades-Plugin kann ein neues Implementierungscontract einfach über `upgradeProxy` eingespielt werden. 
 Ein Beispiel findet sich im Test `test/SubscriptionUpgradeable.ts`.
+
+## Subgraph
+
+The `subgraph/` directory contains a minimal [The Graph](https://thegraph.com) setup for indexing events emitted by `Subscription.sol`. Run the following commands to generate types and build the manifest:
+
+```bash
+npm run codegen
+npm run build-subgraph
+```
+
+See [docs/usage-examples.md](docs/usage-examples.md) for instructions on running a local Graph node.
 
 ## License
 
