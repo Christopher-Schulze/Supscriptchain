@@ -139,15 +139,16 @@ passed. Any failures are logged to the console.
 The file can either contain a simple array of Ethereum addresses or an array of
 objects where each entry defines the user and their plan(s). When using the
 object form, the entry may contain either a `plan` or `plans` field. Both fields
-accept a single plan ID or an array of plan IDs.
+accept a single plan ID, a comma separated list or an array of plan IDs.
 See [`scripts/subscribers.example.json`](scripts/subscribers.example.json) for
 an example.
 
 ```json
 [
-  { "user": "0x1111111111111111111111111111111111111111", "plan": [1, 2] },
-  { "user": "0x2222222222222222222222222222222222222222", "plan": 1 },
-  { "user": "0x3333333333333333333333333333333333333333", "plans": [2, 3] }
+  { "user": "0x1111111111111111111111111111111111111111", "plans": [1, 2, 3] },
+  { "user": "0x2222222222222222222222222222222222222222", "plan": [2, 4] },
+  { "user": "0x3333333333333333333333333333333333333333", "plan": 1 },
+  { "user": "0x4444444444444444444444444444444444444444", "plan": "5,6" }
 ]
 ```
 

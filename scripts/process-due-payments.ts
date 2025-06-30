@@ -4,9 +4,9 @@ import path from 'path';
 
 /**
  * Parsed subscriber entry from JSON.
- * The input can be a list of strings or objects with either
- * a `plan` field or a `plans` field. Both accept a single number
- * or an array of numbers.
+ * The input can be a list of strings or objects with either a `plan`
+ * or `plans` field. Each accepts a single number, an array of numbers
+ * or even a comma separated string. Duplicates are removed.
  */
 interface SubscriberEntry {
   user: string;
@@ -41,11 +41,18 @@ async function main() {
         }
 
         const planField = entry.plans ?? entry.plan ?? defaultPlanId;
-        const planArray = Array.isArray(planField) ? planField : [planField];
+        const planArray = Array.isArray(planField)
+          ? planField
+          : String(planField)
+              .split(',')
+              .map((p: string) => p.trim())
+              .filter((p: string) => p !== '');
+
+        const plans = [...new Set(planArray.map((p: any) => Number(p)))] as number[];
 
         return {
           user: entry.user,
-          plans: planArray.map((p: any) => Number(p)),
+          plans,
         } as SubscriberEntry;
       })
     : [];
@@ -57,6 +64,7 @@ async function main() {
       try {
         const sub = await subscription.userSubscriptions(user, plan);
         if (sub.isActive && sub.nextPaymentDate.toNumber() <= now) {
+          console.log(`Processing payment for ${user} plan ${plan}`);
           const tx = await subscription.processPayment(user, plan);
           await tx.wait();
           console.log(`Processed payment for ${user} plan ${plan}`);
@@ -64,7 +72,7 @@ async function main() {
       } catch (err) {
         console.error(
           `Failed to process payment for user ${user} plan ${plan}:`,
-          err,
+          err instanceof Error ? err.message : err,
         );
       }
     }
