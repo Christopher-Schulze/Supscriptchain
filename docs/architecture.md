@@ -25,3 +25,19 @@ can pause or unpause the contract when needed.
 
 The contract also inherits from `ReentrancyGuard` and uses the `nonReentrant`
 modifier on subscription-related functions to protect against reentrant calls.
+
+### Plan Updates
+
+The owner can adjust an existing plan using `updatePlan`. It checks that the plan exists and, when pricing in USD, that a valid price feed address is supplied. The billing cycle, price, USD price and feed can be changed and a `PlanUpdated` event is emitted.
+
+### Proxy Pattern
+
+`SubscriptionUpgradeable` is deployed behind a Transparent Proxy using the Hardhat Upgrades plugin. The proxy stores all state and forwards calls to the current implementation contract. Upgrading replaces the implementation while keeping data like plans and subscriptions intact.
+
+### PAUSER_ROLE
+
+`PAUSER_ROLE` holders may pause and unpause the contract via OpenZeppelin's `Pausable` extension. Pausing disables subscription and payment related functions so issues can be investigated without losing funds.
+
+### Reentrancy Protection
+
+Both versions of the contract inherit from `ReentrancyGuard`. Functions that transfer tokens such as `subscribe`, `processPayment` and `cancelSubscription` are marked `nonReentrant` to block malicious nested calls.
