@@ -216,6 +216,53 @@ describe("Subscription Contract", function () {
                 subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, 1000, ethers.constants.AddressZero)
             ).to.be.revertedWith("Price feed address required for USD pricing");
         });
+
+        async function fixtureWithExistingUsdPlan() {
+            const setup = await loadFixture(deploySubscriptionFixture);
+            const usdPrice = 1000;
+            await setup.subscriptionContract.connect(setup.owner).createPlan(
+                setup.owner.address,
+                setup.mockToken.address,
+                0,
+                THIRTY_DAYS_IN_SECS,
+                true,
+                usdPrice,
+                setup.mockAggregator.address
+            );
+            return { ...setup, usdPrice };
+        }
+
+        it("Owner can switch from token price to USD price", async function () {
+            const { subscriptionContract, owner, mockAggregator } = await loadFixture(fixtureWithExistingPlan);
+            const newUsdPrice = 1500;
+            await expect(
+                subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, newUsdPrice, mockAggregator.address)
+            )
+                .to.emit(subscriptionContract, "PlanUpdated")
+                .withArgs(0, THIRTY_DAYS_IN_SECS, 0, true, newUsdPrice, mockAggregator.address);
+
+            const plan = await subscriptionContract.plans(0);
+            expect(plan.priceInUsd).to.be.true;
+            expect(plan.usdPrice).to.equal(newUsdPrice);
+            expect(plan.priceFeedAddress).to.equal(mockAggregator.address);
+        });
+
+        it("Owner can switch from USD price to token price", async function () {
+            const { subscriptionContract, owner } = await loadFixture(fixtureWithExistingUsdPlan);
+            const newPrice = ethers.parseUnits("7", 18);
+            const newBilling = THIRTY_DAYS_IN_SECS * 2;
+            await expect(
+                subscriptionContract.connect(owner).updatePlan(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero)
+            )
+                .to.emit(subscriptionContract, "PlanUpdated")
+                .withArgs(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero);
+
+            const plan = await subscriptionContract.plans(0);
+            expect(plan.priceInUsd).to.be.false;
+            expect(plan.price).to.equal(newPrice);
+            expect(plan.priceFeedAddress).to.equal(ethers.constants.AddressZero);
+            expect(plan.usdPrice).to.equal(0);
+        });
     });
 
     describe("subscribe (Fixed Price Plan)", function () {
@@ -316,6 +363,81 @@ describe("Subscription Contract", function () {
             await expect(subscription.connect(user1).subscribeWithPermit(planId, deadline, v, r, s))
                 .to.emit(subscription, "Subscribed");
             expect(await permitToken.balanceOf(user1.address)).to.equal(balBefore.sub(price));
+        });
+
+        it("Reverts with expired permit signature", async function () {
+            const { owner, user1, subscription, permitToken } = await loadFixture(fixtureWithPermitPlan);
+
+            const nonce = await permitToken.nonces(user1.address);
+            const deadline = (await time.latest()) + 100;
+
+            const domain = {
+                name: await permitToken.name(),
+                version: "1",
+                chainId: await user1.getChainId(),
+                verifyingContract: permitToken.address,
+            };
+            const types = {
+                Permit: [
+                    { name: "owner", type: "address" },
+                    { name: "spender", type: "address" },
+                    { name: "value", type: "uint256" },
+                    { name: "nonce", type: "uint256" },
+                    { name: "deadline", type: "uint256" },
+                ],
+            };
+            const values = {
+                owner: user1.address,
+                spender: subscription.address,
+                value: price,
+                nonce,
+                deadline,
+            };
+            const sig = await user1.signTypedData(domain, types, values);
+            const { v, r, s } = ethers.Signature.from(sig);
+
+            await time.increaseTo(deadline + 1);
+
+            await expect(
+                subscription.connect(user1).subscribeWithPermit(planId, deadline, v, r, s)
+            ).to.be.revertedWith("ERC20Permit: expired deadline");
+        });
+
+        it("Reverts with invalid permit signature", async function () {
+            const { owner, user1, subscription, permitToken } = await loadFixture(fixtureWithPermitPlan);
+
+            const nonce = await permitToken.nonces(user1.address);
+            const deadline = (await time.latest()) + 3600;
+
+            const domain = {
+                name: await permitToken.name(),
+                version: "1",
+                chainId: await user1.getChainId(),
+                verifyingContract: permitToken.address,
+            };
+            const types = {
+                Permit: [
+                    { name: "owner", type: "address" },
+                    { name: "spender", type: "address" },
+                    { name: "value", type: "uint256" },
+                    { name: "nonce", type: "uint256" },
+                    { name: "deadline", type: "uint256" },
+                ],
+            };
+            // Sign with wrong value to invalidate signature
+            const values = {
+                owner: user1.address,
+                spender: subscription.address,
+                value: price + 1n,
+                nonce,
+                deadline,
+            };
+            const sig = await user1.signTypedData(domain, types, values);
+            const { v, r, s } = ethers.Signature.from(sig);
+
+            await expect(
+                subscription.connect(user1).subscribeWithPermit(planId, deadline, v, r, s)
+            ).to.be.revertedWith("ERC20Permit: invalid signature");
         });
     });
 

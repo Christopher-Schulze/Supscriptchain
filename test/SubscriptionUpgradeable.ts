@@ -60,3 +60,162 @@ describe("SubscriptionUpgradeable upgrade", function () {
   });
 });
 
+describe("SubscriptionUpgradeable additional scenarios", function () {
+  async function permitPlanFixture() {
+    const [owner, user] = await ethers.getSigners();
+    const PermitFactory = await ethers.getContractFactory("PermitToken", owner);
+    const token = await PermitFactory.deploy("Permit Token", "PTK");
+    await token.waitForDeployment();
+
+    const Sub = await ethers.getContractFactory("SubscriptionUpgradeable", owner);
+    const proxy = await upgrades.deployProxy(Sub, [owner.address], { initializer: "initialize" });
+    await proxy.waitForDeployment();
+
+    const price = ethers.parseUnits("5", 18);
+    const cycle = 30 * 24 * 60 * 60;
+    await token.mint(user.address, ethers.parseUnits("1000", 18));
+
+    await proxy.connect(owner).createPlan(owner.address, token.address, price, cycle, false, 0, ethers.ZeroAddress);
+
+    return { owner, user, proxy, token, price };
+  }
+
+  async function tokenPlanFixture() {
+    const base = await deployUpgradeableFixture();
+    const price = ethers.parseUnits("10", 18);
+    const cycle = 30 * 24 * 60 * 60;
+    await base.proxy.connect(base.owner).createPlan(base.owner.address, base.token.address, price, cycle, false, 0, ethers.ZeroAddress);
+
+    const Agg = await ethers.getContractFactory("MockV3Aggregator", base.owner);
+    const oraclePrice = ethers.toBigInt(2000) * 10n ** 8n;
+    const aggregator = await Agg.deploy(8, oraclePrice);
+    await aggregator.waitForDeployment();
+
+    return { ...base, price, cycle, aggregator };
+  }
+
+  async function usdPlanFixture() {
+    const base = await deployUpgradeableFixture();
+    const cycle = 30 * 24 * 60 * 60;
+    const Agg = await ethers.getContractFactory("MockV3Aggregator", base.owner);
+    const oraclePrice = ethers.toBigInt(2000) * 10n ** 8n;
+    const aggregator = await Agg.deploy(8, oraclePrice);
+    await aggregator.waitForDeployment();
+
+    const usdPrice = 1000;
+    await base.proxy.connect(base.owner).createPlan(base.owner.address, base.token.address, 0, cycle, true, usdPrice, await aggregator.getAddress());
+
+    return { ...base, cycle, aggregator, usdPrice };
+  }
+
+  describe("subscribeWithPermit", function () {
+    it("reverts with expired permit signature", async function () {
+      const { owner, user, proxy, token, price } = await loadFixture(permitPlanFixture);
+
+      const nonce = await token.nonces(user.address);
+      const deadline = (await time.latest()) + 100;
+
+      const domain = {
+        name: await token.name(),
+        version: "1",
+        chainId: await user.getChainId(),
+        verifyingContract: await token.getAddress(),
+      };
+      const types = {
+        Permit: [
+          { name: "owner", type: "address" },
+          { name: "spender", type: "address" },
+          { name: "value", type: "uint256" },
+          { name: "nonce", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      };
+      const values = {
+        owner: user.address,
+        spender: await proxy.getAddress(),
+        value: price,
+        nonce,
+        deadline,
+      };
+      const sig = await user.signTypedData(domain, types, values);
+      const { v, r, s } = ethers.Signature.from(sig);
+
+      await time.increaseTo(deadline + 1);
+
+      await expect(proxy.connect(user).subscribeWithPermit(PLAN_ID, deadline, v, r, s)).to.be.revertedWith(
+        "ERC20Permit: expired deadline"
+      );
+    });
+
+    it("reverts with invalid permit signature", async function () {
+      const { owner, user, proxy, token, price } = await loadFixture(permitPlanFixture);
+
+      const nonce = await token.nonces(user.address);
+      const deadline = (await time.latest()) + 3600;
+
+      const domain = {
+        name: await token.name(),
+        version: "1",
+        chainId: await user.getChainId(),
+        verifyingContract: await token.getAddress(),
+      };
+      const types = {
+        Permit: [
+          { name: "owner", type: "address" },
+          { name: "spender", type: "address" },
+          { name: "value", type: "uint256" },
+          { name: "nonce", type: "uint256" },
+          { name: "deadline", type: "uint256" },
+        ],
+      };
+      const values = {
+        owner: user.address,
+        spender: await proxy.getAddress(),
+        value: price + 1n,
+        nonce,
+        deadline,
+      };
+      const sig = await user.signTypedData(domain, types, values);
+      const { v, r, s } = ethers.Signature.from(sig);
+
+      await expect(proxy.connect(user).subscribeWithPermit(PLAN_ID, deadline, v, r, s)).to.be.revertedWith(
+        "ERC20Permit: invalid signature"
+      );
+    });
+  });
+
+  describe("updatePlan", function () {
+    it("updates from token to USD pricing", async function () {
+      const { proxy, owner, aggregator, cycle } = await loadFixture(tokenPlanFixture);
+      const newUsd = 1500;
+      await expect(
+        proxy.connect(owner).updatePlan(PLAN_ID, cycle, 0, true, newUsd, await aggregator.getAddress())
+      )
+        .to.emit(proxy, "PlanUpdated")
+        .withArgs(PLAN_ID, cycle, 0, true, newUsd, await aggregator.getAddress());
+
+      const plan = await proxy.plans(PLAN_ID);
+      expect(plan.priceInUsd).to.be.true;
+      expect(plan.usdPrice).to.equal(newUsd);
+      expect(plan.priceFeedAddress).to.equal(await aggregator.getAddress());
+    });
+
+    it("updates from USD pricing to token price", async function () {
+      const { proxy, owner, usdPrice, cycle } = await loadFixture(usdPlanFixture);
+      const newPrice = ethers.parseUnits("8", 18);
+      const newCycle = cycle * 2;
+      await expect(
+        proxy.connect(owner).updatePlan(PLAN_ID, newCycle, newPrice, false, 0, ethers.ZeroAddress)
+      )
+        .to.emit(proxy, "PlanUpdated")
+        .withArgs(PLAN_ID, newCycle, newPrice, false, 0, ethers.ZeroAddress);
+
+      const plan = await proxy.plans(PLAN_ID);
+      expect(plan.priceInUsd).to.be.false;
+      expect(plan.price).to.equal(newPrice);
+      expect(plan.priceFeedAddress).to.equal(ethers.ZeroAddress);
+      expect(plan.usdPrice).to.equal(0);
+    });
+  });
+});
+
