@@ -1,13 +1,20 @@
 import { ethers } from "ethers";
+import type { ExternalProvider } from "ethers";
 import type { Subscription } from "typechain/contracts/Subscription.sol/Subscription";
 import { Subscription__factory } from "typechain/factories/contracts/Subscription.sol/Subscription__factory";
+
+declare global {
+  interface Window {
+    ethereum?: ExternalProvider;
+  }
+}
 
 export async function getContract(): Promise<Subscription> {
   const address = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
   if (!address) throw new Error("NEXT_PUBLIC_CONTRACT_ADDRESS is not defined");
   let signerOrProvider: ethers.Signer | ethers.Provider;
-  if (typeof window !== "undefined" && (window as any).ethereum) {
-    const provider = new ethers.BrowserProvider((window as any).ethereum);
+  if (typeof window !== "undefined" && (window as Window).ethereum) {
+    const provider = new ethers.BrowserProvider((window as Window).ethereum!);
     const signer = await provider.getSigner();
     signerOrProvider = signer;
   } else {

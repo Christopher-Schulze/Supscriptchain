@@ -21,6 +21,7 @@ cp .env.local.example .env.local
 NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourContractAddress
 # Optional RPC provider used when MetaMask is not available
 NEXT_PUBLIC_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
+NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
 ```
 
 ## Start
@@ -38,7 +39,17 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 - `/plans` – displays all subscription plans stored in the contract.
 - `/manage` – subscribe to or cancel a plan.
 - `/payment` – merchant page to trigger a payment for a subscriber.
+- `/analytics` – shows active subscriptions and past payments from the Subgraph.
 
 Wallet connectivity uses the injected provider (MetaMask or Wallet‑Connect
 compatible). If no wallet is available the app falls back to the RPC URL for
 read‑only operations.
+
+## Using the Subgraph
+
+The analytics page queries a Subgraph instance. To run one locally follow the
+steps in [docs/usage-examples.md](../docs/usage-examples.md#running-the-subgraph-locally).
+Set `NEXT_PUBLIC_SUBGRAPH_URL` in `.env.local` to the GraphQL endpoint exposed
+by the node (e.g. `http://localhost:8000/subgraphs/name/subscription-subgraph/graphql`).
+Once the Subgraph is synced, start the frontend with `npm run dev` and open
+`/analytics` to view the indexed data.
