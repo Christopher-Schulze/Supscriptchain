@@ -17,7 +17,7 @@ describe("Subscription Contract", function () {
         // No need to call mockToken.deployed() with ethers v6, await on deploy() is enough
 
         // Mint some tokens to user1 and anotherUser for testing
-        const initialUserBalance = ethers.utils.parseUnits("1000", 18);
+        const initialUserBalance = ethers.parseUnits("1000", 18);
         await mockToken.mint(user1.address, initialUserBalance);
         await mockToken.mint(anotherUser.address, initialUserBalance);
 
@@ -27,8 +27,8 @@ describe("Subscription Contract", function () {
         
         // User1 approves the subscription contract to spend their mock tokens
         // Approve a large amount for simplicity in tests
-        await mockToken.connect(user1).approve(subscriptionContract.address, ethers.utils.parseUnits("5000", 18));
-        await mockToken.connect(anotherUser).approve(subscriptionContract.address, ethers.utils.parseUnits("5000", 18));
+        await mockToken.connect(user1).approve(subscriptionContract.address, ethers.parseUnits("5000", 18));
+        await mockToken.connect(anotherUser).approve(subscriptionContract.address, ethers.parseUnits("5000", 18));
 
         // Deploy MockV3Aggregator
         const MockAggregatorFactory = await ethers.getContractFactory("MockV3Aggregator", owner);
@@ -62,7 +62,7 @@ describe("Subscription Contract", function () {
 
         it("Should allow owner to create a fixed price plan (merchant is owner) and emit PlanCreated event", async function () {
             const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
-            const fixedPrice = ethers.utils.parseUnits("10", mockTokenDecimals);
+            const fixedPrice = ethers.parseUnits("10", mockTokenDecimals);
             const billingCycle = THIRTY_DAYS_IN_SECS;
 
             await expect(subscriptionContract.connect(owner).createPlan(
@@ -116,7 +116,7 @@ describe("Subscription Contract", function () {
 
         it("Should default merchant to owner if address(0) is provided for merchantAddress", async function () {
             const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
-            const fixedPrice = ethers.utils.parseUnits("5", mockTokenDecimals);
+            const fixedPrice = ethers.parseUnits("5", mockTokenDecimals);
             await subscriptionContract.connect(owner).createPlan(
                 ethers.constants.AddressZero, // merchantAddress
                 mockToken.address, fixedPrice, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
@@ -150,7 +150,7 @@ describe("Subscription Contract", function () {
     describe("updatePlan", function () {
         async function fixtureWithExistingPlan() {
             const setup = await loadFixture(deploySubscriptionFixture);
-            const fixedPrice = ethers.utils.parseUnits("10", 18);
+            const fixedPrice = ethers.parseUnits("10", 18);
             await setup.subscriptionContract.connect(setup.owner).createPlan(
                 setup.owner.address,
                 setup.mockToken.address,
@@ -165,7 +165,7 @@ describe("Subscription Contract", function () {
 
         it("Owner can update plan parameters and event emitted", async function () {
             const { subscriptionContract, owner, fixedPrice } = await loadFixture(fixtureWithExistingPlan);
-            const newPrice = ethers.utils.parseUnits("15", 18);
+            const newPrice = ethers.parseUnits("15", 18);
             const newBilling = THIRTY_DAYS_IN_SECS * 2;
 
             await expect(
@@ -188,7 +188,7 @@ describe("Subscription Contract", function () {
 
         it("Updated price is used when subscribing", async function () {
             const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithExistingPlan);
-            const newPrice = ethers.utils.parseUnits("20", 18);
+            const newPrice = ethers.parseUnits("20", 18);
             const newBilling = THIRTY_DAYS_IN_SECS / 2;
             await subscriptionContract.connect(owner).updatePlan(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero);
 
@@ -220,7 +220,7 @@ describe("Subscription Contract", function () {
 
     describe("subscribe (Fixed Price Plan)", function () {
         const planId = 0;
-        const fixedPrice = ethers.utils.parseUnits("10", 18); // mockTokenDecimals is 18
+        const fixedPrice = ethers.parseUnits("10", 18); // mockTokenDecimals is 18
         const billingCycle = THIRTY_DAYS_IN_SECS;
 
         async function fixtureWithFixedPlan() {
@@ -254,7 +254,7 @@ describe("Subscription Contract", function () {
 
     describe("subscribeWithPermit", function () {
         const planId = 0;
-        const price = ethers.utils.parseUnits("5", 18);
+        const price = ethers.parseUnits("5", 18);
         const billingCycle = THIRTY_DAYS_IN_SECS;
 
         async function fixtureWithPermitPlan() {
@@ -265,7 +265,7 @@ describe("Subscription Contract", function () {
             const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
             const subscription = (await SubscriptionFactory.deploy()) as Subscription;
 
-            const amount = ethers.utils.parseUnits("1000", 18);
+            const amount = ethers.parseUnits("1000", 18);
             await permitToken.mint(user1.address, amount);
 
             await subscription.connect(owner).createPlan(
@@ -367,7 +367,7 @@ describe("Subscription Contract", function () {
                     .mul(await (await mockAggregator.latestRoundData()).answer)
                 );
             
-            expect(expectedTokenAmount).to.equal(ethers.utils.parseUnits("0.005", 18));
+            expect(expectedTokenAmount).to.equal(ethers.parseUnits("0.005", 18));
 
 
             await expect(subscriptionContract.connect(user1).subscribe(planId))
@@ -403,7 +403,7 @@ describe("Subscription Contract", function () {
 
     describe("processPayment (Fixed Price Plan)", function () {
         const planId = 0;
-        const fixedPrice = ethers.utils.parseUnits("10", 18);
+        const fixedPrice = ethers.parseUnits("10", 18);
         const billingCycle = THIRTY_DAYS_IN_SECS;
 
         async function fixtureWithActiveFixedSubscription() {
@@ -542,7 +542,7 @@ describe("Subscription Contract", function () {
                     ethers.BigNumber.from(100) // To convert cents to dollars
                     .mul(newOraclePrice) // newOraclePrice is already price * 10^oracleDecimals
                 );
-            expect(expectedTokenAmount).to.equal(ethers.utils.parseUnits("0.004", tokenDecimals)); // 0.004 MTK for $10 at $2500/MTK
+            expect(expectedTokenAmount).to.equal(ethers.parseUnits("0.004", tokenDecimals)); // 0.004 MTK for $10 at $2500/MTK
 
             // Process payment by owner (who is the merchant for this plan)
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
@@ -620,7 +620,7 @@ describe("Subscription Contract", function () {
 
 describe("cancelSubscription", function () {
     const planId = 0;
-    const fixedPrice = ethers.utils.parseUnits("10", 18);
+    const fixedPrice = ethers.parseUnits("10", 18);
     const billingCycle = THIRTY_DAYS_IN_SECS;
 
     async function fixtureWithActiveSubscriptionForCancel() {
@@ -762,7 +762,7 @@ describe("Ownable2Step Behavior", function () {
 describe("Pausable", function () {
     async function fixtureWithPlanAndSubscription() {
         const setup = await loadFixture(deploySubscriptionFixture);
-        const fixedPrice = ethers.utils.parseUnits("10", 18);
+        const fixedPrice = ethers.parseUnits("10", 18);
         await setup.subscriptionContract.connect(setup.owner).createPlan(
             setup.owner.address,
             setup.mockToken.address,
@@ -820,12 +820,12 @@ describe("Reentrancy protection", function () {
         const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
         const subscriptionContract = (await SubscriptionFactory.deploy()) as Subscription;
 
-        const amount = ethers.utils.parseUnits("100", 18);
+        const amount = ethers.parseUnits("100", 18);
         await maliciousToken.mint(user1.address, amount);
 
         await maliciousToken.connect(user1).approve(subscriptionContract.address, amount);
 
-        const fixedPrice = ethers.utils.parseUnits("10", 18);
+        const fixedPrice = ethers.parseUnits("10", 18);
         await subscriptionContract.connect(owner).createPlan(
             owner.address,
             maliciousToken.address,
