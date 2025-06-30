@@ -1,6 +1,6 @@
 # Usage Examples
 
-Below are small snippets showing how to interact with the Subscription contract from a Hardhat script or console.
+Below are small snippets showing how to interact with the Subscription contract from a Hardhat script or console. The contract is deployed as an upgradeable proxy (`SubscriptionUpgradeable`).
 
 ## Creating a Plan
 ```ts
@@ -59,7 +59,8 @@ await subscription.updatePlan(
 ## Running the Subgraph Locally
 
 The `subgraph/` folder contains a basic [The Graph](https://thegraph.com) setup
-that indexes events from `Subscription.sol`. To start a local Graph node and
+that indexes events from the upgradeable `SubscriptionUpgradeable.sol` contract.
+To start a local Graph node and
 query the data, follow these steps:
 
 1. Install the Graph CLI:

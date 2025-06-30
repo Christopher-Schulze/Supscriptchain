@@ -19,7 +19,7 @@ dataSources:
         - Payment
       abis:
         - name: Subscription
-          file: ../artifacts/contracts/Subscription.sol/Subscription.json
+          file: ../artifacts/contracts/SubscriptionUpgradeable.sol/SubscriptionUpgradeable.json
       eventHandlers:
         - event: PlanCreated(uint256,address,address,uint8,uint256,uint256,bool,uint256,address)
           handler: handlePlanCreated
