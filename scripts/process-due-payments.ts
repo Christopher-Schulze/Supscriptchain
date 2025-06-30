@@ -2,6 +2,12 @@ import { ethers } from 'hardhat';
 import fs from 'fs';
 import path from 'path';
 
+/**
+ * Parsed subscriber entry from JSON.
+ * The input can be a list of strings or objects with either
+ * a `plan` field or a `plans` field. Both accept a single number
+ * or an array of numbers.
+ */
 interface SubscriberEntry {
   user: string;
   plans: number[];
@@ -33,11 +39,13 @@ async function main() {
         if (typeof entry === 'string') {
           return { user: entry, plans: [defaultPlanId] } as SubscriberEntry;
         }
+
+        const planField = entry.plans ?? entry.plan ?? defaultPlanId;
+        const planArray = Array.isArray(planField) ? planField : [planField];
+
         return {
           user: entry.user,
-          plans: Array.isArray(entry.plan)
-            ? entry.plan.map((p: any) => Number(p))
-            : [Number(entry.plan ?? defaultPlanId)],
+          plans: planArray.map((p: any) => Number(p)),
         } as SubscriberEntry;
       })
     : [];
@@ -55,7 +63,7 @@ async function main() {
         }
       } catch (err) {
         console.error(
-          `Failed to process payment for ${user} plan ${plan}:`,
+          `Failed to process payment for user ${user} plan ${plan}:`,
           err,
         );
       }
