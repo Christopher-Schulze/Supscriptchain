@@ -1,6 +1,7 @@
 {
   "name": "hardhat-project",
   "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.97.1",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.14",
     "@openzeppelin/hardhat-upgrades": "^3.0.0",
@@ -10,6 +11,7 @@
     "eslint": "^9.30.0",
     "hardhat": "^2.22.4",
     "hardhat-coverage": "^0.9.19",
+    "matchstick-as": "^0.6.0",
     "prettier": "^3.6.2",
     "solc": "^0.8.26",
     "solhint": "^5.2.0",
@@ -24,7 +26,8 @@
     "typechain": "typechain --target ethers-v6 --out-dir typechain ./artifacts/**/*.json",
     "codegen": "graph codegen subgraph/subgraph.yaml",
     "build-subgraph": "graph build subgraph/subgraph.yaml",
-    "coverage": "hardhat coverage"
+    "coverage": "hardhat coverage",
+    "test-subgraph": "graph test"
   },
   "dependencies": {
     "@chainlink/contracts": "^1.4.0",
