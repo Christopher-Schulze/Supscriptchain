@@ -47,6 +47,18 @@ Example deployment to a testnet network configured in `hardhat.config.ts`:
 npx hardhat run scripts/deploy-testnet.ts --network sepolia
 ```
 
+## Contract Verification
+
+After deployment you can verify both proxy and implementation contracts using the
+script `scripts/verify.ts`:
+
+```bash
+npx hardhat run scripts/verify.ts --network <network>
+```
+
+Make sure `ETHERSCAN_API_KEY` is set in your environment so the Hardhat verify
+plugin can submit the contract source to the block explorer.
+
 ## Static Analysis
 
 Install [Slither](https://github.com/crytic/slither) using `pip`:
