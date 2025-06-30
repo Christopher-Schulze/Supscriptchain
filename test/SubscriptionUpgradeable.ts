@@ -1,6 +1,10 @@
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
+import type {
+  SubscriptionUpgradeable,
+  SubscriptionUpgradeableV2,
+} from "../typechain";
 
 const PLAN_ID = 0;
 
@@ -13,7 +17,11 @@ async function deployUpgradeableFixture() {
   await token.mint(user.address, ethers.parseUnits("1000", 18));
 
   const SubV1 = await ethers.getContractFactory("SubscriptionUpgradeable", owner);
-  const proxy = await upgrades.deployProxy(SubV1, [owner.address], { initializer: "initialize" });
+  const proxy = (await upgrades.deployProxy(
+    SubV1,
+    [owner.address],
+    { initializer: "initialize" }
+  )) as SubscriptionUpgradeable;
   await proxy.waitForDeployment();
 
   await token.connect(user).approve(await proxy.getAddress(), ethers.parseUnits("1000", 18));
@@ -37,7 +45,10 @@ describe("SubscriptionUpgradeable upgrade", function () {
     await time.increase(cycle + 1);
 
     const SubV2 = await ethers.getContractFactory("SubscriptionUpgradeableV2", owner);
-    const upgraded = await upgrades.upgradeProxy(await proxy.getAddress(), SubV2);
+    const upgraded = (await upgrades.upgradeProxy(
+      await proxy.getAddress(),
+      SubV2
+    )) as SubscriptionUpgradeableV2;
     await upgraded.waitForDeployment();
 
     expect(await upgraded.version()).to.equal("v2");

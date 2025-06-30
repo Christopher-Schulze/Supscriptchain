@@ -14,7 +14,7 @@ describe("Subscription Contract", function () {
         // Deploy MockToken
         const MockTokenFactory = await ethers.getContractFactory("MockToken", owner); // Deploy with owner
         const mockToken = await MockTokenFactory.deploy("Mock Token", "MTK", 18);
-        // No need to call mockToken.deployed() with ethers v6, await on deploy() is enough
+        await mockToken.waitForDeployment();
 
         // Mint some tokens to user1 and anotherUser for testing
         const initialUserBalance = ethers.parseUnits("1000", 18);
@@ -24,6 +24,7 @@ describe("Subscription Contract", function () {
         // Deploy Subscription contract
         const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner); // Deploy with owner
         const subscriptionContract = (await SubscriptionFactory.deploy()) as Subscription;
+        await subscriptionContract.waitForDeployment();
         
         // User1 approves the subscription contract to spend their mock tokens
         // Approve a large amount for simplicity in tests
@@ -35,6 +36,7 @@ describe("Subscription Contract", function () {
         // 8 decimals for price feed (common for USD pairs), initial price $2000 / token
         const initialOraclePrice = ethers.BigNumber.from("2000").mul(ethers.BigNumber.from("10").pow(8)); 
         const mockAggregator = await MockAggregatorFactory.deploy(8, initialOraclePrice);
+        await mockAggregator.waitForDeployment();
 
         return { subscriptionContract, mockToken, mockAggregator, owner, user1, merchant, anotherUser, initialUserBalance, initialOraclePrice };
     }
@@ -261,9 +263,11 @@ describe("Subscription Contract", function () {
             const [owner, user1] = await ethers.getSigners();
             const PermitFactory = await ethers.getContractFactory("PermitToken", owner);
             const permitToken = await PermitFactory.deploy("Permit Token", "PTK");
+            await permitToken.waitForDeployment();
 
             const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
             const subscription = (await SubscriptionFactory.deploy()) as Subscription;
+            await subscription.waitForDeployment();
 
             const amount = ethers.parseUnits("1000", 18);
             await permitToken.mint(user1.address, amount);
@@ -816,9 +820,11 @@ describe("Reentrancy protection", function () {
 
         const MaliciousTokenFactory = await ethers.getContractFactory("MaliciousToken", owner);
         const maliciousToken = await MaliciousTokenFactory.deploy("Malicious Token", "MAL", 18);
+        await maliciousToken.waitForDeployment();
 
         const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
         const subscriptionContract = (await SubscriptionFactory.deploy()) as Subscription;
+        await subscriptionContract.waitForDeployment();
 
         const amount = ethers.parseUnits("100", 18);
         await maliciousToken.mint(user1.address, amount);
