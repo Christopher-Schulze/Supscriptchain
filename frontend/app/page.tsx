@@ -9,6 +9,7 @@ export default function Home() {
         <li><Link href="/plans">Plan Overview</Link></li>
         <li><Link href="/manage">Subscription Management</Link></li>
         <li><Link href="/payment">Payment</Link></li>
+        <li><Link href="/analytics">Analytics</Link></li>
       </ul>
     </div>
   );
