@@ -13,7 +13,13 @@ const inputPath = path.join(__dirname, '../subgraph/subgraph.yaml');
 const outputPath = path.join(__dirname, '../subgraph/subgraph.local.yaml');
 
 let yaml = fs.readFileSync(inputPath, 'utf8');
-yaml = yaml.replace(/{{NETWORK}}/g, network).replace(/{{CONTRACT_ADDRESS}}/g, address);
+yaml = yaml
+  .replace(/{{NETWORK}}/g, network)
+  .replace(/{{CONTRACT_ADDRESS}}/g, address)
+  .replace(
+    /..\/artifacts\/contracts\/Subscription\.sol\/Subscription\.json/g,
+    '../artifacts/contracts/SubscriptionUpgradeable.sol/SubscriptionUpgradeable.json'
+  );
 
 fs.writeFileSync(outputPath, yaml);
 console.log(`Wrote ${outputPath}`);
