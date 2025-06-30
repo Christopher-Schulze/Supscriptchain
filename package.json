@@ -2,16 +2,17 @@
   "name": "hardhat-project",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-    "hardhat": "^2.22.4",
-    "solhint": "^5.2.0",
-    "solc": "^0.8.26",
-    "eslint": "^9.30.0",
-    "prettier": "^3.6.2",
-    "@types/node": "^24.0.7",
-    "hardhat-coverage": "^0.9.19",
     "@openzeppelin/hardhat-upgrades": "^3.0.0",
-    "typechain": "^8.3.2",
-    "@typechain/ethers-v6": "^0.5.1"
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/node": "^24.0.7",
+    "eslint": "^9.30.0",
+    "hardhat": "^2.22.4",
+    "hardhat-coverage": "^0.9.19",
+    "prettier": "^3.6.2",
+    "solc": "^0.8.26",
+    "solhint": "^5.2.0",
+    "typechain": "^8.3.2"
   },
   "scripts": {
     "compile": "hardhat compile",

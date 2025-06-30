@@ -1,7 +1,8 @@
 import { ethers } from "ethers";
-import abi from "./subscriptionAbi";
+import type { Subscription } from "typechain/contracts/Subscription.sol/Subscription";
+import { Subscription__factory } from "typechain/factories/contracts/Subscription.sol/Subscription__factory";
 
-export async function getContract() {
+export async function getContract(): Promise<Subscription> {
   const address = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
   if (!address) throw new Error("NEXT_PUBLIC_CONTRACT_ADDRESS is not defined");
   let signerOrProvider: ethers.Signer | ethers.Provider;
@@ -14,5 +15,5 @@ export async function getContract() {
     if (!rpc) throw new Error("RPC provider not available");
     signerOrProvider = new ethers.JsonRpcProvider(rpc);
   }
-  return new ethers.Contract(address, abi, signerOrProvider);
+  return Subscription__factory.connect(address, signerOrProvider);
 }
