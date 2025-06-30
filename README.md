@@ -173,6 +173,11 @@ To automate processing, add a cron entry. This example runs hourly:
 Der Vertrag `SubscriptionUpgradeable` wird über einen Transparent Proxy bereitgestellt.
 Mit dem Hardhat-Upgrades-Plugin kann ein neues Implementierungscontract einfach über `upgradeProxy` eingespielt werden.
 Ein Beispiel findet sich im Test `test/SubscriptionUpgradeable.ts`.
+Für reale Deployments steht das Skript `scripts/upgrade.ts` bereit, welches die Proxy-Adresse aus `SUBSCRIPTION_ADDRESS` liest und auf `SubscriptionUpgradeableV2` oder spätere Versionen aktualisiert.
+
+```bash
+npx hardhat run scripts/upgrade.ts --network <network>
+```
 
 ## Subgraph
 
