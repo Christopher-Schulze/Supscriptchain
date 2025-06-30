@@ -136,15 +136,17 @@ The script `scripts/process-due-payments.ts` reads a list of subscribers from a
 JSON file and executes `processPayment` for those whose `nextPaymentDate` has
 passed. Any failures are logged to the console.
 
-The file must contain a JSON array of Ethereum addresses. See
-[`scripts/subscribers.example.json`](scripts/subscribers.example.json) for an
-example. The required schema is simply an array of strings, e.g.
+The file can either contain a simple array of Ethereum addresses or an array of
+objects where each entry defines the user and their plan(s). When using the
+object form, the `plan` field may be a single number or an array of numbers.
+See [`scripts/subscribers.example.json`](scripts/subscribers.example.json) for
+an example.
 
 ```json
 [
-  "0x1111111111111111111111111111111111111111",
-  "0x2222222222222222222222222222222222222222",
-  "0x3333333333333333333333333333333333333333"
+  { "user": "0x1111111111111111111111111111111111111111", "plan": [1, 2] },
+  { "user": "0x2222222222222222222222222222222222222222", "plan": 1 },
+  { "user": "0x3333333333333333333333333333333333333333", "plan": 2 }
 ]
 ```
 
@@ -166,8 +168,8 @@ To automate processing, add a cron entry. This example runs hourly:
 
 ## Upgradeprozess
 
-Der Vertrag `SubscriptionUpgradeable` wird über einen Transparent Proxy bereitgestellt. 
-Mit dem Hardhat-Upgrades-Plugin kann ein neues Implementierungscontract einfach über `upgradeProxy` eingespielt werden. 
+Der Vertrag `SubscriptionUpgradeable` wird über einen Transparent Proxy bereitgestellt.
+Mit dem Hardhat-Upgrades-Plugin kann ein neues Implementierungscontract einfach über `upgradeProxy` eingespielt werden.
 Ein Beispiel findet sich im Test `test/SubscriptionUpgradeable.ts`.
 
 ## Subgraph
