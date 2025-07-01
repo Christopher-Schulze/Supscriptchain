@@ -34,13 +34,18 @@ compilation.
 
 ## E2E-Tests
 
-Die Playwright-Tests befinden sich im Ordner `e2e/` und lassen sich mit
+Die Playwright-Tests befinden sich im Ordner `e2e/`. Sie laufen standardmäßig
+im Headless-Modus. Starte sie mit:
 
 ```bash
 npm run test:e2e
 ```
 
-ausführen.
+Dies ruft `playwright test` auf und öffnet keinen Browser. Die Tests starten
+einen lokalen Hardhat-Knoten sowie den Next.js-Server und setzen dabei die
+Umgebungsvariablen `NEXT_PUBLIC_CONTRACT_ADDRESS`, `NEXT_PUBLIC_RPC_URL` und
+`NEXT_PUBLIC_SUBGRAPH_URL` automatisch. Weitere Einstellungen sind nicht
+erforderlich.
 
 ## Deployment
 
