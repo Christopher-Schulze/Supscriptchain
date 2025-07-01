@@ -27,3 +27,9 @@ jobs:
     - run: npm run solhint
     - run: npm test
     - run: npm run coverage
+    - name: Install frontend deps
+      run: npm install --prefix frontend
+    - name: Lint frontend
+      run: npm run lint --prefix frontend
+    - name: Build frontend
+      run: npm run build --prefix frontend
