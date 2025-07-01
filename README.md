@@ -91,6 +91,24 @@ Generate a test coverage report using:
 npm run coverage
 ```
 
+## Gas Report
+
+Estimate gas consumption during tests:
+
+```bash
+npm run gas
+```
+
+The command sets `REPORT_GAS=true` and prints a table similar to:
+
+```
+·---------------------------------|---------------|------------|-------------·
+|  Contract                        ·  Min Gas      ·  Max Gas   ·  Avg Gas   |
+·---------------------------------|---------------|------------|-------------·
+|  Subscription                    ·       50,000  ·   150,000  ·    80,000  |
+·---------------------------------|---------------|------------|-------------·
+```
+
 ## Contracts
 
 - `Subscription.sol` – core subscription logic. Uses `Ownable2Step` and `SafeERC20`.
