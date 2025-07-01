@@ -2,6 +2,7 @@ import { ethers } from "ethers";
 import type { ExternalProvider } from "ethers";
 import type { Subscription } from "typechain/contracts/Subscription.sol/Subscription";
 import { Subscription__factory } from "typechain/factories/contracts/Subscription.sol/Subscription__factory";
+import { requireEnv } from "./env";
 
 declare global {
   interface Window {
@@ -10,8 +11,7 @@ declare global {
 }
 
 export async function getContract(): Promise<Subscription> {
-  const address = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS;
-  if (!address) throw new Error("NEXT_PUBLIC_CONTRACT_ADDRESS is not defined");
+  const address = requireEnv("NEXT_PUBLIC_CONTRACT_ADDRESS");
   let signerOrProvider: ethers.Signer | ethers.Provider;
   if (typeof window !== "undefined" && (window as Window).ethereum) {
     const provider = new ethers.BrowserProvider((window as Window).ethereum!);
@@ -19,7 +19,7 @@ export async function getContract(): Promise<Subscription> {
     signerOrProvider = signer;
   } else {
     const rpc = process.env.NEXT_PUBLIC_RPC_URL;
-    if (!rpc) throw new Error("RPC provider not available");
+    if (!rpc) throw new Error("NEXT_PUBLIC_RPC_URL is not defined and no wallet is available");
     signerOrProvider = new ethers.JsonRpcProvider(rpc);
   }
   return Subscription__factory.connect(address, signerOrProvider);

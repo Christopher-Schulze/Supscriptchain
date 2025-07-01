@@ -13,16 +13,23 @@ npm install
 
 ## Environment Variables
 
-Copy `.env.local.example` to `.env.local` and set the required contract address. Optionally provide an RPC URL used when no wallet is available:
+Copy `.env.local.example` to `.env.local` and provide the required variables:
 
 ```bash
 cp .env.local.example .env.local
 
 NEXT_PUBLIC_CONTRACT_ADDRESS=0xYourContractAddress
-# Optional RPC provider used when MetaMask is not available
+# RPC provider used when MetaMask is not available
 NEXT_PUBLIC_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
+# GraphQL endpoint for the analytics page
 NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
 ```
+
+Required variables:
+
+- `NEXT_PUBLIC_CONTRACT_ADDRESS` – address of the deployed `Subscription` contract.
+- `NEXT_PUBLIC_RPC_URL` – RPC provider used when no wallet is available.
+- `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint for the analytics page.
 
 ## Start
 

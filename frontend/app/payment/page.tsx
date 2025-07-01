@@ -7,6 +7,7 @@ export default function Payment() {
   const { account, connect } = useWallet();
   const [planId, setPlanId] = useState('0');
   const [user, setUser] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   async function trigger() {
     try {
@@ -14,12 +15,14 @@ export default function Payment() {
       await contract.processPayment(user, BigInt(planId));
     } catch (err) {
       console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
   return (
     <div>
       <h1>Process Payment</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <div>
         <label>User: </label>

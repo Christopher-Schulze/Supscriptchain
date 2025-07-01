@@ -1,7 +1,8 @@
 import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
+import { requireEnv } from './env';
 
 const client = new ApolloClient({
-  uri: process.env.NEXT_PUBLIC_SUBGRAPH_URL,
+  uri: requireEnv('NEXT_PUBLIC_SUBGRAPH_URL'),
   cache: new InMemoryCache(),
 });
 
