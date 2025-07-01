@@ -70,7 +70,24 @@ query the data, follow these steps:
    ```
 
 2. Install `graph-node` using the [official packages](https://github.com/graphprotocol/graph-node/releases)
-   or by building it from source. Start the node locally, for example:
+   or by building it from source. `graph-node` requires a running PostgreSQL
+   database and an IPFS daemon. Create a database called `graph-node` and ensure
+   IPFS is available on `localhost:5001`.
+
+   A quick way to start the node is using Docker:
+
+   ```bash
+   docker run -it --rm -p 8000:8000 -p 8020:8020 \
+     -e postgres_host=host.docker.internal \
+     -e postgres_user=graph \
+     -e postgres_pass=password \
+     -e postgres_db=graph-node \
+     -e ethereum=NETWORK:http://host.docker.internal:8545 \
+     -e ipfs=host.docker.internal:5001 \
+     graphprotocol/graph-node:latest
+   ```
+
+   If you have the binary installed locally, start it as follows:
 
    ```bash
    graph-node \
