@@ -25,7 +25,7 @@ NEXT_PUBLIC_RPC_URL=https://sepolia.infura.io/v3/YOUR_KEY
 NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
 ```
 
-Required variables:
+These values are required and the app will throw an error on startup if any are missing (see `lib/env.ts`):
 
 - `NEXT_PUBLIC_CONTRACT_ADDRESS` – address of the deployed `Subscription` contract.
 - `NEXT_PUBLIC_RPC_URL` – RPC provider used when no wallet is available.
