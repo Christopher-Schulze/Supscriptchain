@@ -17,6 +17,7 @@ interface Plan {
 export default function Plans() {
   const { account, connect } = useWallet();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -31,6 +32,7 @@ export default function Plans() {
         setPlans(list);
       } catch (err) {
         console.error(err);
+        setError(err instanceof Error ? err.message : String(err));
       }
     }
     load();
@@ -39,6 +41,7 @@ export default function Plans() {
   return (
     <div>
       <h1>Available Plans</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <ul>
         {plans.map((p, idx) => (

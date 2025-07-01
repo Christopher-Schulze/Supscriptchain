@@ -6,6 +6,7 @@ import useWallet from '../../lib/useWallet';
 export default function Manage() {
   const { account, connect } = useWallet();
   const [planId, setPlanId] = useState('0');
+  const [error, setError] = useState<string | null>(null);
 
   async function subscribe() {
     try {
@@ -13,6 +14,7 @@ export default function Manage() {
       await contract.subscribe(BigInt(planId));
     } catch (err) {
       console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -22,12 +24,14 @@ export default function Manage() {
       await contract.cancelSubscription(BigInt(planId));
     } catch (err) {
       console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
     }
   }
 
   return (
     <div>
       <h1>Manage Subscription</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <div>
         <label>Plan ID: </label>

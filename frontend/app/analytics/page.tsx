@@ -19,6 +19,7 @@ interface PaymentData {
 export default function Analytics() {
   const [subs, setSubs] = useState<SubscriptionData[]>([]);
   const [payments, setPayments] = useState<PaymentData[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -31,6 +32,7 @@ export default function Analytics() {
         setPayments(p);
       } catch (err) {
         console.error(err);
+        setError(err instanceof Error ? err.message : String(err));
       }
     }
     load();
@@ -39,6 +41,7 @@ export default function Analytics() {
   return (
     <div>
       <h1>Analytics</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <h2>Active Subscriptions</h2>
       <ul>
         {subs.map((s) => (
