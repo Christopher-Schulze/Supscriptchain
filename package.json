@@ -5,6 +5,7 @@
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.14",
     "@openzeppelin/hardhat-upgrades": "^3.0.0",
+    "@playwright/test": "^1.53.2",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/node": "^24.0.7",
@@ -12,6 +13,7 @@
     "hardhat": "^2.22.4",
     "hardhat-coverage": "^0.9.19",
     "matchstick-as": "^0.6.0",
+    "playwright": "^1.53.2",
     "prettier": "^3.6.2",
     "solc": "^0.8.26",
     "solhint": "^5.2.0",
@@ -27,7 +29,8 @@
     "codegen": "graph codegen subgraph/subgraph.yaml",
     "build-subgraph": "graph build subgraph/subgraph.yaml",
     "coverage": "hardhat coverage",
-    "test-subgraph": "graph test"
+    "test-subgraph": "graph test",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@chainlink/contracts": "^1.4.0",
