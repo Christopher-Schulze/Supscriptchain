@@ -1,11 +1,37 @@
 import fs from 'fs';
 import path from 'path';
 
-const network = process.env.NETWORK;
-const address = process.env.CONTRACT_ADDRESS;
+function parseArgs() {
+  const result: { network?: string; address?: string } = {};
+  const args = process.argv.slice(2);
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--network' && args[i + 1]) {
+      result.network = args[i + 1];
+      i++;
+    } else if (arg.startsWith('--network=')) {
+      result.network = arg.split('=')[1];
+    } else if (arg === '--address' && args[i + 1]) {
+      result.address = args[i + 1];
+      i++;
+    } else if (arg.startsWith('--address=')) {
+      result.address = arg.split('=')[1];
+    }
+  }
+
+  return result;
+}
+
+const { network: networkArg, address: addressArg } = parseArgs();
+
+const network = networkArg || process.env.NETWORK;
+const address = addressArg || process.env.CONTRACT_ADDRESS;
 
 if (!network || !address) {
-  console.error('NETWORK and CONTRACT_ADDRESS env vars must be set');
+  console.error(
+    'NETWORK/--network and CONTRACT_ADDRESS/--address must be provided'
+  );
   process.exit(1);
 }
 
