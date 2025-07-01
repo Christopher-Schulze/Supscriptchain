@@ -29,7 +29,7 @@
     "solhint": "solhint 'contracts/**/*.sol'",
     "typechain": "typechain --target ethers-v6 --out-dir typechain ./artifacts/**/*.json",
     "codegen": "graph codegen subgraph/subgraph.yaml",
-    "build-subgraph": "graph build subgraph/subgraph.yaml",
+    "build-subgraph": "npx --yes ts-node scripts/prepare-subgraph.ts && graph build subgraph/subgraph.local.yaml",
     "coverage": "hardhat coverage",
     "test-subgraph": "graph test",
     "test:e2e": "playwright test"
