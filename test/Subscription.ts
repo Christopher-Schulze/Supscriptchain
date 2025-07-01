@@ -1105,6 +1105,56 @@ describe("getPaymentAmount with uncommon decimals", function () {
         expect(before.sub(after)).to.equal(expected);
     });
 
+    async function fixtureDecimals6Subscribed() {
+        const base = await fixtureDecimals6();
+        const usdPrice = 1234;
+        await base.subscription
+            .connect(base.owner)
+            .createPlan(base.owner.address, base.token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, base.feed.target);
+        await base.subscription.connect(base.user1).subscribe(0);
+        await time.increase(THIRTY_DAYS_IN_SECS + 1);
+        return { ...base, usdPrice };
+    }
+
+    it("processPayment handles 6 decimal tokens", async function () {
+        const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price, usdPrice } = await loadFixture(
+            fixtureDecimals6Subscribed
+        );
+        const expected = ethers.BigNumber.from(usdPrice)
+            .mul(ethers.BigNumber.from(10).pow(tokenDecimals))
+            .mul(ethers.BigNumber.from(10).pow(oracleDecimals))
+            .div(ethers.BigNumber.from(100).mul(price));
+        const before = await token.balanceOf(user1.address);
+        await subscription.connect(owner).processPayment(user1.address, 0);
+        const after = await token.balanceOf(user1.address);
+        expect(before.sub(after)).to.equal(expected);
+    });
+
+    async function fixtureDecimals30Subscribed() {
+        const base = await fixtureDecimals30();
+        const usdPrice = 1000;
+        await base.subscription
+            .connect(base.owner)
+            .createPlan(base.owner.address, base.token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, base.feed.target);
+        await base.subscription.connect(base.user1).subscribe(0);
+        await time.increase(THIRTY_DAYS_IN_SECS + 1);
+        return { ...base, usdPrice };
+    }
+
+    it("processPayment handles 30 decimal tokens", async function () {
+        const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price, usdPrice } = await loadFixture(
+            fixtureDecimals30Subscribed
+        );
+        const expected = ethers.BigNumber.from(usdPrice)
+            .mul(ethers.BigNumber.from(10).pow(tokenDecimals))
+            .mul(ethers.BigNumber.from(10).pow(oracleDecimals))
+            .div(ethers.BigNumber.from(100).mul(price));
+        const before = await token.balanceOf(user1.address);
+        await subscription.connect(owner).processPayment(user1.address, 0);
+        const after = await token.balanceOf(user1.address);
+        expect(before.sub(after)).to.equal(expected);
+    });
+
     async function fixtureOverflow() {
         const [owner, user1] = await ethers.getSigners();
         const Token = await ethers.getContractFactory("MockToken", owner);
