@@ -69,13 +69,14 @@ query the data, follow these steps:
    npm install -g @graphprotocol/graph-cli
    ```
 
-2. Run a local Graph node using the docker configuration from the official
-   repository:
+2. Install `graph-node` using the [official packages](https://github.com/graphprotocol/graph-node/releases)
+   or by building it from source. Start the node locally, for example:
 
    ```bash
-   git clone https://github.com/graphprotocol/graph-node.git
-   cd graph-node/docker
-   docker compose up
+   graph-node \
+     --postgres-url postgresql://graph:password@localhost:5432/graph-node \
+     --ethereum-rpc NETWORK:http://localhost:8545 \
+     --ipfs 127.0.0.1:5001
    ```
 
 3. In another terminal, generate and deploy the subgraph. First create a
