@@ -64,6 +64,14 @@ Both scripts require the following environment variables:
 - `FIXED_PRICE`
 - `USD_PRICE`
 
+The Hardhat networks `sepolia` and `mainnet` read their RPC URLs and
+private keys from `.env` as well:
+
+- `SEPOLIA_RPC_URL`
+- `SEPOLIA_PRIVATE_KEY`
+- `MAINNET_RPC_URL`
+- `MAINNET_PRIVATE_KEY`
+
 Example deployment to a testnet network configured in `hardhat.config.ts`:
 
 ```bash
