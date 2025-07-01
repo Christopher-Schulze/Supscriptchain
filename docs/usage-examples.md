@@ -74,18 +74,26 @@ query the data, follow these steps:
    database and an IPFS daemon. Create a database called `graph-node` and ensure
    IPFS is available on `localhost:5001`.
 
+   The Docker image exposes two ports: `8000` for GraphQL queries and `8020` for
+   management operations. Replace `NETWORK` with the name of your chain
+   (e.g. `localhost`) and adjust the PostgreSQL settings if they differ from the
+   values below.
+
    A quick way to start the node is using Docker:
 
    ```bash
-   docker run -it --rm -p 8000:8000 -p 8020:8020 \
-     -e postgres_host=host.docker.internal \
-     -e postgres_user=graph \
-     -e postgres_pass=password \
-     -e postgres_db=graph-node \
-     -e ethereum=NETWORK:http://host.docker.internal:8545 \
-     -e ipfs=host.docker.internal:5001 \
-     graphprotocol/graph-node:latest
-   ```
+    docker run -it --rm -p 8000:8000 -p 8020:8020 \
+      -e postgres_host=host.docker.internal \
+      -e postgres_user=graph \
+      -e postgres_pass=password \
+      -e postgres_db=graph-node \
+      -e ethereum=NETWORK:http://host.docker.internal:8545 \
+      -e ipfs=host.docker.internal:5001 \
+      graphprotocol/graph-node:latest
+    ```
+
+     `NETWORK` should match the chain that the subgraph indexes. When using a
+     local Hardhat node it usually is `localhost`.
 
    If you have the binary installed locally, start it as follows:
 
@@ -100,8 +108,9 @@ query the data, follow these steps:
    local manifest by replacing the placeholders in `subgraph.yaml`:
 
    ```bash
-   NETWORK=<network> CONTRACT_ADDRESS=<address> \
-     npx ts-node scripts/prepare-subgraph.ts
+  # Replace with the network name and address of your deployed proxy
+  NETWORK=<network> CONTRACT_ADDRESS=<address> \
+    npx ts-node scripts/prepare-subgraph.ts
    npm run codegen
    graph build subgraph/subgraph.local.yaml
    graph deploy \

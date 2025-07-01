@@ -47,6 +47,16 @@ Umgebungsvariablen `NEXT_PUBLIC_CONTRACT_ADDRESS`, `NEXT_PUBLIC_RPC_URL` und
 `NEXT_PUBLIC_SUBGRAPH_URL` automatisch. Weitere Einstellungen sind nicht
 erforderlich.
 
+Um die Tests manuell aufzurufen, können die Variablen auch explizit gesetzt
+werden:
+
+```bash
+NEXT_PUBLIC_CONTRACT_ADDRESS=<address> \
+NEXT_PUBLIC_RPC_URL=http://127.0.0.1:8545 \
+NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgraph/graphql \
+npx playwright test --headless
+```
+
 ## Deployment
 
 Two deployment scripts are provided under `scripts/`.
