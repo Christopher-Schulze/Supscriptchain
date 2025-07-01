@@ -7,6 +7,7 @@ import type {
 } from "../typechain";
 
 const PLAN_ID = 0;
+const THIRTY_DAYS_IN_SECS = 30 * 24 * 60 * 60;
 
 async function deployUpgradeableFixture() {
   const [owner, user] = await ethers.getSigners();
@@ -227,6 +228,49 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
       expect(plan.priceFeedAddress).to.equal(ethers.ZeroAddress);
       expect(plan.usdPrice).to.equal(0);
     });
+  });
+});
+
+describe("Reentrancy protection", function () {
+  async function deployMaliciousFixture() {
+    const [owner, user] = await ethers.getSigners();
+
+    const MaliciousFactory = await ethers.getContractFactory("MaliciousToken", owner);
+    const maliciousToken = await MaliciousFactory.deploy("Malicious Token", "MAL", 18);
+    await maliciousToken.waitForDeployment();
+
+    const SubFactory = await ethers.getContractFactory("SubscriptionUpgradeable", owner);
+    const proxy = (await upgrades.deployProxy(SubFactory, [owner.address], { initializer: "initialize" })) as SubscriptionUpgradeable;
+    await proxy.waitForDeployment();
+
+    const amount = ethers.parseUnits("100", 18);
+    await maliciousToken.mint(user.address, amount);
+    await maliciousToken.connect(user).approve(await proxy.getAddress(), amount);
+
+    const fixedPrice = ethers.parseUnits("10", 18);
+    await proxy.connect(owner).createPlan(owner.address, await maliciousToken.getAddress(), fixedPrice, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress);
+
+    const data = proxy.interface.encodeFunctionData("cancelSubscription", [PLAN_ID]);
+    await maliciousToken.setReentrancy(await proxy.getAddress(), data);
+
+    return { proxy, maliciousToken, owner, user };
+  }
+
+  it("subscribe rejects reentrant token", async function () {
+    const { proxy, user } = await loadFixture(deployMaliciousFixture);
+    await expect(proxy.connect(user).subscribe(PLAN_ID)).to.be.revertedWithCustomError(proxy, "ReentrancyGuardReentrantCall");
+  });
+
+  it("processPayment rejects reentrancy", async function () {
+    const { proxy, maliciousToken, owner, user } = await loadFixture(deployMaliciousFixture);
+    await maliciousToken.setReentrancy(ethers.ZeroAddress, "0x");
+    await proxy.connect(user).subscribe(PLAN_ID);
+
+    const data = proxy.interface.encodeFunctionData("subscribe", [PLAN_ID]);
+    await maliciousToken.setReentrancy(await proxy.getAddress(), data);
+
+    await time.increase(THIRTY_DAYS_IN_SECS + 1);
+    await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWithCustomError(proxy, "ReentrancyGuardReentrantCall");
   });
 });
 
