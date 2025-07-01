@@ -804,7 +804,7 @@ describe("cancelSubscription", function () {
         const { subscriptionContract, anotherUser } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
         // anotherUser tries to cancel user1's subscription planId, but for their own account
         await expect(subscriptionContract.connect(anotherUser).cancelSubscription(planId))
-            .to.be.revertedWith("Not subscribed to this plan or subscription data mismatch"); // Or "Subscription is already inactive" if it defaults to false
+            .to.be.revertedWith("Not subscribed to this plan or subscription data mismatch");
     });
 
     it("Should prevent cancelling a non-existent plan ID for the user", async function () {
