@@ -39,7 +39,15 @@ Two deployment scripts are provided under `scripts/`.
 - **Testnet** – `scripts/deploy-testnet.ts`
 - **Mainnet** – `scripts/deploy-mainnet.ts`
 
-Both scripts read configuration from environment variables such as `MERCHANT_ADDRESS`, `TOKEN_ADDRESS`, `PRICE_FEED`, `BILLING_CYCLE`, `PRICE_IN_USD`, `FIXED_PRICE` and `USD_PRICE`.
+Both scripts require the following environment variables:
+
+- `MERCHANT_ADDRESS`
+- `TOKEN_ADDRESS`
+- `PRICE_FEED`
+- `BILLING_CYCLE`
+- `PRICE_IN_USD`
+- `FIXED_PRICE`
+- `USD_PRICE`
 
 Example deployment to a testnet network configured in `hardhat.config.ts`:
 
