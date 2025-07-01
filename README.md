@@ -72,6 +72,21 @@ private keys from `.env` as well:
 - `MAINNET_RPC_URL`
 - `MAINNET_PRIVATE_KEY`
 
+Your `hardhat.config.ts` should include network settings that load these values:
+
+```ts
+networks: {
+  sepolia: {
+    url: process.env.SEPOLIA_RPC_URL || "",
+    accounts: process.env.SEPOLIA_PRIVATE_KEY ? [process.env.SEPOLIA_PRIVATE_KEY] : [],
+  },
+  mainnet: {
+    url: process.env.MAINNET_RPC_URL || "",
+    accounts: process.env.MAINNET_PRIVATE_KEY ? [process.env.MAINNET_PRIVATE_KEY] : [],
+  },
+}
+```
+
 Example deployment to a testnet network configured in `hardhat.config.ts`:
 
 ```bash
