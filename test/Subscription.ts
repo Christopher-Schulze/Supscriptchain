@@ -1029,3 +1029,109 @@ describe("recoverERC20", function () {
         expect(await mockToken.balanceOf(owner.address)).to.equal(ownerBalBefore.add(amount));
     });
 });
+
+describe("getPaymentAmount with uncommon decimals", function () {
+    async function fixtureDecimals6() {
+        const [owner, user1] = await ethers.getSigners();
+        const Token = await ethers.getContractFactory("MockToken", owner);
+        const tokenDecimals = 6;
+        const token = await Token.deploy("Mock6", "M6", tokenDecimals);
+        await token.waitForDeployment();
+        const amount = ethers.parseUnits("1000", tokenDecimals);
+        await token.mint(user1.address, amount);
+
+        const Sub = await ethers.getContractFactory("Subscription", owner);
+        const subscription = (await Sub.deploy()) as Subscription;
+        await subscription.waitForDeployment();
+        await token.connect(user1).approve(subscription.target, ethers.parseUnits("5000", tokenDecimals));
+
+        const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
+        const oracleDecimals = 10;
+        const price = ethers.BigNumber.from(2000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+        const feed = await Agg.deploy(oracleDecimals, price);
+        await feed.waitForDeployment();
+
+        return { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price };
+    }
+
+    it("handles 6 decimal tokens", async function () {
+        const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price } = await loadFixture(fixtureDecimals6);
+        const usdPrice = 1234;
+        await subscription.connect(owner).createPlan(owner.address, token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, feed.target);
+        const expected = ethers.BigNumber.from(usdPrice)
+            .mul(ethers.BigNumber.from(10).pow(tokenDecimals))
+            .mul(ethers.BigNumber.from(10).pow(oracleDecimals))
+            .div(ethers.BigNumber.from(100).mul(price));
+        const before = await token.balanceOf(user1.address);
+        await subscription.connect(user1).subscribe(0);
+        const after = await token.balanceOf(user1.address);
+        expect(before.sub(after)).to.equal(expected);
+    });
+
+    async function fixtureDecimals30() {
+        const [owner, user1] = await ethers.getSigners();
+        const Token = await ethers.getContractFactory("MockToken", owner);
+        const tokenDecimals = 30;
+        const token = await Token.deploy("Mock30", "M30", tokenDecimals);
+        await token.waitForDeployment();
+        const amount = ethers.parseUnits("1000", tokenDecimals);
+        await token.mint(user1.address, amount);
+
+        const Sub = await ethers.getContractFactory("Subscription", owner);
+        const subscription = (await Sub.deploy()) as Subscription;
+        await subscription.waitForDeployment();
+        await token.connect(user1).approve(subscription.target, ethers.parseUnits("5000", tokenDecimals));
+
+        const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
+        const oracleDecimals = 12;
+        const price = ethers.BigNumber.from(3000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+        const feed = await Agg.deploy(oracleDecimals, price);
+        await feed.waitForDeployment();
+
+        return { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price };
+    }
+
+    it("handles 30 decimal tokens", async function () {
+        const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price } = await loadFixture(fixtureDecimals30);
+        const usdPrice = 1000;
+        await subscription.connect(owner).createPlan(owner.address, token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, feed.target);
+        const expected = ethers.BigNumber.from(usdPrice)
+            .mul(ethers.BigNumber.from(10).pow(tokenDecimals))
+            .mul(ethers.BigNumber.from(10).pow(oracleDecimals))
+            .div(ethers.BigNumber.from(100).mul(price));
+        const before = await token.balanceOf(user1.address);
+        await subscription.connect(user1).subscribe(0);
+        const after = await token.balanceOf(user1.address);
+        expect(before.sub(after)).to.equal(expected);
+    });
+
+    async function fixtureOverflow() {
+        const [owner, user1] = await ethers.getSigners();
+        const Token = await ethers.getContractFactory("MockToken", owner);
+        const tokenDecimals = 76;
+        const token = await Token.deploy("MockBig", "MBIG", tokenDecimals);
+        await token.waitForDeployment();
+        const amount = ethers.parseUnits("1", tokenDecimals);
+        await token.mint(user1.address, amount);
+
+        const Sub = await ethers.getContractFactory("Subscription", owner);
+        const subscription = (await Sub.deploy()) as Subscription;
+        await subscription.waitForDeployment();
+        await token.connect(user1).approve(subscription.target, amount);
+
+        const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
+        const oracleDecimals = 20;
+        const price = ethers.BigNumber.from(2000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+        const feed = await Agg.deploy(oracleDecimals, price);
+        await feed.waitForDeployment();
+
+        return { owner, user1, subscription, token, feed };
+    }
+
+    it("reverts on overflow", async function () {
+        const { owner, user1, subscription, token, feed } = await loadFixture(fixtureOverflow);
+        const usdPrice = 1000;
+        await subscription.connect(owner).createPlan(owner.address, token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, feed.target);
+        await expect(subscription.connect(user1).subscribe(0)).to.be.reverted;
+    });
+});
