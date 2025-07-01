@@ -32,6 +32,16 @@ The project now includes a local Solidity compiler. Hardhat will compile using
 `node_modules/solc/soljson.js`, so no network access is required during
 compilation.
 
+## E2E-Tests
+
+Die Playwright-Tests befinden sich im Ordner `e2e/` und lassen sich mit
+
+```bash
+npm run test:e2e
+```
+
+ausführen.
+
 ## Deployment
 
 Two deployment scripts are provided under `scripts/`.
