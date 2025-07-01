@@ -811,7 +811,7 @@ describe("cancelSubscription", function () {
         const { subscriptionContract, user1 } = await loadFixture(fixtureWithActiveSubscriptionForCancel);
         const nonExistentPlanId = 99;
         await expect(subscriptionContract.connect(user1).cancelSubscription(nonExistentPlanId))
-             .to.be.revertedWith("Not subscribed to this plan or subscription data mismatch"); // Or "Subscription is already inactive"
+             .to.be.revertedWith("Not subscribed to this plan or subscription data mismatch");
     });
 
 
