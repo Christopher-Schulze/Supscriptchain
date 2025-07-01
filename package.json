@@ -31,6 +31,7 @@
     "codegen": "graph codegen subgraph/subgraph.yaml",
     "build-subgraph": "graph build subgraph/subgraph.yaml",
     "coverage": "hardhat coverage",
+    "slither": "slither .",
     "test-subgraph": "graph test",
     "test:e2e": "playwright test"
   },
