@@ -29,3 +29,7 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Frontend
+frontend/.next/
+frontend/.env.local
