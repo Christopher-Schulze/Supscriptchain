@@ -96,14 +96,12 @@ query the data, follow these steps:
      --ipfs 127.0.0.1:5001
    ```
 
-3. In another terminal, generate and deploy the subgraph. First create a
-   local manifest by replacing the placeholders in `subgraph.yaml`:
+3. In another terminal, generate and deploy the subgraph. The build step will
+   automatically create a local manifest:
 
    ```bash
-   NETWORK=<network> CONTRACT_ADDRESS=<address> \
-     npx ts-node scripts/prepare-subgraph.ts
    npm run codegen
-   graph build subgraph/subgraph.local.yaml
+   npm run build-subgraph -- --network <network> --address <address>
    graph deploy \
      --node http://localhost:8020/ \
      --ipfs http://localhost:5001/ \
