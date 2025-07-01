@@ -11,6 +11,7 @@
     "eslint": "^9.30.0",
     "hardhat": "^2.22.4",
     "hardhat-coverage": "^0.9.19",
+    "hardhat-gas-reporter": "^2.3.0",
     "matchstick-as": "^0.6.0",
     "prettier": "^3.6.2",
     "solc": "^0.8.26",
@@ -20,6 +21,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "HARDHAT_DISABLE_DOWNLOAD_COMPILERS=true hardhat test",
+    "gas": "HARDHAT_DISABLE_DOWNLOAD_COMPILERS=true REPORT_GAS=true hardhat test",
     "lint": "eslint --ext .ts .",
     "format": "prettier --write .",
     "solhint": "solhint 'contracts/**/*.sol'",
