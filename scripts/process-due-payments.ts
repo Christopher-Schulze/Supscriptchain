@@ -14,6 +14,10 @@ interface SubscriberEntry {
 }
 
 async function main() {
+  const failOnFailure =
+    process.env.FAIL_ON_FAILURE === 'true' ||
+    process.env.FAIL_ON_FAILURE === '1';
+  const failures: { user: string; plan: number; reason: string }[] = [];
   const contractAddress = process.env.SUBSCRIPTION_ADDRESS;
   if (!contractAddress) {
     throw new Error('SUBSCRIPTION_ADDRESS not set');
@@ -70,11 +74,23 @@ async function main() {
           console.log(`Processed payment for ${user} plan ${plan}`);
         }
       } catch (err) {
+        const reason = err instanceof Error ? err.message : String(err);
+        failures.push({ user, plan, reason });
         console.error(
           `Failed to process payment for user ${user} plan ${plan}:`,
-          err instanceof Error ? err.message : err,
+          reason,
         );
       }
+    }
+  }
+
+  if (failures.length > 0) {
+    console.log('\nFailed payments summary:');
+    for (const f of failures) {
+      console.log(`- ${f.user} plan ${f.plan}: ${f.reason}`);
+    }
+    if (failOnFailure) {
+      process.exitCode = 1;
     }
   }
 }
