@@ -183,6 +183,23 @@ test('upgrade flow', async ({ page }) => {
     amount: ethers.parseUnits('10', 18).toString(),
     newNextPaymentDate: finalSub.nextPaymentDate.toString(),
   });
+
+  // verify events before and after upgrade are returned by the subgraph
+  const res = await fetch(SUBGRAPH_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      query:
+        '{ subscriptions { id planId } payments { id planId } }',
+    }),
+  });
+  const json = await res.json();
+  expect(json.data.subscriptions.length).toBe(1);
+  expect(json.data.subscriptions[0].id).toBe(`${user}-0`);
+  expect(json.data.payments.length).toBe(1);
+  expect(json.data.payments[0].id).toBe('1');
+
+  expect(await upgraded.version()).toBe('v2');
 });
 
 test('analytics page shows subgraph data', async ({ page }) => {
