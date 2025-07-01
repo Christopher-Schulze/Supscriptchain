@@ -263,6 +263,16 @@ contract SubscriptionUpgradeable is
         emit SubscriptionCancelled(msg.sender, _planId);
     }
 
+    /**
+     * @notice Recover ERC20 tokens accidentally sent to this contract.
+     * @dev Only callable by the owner.
+     * @param token The ERC20 token address.
+     * @param amount The amount of tokens to recover.
+     */
+    function recoverERC20(address token, uint256 amount) external onlyOwner {
+        IERC20Upgradeable(token).safeTransfer(owner(), amount);
+    }
+
     uint256[50] private __gap;
 }
 

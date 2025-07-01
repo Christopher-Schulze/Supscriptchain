@@ -28,8 +28,8 @@ describe("Subscription Contract", function () {
         
         // User1 approves the subscription contract to spend their mock tokens
         // Approve a large amount for simplicity in tests
-        await mockToken.connect(user1).approve(subscriptionContract.address, ethers.parseUnits("5000", 18));
-        await mockToken.connect(anotherUser).approve(subscriptionContract.address, ethers.parseUnits("5000", 18));
+        await mockToken.connect(user1).approve(subscriptionContract.target, ethers.parseUnits("5000", 18));
+        await mockToken.connect(anotherUser).approve(subscriptionContract.target, ethers.parseUnits("5000", 18));
 
         // Deploy MockV3Aggregator
         const MockAggregatorFactory = await ethers.getContractFactory("MockV3Aggregator", owner);
@@ -44,15 +44,15 @@ describe("Subscription Contract", function () {
     describe("Deployment", function () {
         it("Should deploy contracts successfully and set the right owner/values", async function () {
             const { subscriptionContract, mockToken, mockAggregator, owner, user1, initialUserBalance, initialOraclePrice } = await loadFixture(deploySubscriptionFixture);
-            expect(subscriptionContract.address).to.not.be.undefined;
+            expect(subscriptionContract.target).to.not.be.undefined;
             expect(await subscriptionContract.owner()).to.equal(owner.address);
             
-            expect(mockToken.address).to.not.be.undefined;
+            expect(mockToken.target).to.not.be.undefined;
             expect(await mockToken.balanceOf(user1.address)).to.equal(initialUserBalance);
             expect(await mockToken.decimals()).to.equal(18);
 
 
-            expect(mockAggregator.address).to.not.be.undefined;
+            expect(mockAggregator.target).to.not.be.undefined;
             expect(await mockAggregator.decimals()).to.equal(8);
             const [, latestPrice, , ,] = await mockAggregator.latestRoundData();
             expect(latestPrice).to.equal(initialOraclePrice);
@@ -69,25 +69,25 @@ describe("Subscription Contract", function () {
 
             await expect(subscriptionContract.connect(owner).createPlan(
                 owner.address, // merchantAddress
-                mockToken.address,
+                mockToken.target,
                 fixedPrice,
                 billingCycle,
                 false, // priceInUsd
                 0,     // usdPrice
-                ethers.constants.AddressZero // priceFeedAddress
+                ethers.ZeroAddress // priceFeedAddress
             ))
                 .to.emit(subscriptionContract, "PlanCreated")
-                .withArgs(0, owner.address, mockToken.address, mockTokenDecimals, fixedPrice, billingCycle, false, 0, ethers.constants.AddressZero);
+                .withArgs(0, owner.address, mockToken.target, mockTokenDecimals, fixedPrice, billingCycle, false, 0, ethers.ZeroAddress);
 
             const plan = await subscriptionContract.plans(0);
             expect(plan.merchant).to.equal(owner.address);
-            expect(plan.token).to.equal(mockToken.address);
+            expect(plan.token).to.equal(mockToken.target);
             expect(plan.tokenDecimals).to.equal(mockTokenDecimals);
             expect(plan.price).to.equal(fixedPrice);
             expect(plan.billingCycle).to.equal(billingCycle);
             expect(plan.priceInUsd).to.be.false;
             expect(plan.usdPrice).to.equal(0);
-            expect(plan.priceFeedAddress).to.equal(ethers.constants.AddressZero);
+            expect(plan.priceFeedAddress).to.equal(ethers.ZeroAddress);
             expect(await subscriptionContract.nextPlanId()).to.equal(1);
         });
 
@@ -98,30 +98,30 @@ describe("Subscription Contract", function () {
 
             await expect(subscriptionContract.connect(owner).createPlan(
                 merchant.address, // merchantAddress
-                mockToken.address,
+                mockToken.target,
                 0, // fixedPrice (not used)
                 billingCycle,
                 true,  // priceInUsd
                 usdPriceCents,
-                mockAggregator.address
+                mockAggregator.target
             ))
                 .to.emit(subscriptionContract, "PlanCreated")
-                .withArgs(0, merchant.address, mockToken.address, mockTokenDecimals, 0, billingCycle, true, usdPriceCents, mockAggregator.address);
+                .withArgs(0, merchant.address, mockToken.target, mockTokenDecimals, 0, billingCycle, true, usdPriceCents, mockAggregator.target);
 
             const plan = await subscriptionContract.plans(0);
             expect(plan.merchant).to.equal(merchant.address);
             expect(plan.tokenDecimals).to.equal(mockTokenDecimals);
             expect(plan.priceInUsd).to.be.true;
             expect(plan.usdPrice).to.equal(usdPriceCents);
-            expect(plan.priceFeedAddress).to.equal(mockAggregator.address);
+            expect(plan.priceFeedAddress).to.equal(mockAggregator.target);
         });
 
         it("Should default merchant to owner if address(0) is provided for merchantAddress", async function () {
             const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
             const fixedPrice = ethers.parseUnits("5", mockTokenDecimals);
             await subscriptionContract.connect(owner).createPlan(
-                ethers.constants.AddressZero, // merchantAddress
-                mockToken.address, fixedPrice, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+                ethers.ZeroAddress, // merchantAddress
+                mockToken.target, fixedPrice, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress
             );
             const plan = await subscriptionContract.plans(0);
             expect(plan.merchant).to.equal(owner.address);
@@ -129,7 +129,7 @@ describe("Subscription Contract", function () {
 
         it("Should prevent non-owner from creating a plan", async function () {
             const { subscriptionContract, mockToken, user1, owner } = await loadFixture(deploySubscriptionFixture);
-            await expect(subscriptionContract.connect(user1).createPlan(owner.address, mockToken.address, 10, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero))
+            await expect(subscriptionContract.connect(user1).createPlan(owner.address, mockToken.target, 10, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress))
                 .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
                 .withArgs(user1.address);
         });
@@ -137,14 +137,14 @@ describe("Subscription Contract", function () {
         it("Should revert if creating a USD plan with zero address for price feed", async function () {
             const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
             await expect(subscriptionContract.connect(owner).createPlan(
-                owner.address, mockToken.address, 0, THIRTY_DAYS_IN_SECS, true, 1000, ethers.constants.AddressZero
+                owner.address, mockToken.target, 0, THIRTY_DAYS_IN_SECS, true, 1000, ethers.ZeroAddress
             )).to.be.revertedWith("Price feed address required for USD pricing");
         });
 
         it("Should revert if creating a plan with zero address for token", async function () {
             const { subscriptionContract, owner } = await loadFixture(deploySubscriptionFixture);
             await expect(subscriptionContract.connect(owner).createPlan(
-                owner.address, ethers.constants.AddressZero, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+                owner.address, ethers.ZeroAddress, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress
             )).to.be.revertedWith("Token address cannot be zero");
         });
 
@@ -168,12 +168,12 @@ describe("Subscription Contract", function () {
             const fixedPrice = ethers.parseUnits("10", 18);
             await setup.subscriptionContract.connect(setup.owner).createPlan(
                 setup.owner.address,
-                setup.mockToken.address,
+                setup.mockToken.target,
                 fixedPrice,
                 THIRTY_DAYS_IN_SECS,
                 false,
                 0,
-                ethers.constants.AddressZero
+                ethers.ZeroAddress
             );
             return { ...setup, fixedPrice };
         }
@@ -190,11 +190,11 @@ describe("Subscription Contract", function () {
                     newPrice,
                     false,
                     0,
-                    ethers.constants.AddressZero
+                    ethers.ZeroAddress
                 )
             )
                 .to.emit(subscriptionContract, "PlanUpdated")
-                .withArgs(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero);
+                .withArgs(0, newBilling, newPrice, false, 0, ethers.ZeroAddress);
 
             const plan = await subscriptionContract.plans(0);
             expect(plan.price).to.equal(newPrice);
@@ -205,7 +205,7 @@ describe("Subscription Contract", function () {
             const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithExistingPlan);
             const newPrice = ethers.parseUnits("20", 18);
             const newBilling = THIRTY_DAYS_IN_SECS / 2;
-            await subscriptionContract.connect(owner).updatePlan(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero);
+            await subscriptionContract.connect(owner).updatePlan(0, newBilling, newPrice, false, 0, ethers.ZeroAddress);
 
             const userBalBefore = await mockToken.balanceOf(user1.address);
             await subscriptionContract.connect(user1).subscribe(0);
@@ -219,7 +219,7 @@ describe("Subscription Contract", function () {
         it("Non-owner cannot update plan", async function () {
             const { subscriptionContract, user1 } = await loadFixture(fixtureWithExistingPlan);
             await expect(
-                subscriptionContract.connect(user1).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, false, 0, ethers.constants.AddressZero)
+                subscriptionContract.connect(user1).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, false, 0, ethers.ZeroAddress)
             )
                 .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
                 .withArgs(user1.address);
@@ -228,7 +228,7 @@ describe("Subscription Contract", function () {
         it("Reverts when enabling USD pricing without feed", async function () {
             const { subscriptionContract, owner } = await loadFixture(fixtureWithExistingPlan);
             await expect(
-                subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, 1000, ethers.constants.AddressZero)
+                subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, 1000, ethers.ZeroAddress)
             ).to.be.revertedWith("Price feed address required for USD pricing");
         });
 
@@ -244,12 +244,12 @@ describe("Subscription Contract", function () {
             const usdPrice = 1000;
             await setup.subscriptionContract.connect(setup.owner).createPlan(
                 setup.owner.address,
-                setup.mockToken.address,
+                setup.mockToken.target,
                 0,
                 THIRTY_DAYS_IN_SECS,
                 true,
                 usdPrice,
-                setup.mockAggregator.address
+                setup.mockAggregator.target
             );
             return { ...setup, usdPrice };
         }
@@ -258,15 +258,15 @@ describe("Subscription Contract", function () {
             const { subscriptionContract, owner, mockAggregator } = await loadFixture(fixtureWithExistingPlan);
             const newUsdPrice = 1500;
             await expect(
-                subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, newUsdPrice, mockAggregator.address)
+                subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, newUsdPrice, mockAggregator.target)
             )
                 .to.emit(subscriptionContract, "PlanUpdated")
-                .withArgs(0, THIRTY_DAYS_IN_SECS, 0, true, newUsdPrice, mockAggregator.address);
+                .withArgs(0, THIRTY_DAYS_IN_SECS, 0, true, newUsdPrice, mockAggregator.target);
 
             const plan = await subscriptionContract.plans(0);
             expect(plan.priceInUsd).to.be.true;
             expect(plan.usdPrice).to.equal(newUsdPrice);
-            expect(plan.priceFeedAddress).to.equal(mockAggregator.address);
+            expect(plan.priceFeedAddress).to.equal(mockAggregator.target);
         });
 
         it("Owner can switch from USD price to token price", async function () {
@@ -274,15 +274,15 @@ describe("Subscription Contract", function () {
             const newPrice = ethers.parseUnits("7", 18);
             const newBilling = THIRTY_DAYS_IN_SECS * 2;
             await expect(
-                subscriptionContract.connect(owner).updatePlan(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero)
+                subscriptionContract.connect(owner).updatePlan(0, newBilling, newPrice, false, 0, ethers.ZeroAddress)
             )
                 .to.emit(subscriptionContract, "PlanUpdated")
-                .withArgs(0, newBilling, newPrice, false, 0, ethers.constants.AddressZero);
+                .withArgs(0, newBilling, newPrice, false, 0, ethers.ZeroAddress);
 
             const plan = await subscriptionContract.plans(0);
             expect(plan.priceInUsd).to.be.false;
             expect(plan.price).to.equal(newPrice);
-            expect(plan.priceFeedAddress).to.equal(ethers.constants.AddressZero);
+            expect(plan.priceFeedAddress).to.equal(ethers.ZeroAddress);
             expect(plan.usdPrice).to.equal(0);
         });
     });
@@ -297,7 +297,7 @@ describe("Subscription Contract", function () {
             // Merchant for this plan will be 'owner'
             await setup.subscriptionContract.connect(setup.owner).createPlan(
                 setup.owner.address, // Merchant is owner
-                setup.mockToken.address, fixedPrice, billingCycle, false, 0, ethers.constants.AddressZero
+                setup.mockToken.target, fixedPrice, billingCycle, false, 0, ethers.ZeroAddress
             );
             return setup;
         }
@@ -341,12 +341,12 @@ describe("Subscription Contract", function () {
 
             await subscription.connect(owner).createPlan(
                 owner.address,
-                permitToken.address,
+                permitToken.target,
                 price,
                 billingCycle,
                 false,
                 0,
-                ethers.constants.AddressZero
+                ethers.ZeroAddress
             );
 
             return { owner, user1, subscription, permitToken };
@@ -362,7 +362,7 @@ describe("Subscription Contract", function () {
                 name: await permitToken.name(),
                 version: "1",
                 chainId: await user1.getChainId(),
-                verifyingContract: permitToken.address,
+                verifyingContract: permitToken.target,
             };
             const types = {
                 Permit: [
@@ -399,7 +399,7 @@ describe("Subscription Contract", function () {
                 name: await permitToken.name(),
                 version: "1",
                 chainId: await user1.getChainId(),
-                verifyingContract: permitToken.address,
+                verifyingContract: permitToken.target,
             };
             const types = {
                 Permit: [
@@ -437,7 +437,7 @@ describe("Subscription Contract", function () {
                 name: await permitToken.name(),
                 version: "1",
                 chainId: await user1.getChainId(),
-                verifyingContract: permitToken.address,
+                verifyingContract: permitToken.target,
             };
             const types = {
                 Permit: [
@@ -481,12 +481,12 @@ describe("Subscription Contract", function () {
             // Merchant for this plan will be 'owner'
             await setup.subscriptionContract.connect(setup.owner).createPlan(
                 setup.owner.address, // Merchant is owner
-                setup.mockToken.address,
+                setup.mockToken.target,
                 0,
                 billingCycle,
                 true,
                 usdPriceCents,
-                setup.mockAggregator.address
+                setup.mockAggregator.target
             );
             return setup;
         }
@@ -557,10 +557,10 @@ describe("Subscription Contract", function () {
             // Plan merchant is owner
             await setup.subscriptionContract.connect(setup.owner).createPlan(
                 setup.owner.address, // merchant
-                setup.mockToken.address,
+                setup.mockToken.target,
                 fixedPrice,
                 billingCycle,
-                false, 0, ethers.constants.AddressZero
+                false, 0, ethers.ZeroAddress
             );
             await setup.subscriptionContract.connect(setup.user1).subscribe(planId);
             return setup;
@@ -622,7 +622,7 @@ describe("Subscription Contract", function () {
         it("Should revert if contract has insufficient allowance for fixed price payment", async function () {
             const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithActiveFixedSubscription);
             // Revoke allowance
-            await mockToken.connect(user1).approve(subscriptionContract.address, 0);
+            await mockToken.connect(user1).approve(subscriptionContract.target, 0);
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
             await time.increaseTo(subDetails.nextPaymentDate.add(1));
@@ -646,12 +646,12 @@ describe("Subscription Contract", function () {
             // Plan merchant is owner
             await setup.subscriptionContract.connect(setup.owner).createPlan(
                 setup.owner.address, // merchant
-                setup.mockToken.address,
+                setup.mockToken.target,
                 0, // price
                 billingCycle,
                 true, // priceInUsd
                 usdPriceCents,
-                setup.mockAggregator.address
+                setup.mockAggregator.target
             );
             await setup.subscriptionContract.connect(setup.user1).subscribe(planId); // Initial payment based on $2000/MTK
             return setup;
@@ -748,7 +748,7 @@ describe("Subscription Contract", function () {
 
         it("Should revert if contract has insufficient allowance for USD priced payment", async function () {
             const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithActiveUsdSubscription);
-            await mockToken.connect(user1).approve(subscriptionContract.address, 0);
+            await mockToken.connect(user1).approve(subscriptionContract.target, 0);
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
             await time.increaseTo(subDetails.nextPaymentDate.add(1));
@@ -770,10 +770,10 @@ describe("cancelSubscription", function () {
         // Plan merchant is owner
         await setup.subscriptionContract.connect(setup.owner).createPlan(
             setup.owner.address, // merchant
-            setup.mockToken.address,
+            setup.mockToken.target,
             fixedPrice,
             billingCycle,
-            false, 0, ethers.constants.AddressZero
+            false, 0, ethers.ZeroAddress
         );
         // user1 subscribes
         await setup.subscriptionContract.connect(setup.user1).subscribe(planId);
@@ -853,7 +853,7 @@ describe("Ownable2Step Behavior", function () {
             .withArgs(owner.address, anotherUser.address);
 
         expect(await subscriptionContract.owner()).to.equal(anotherUser.address);
-        expect(await subscriptionContract.pendingOwner()).to.equal(ethers.constants.AddressZero);
+        expect(await subscriptionContract.pendingOwner()).to.equal(ethers.ZeroAddress);
     });
 
     it("Should prevent non-owner from initiating ownership transfer", async function () {
@@ -879,7 +879,7 @@ describe("Ownable2Step Behavior", function () {
 
         // Owner can still create plans
         await expect(subscriptionContract.connect(owner).createPlan(
-            owner.address, mockToken.address, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+            owner.address, mockToken.target, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress
         )).to.not.be.reverted;
     });
 
@@ -890,12 +890,12 @@ describe("Ownable2Step Behavior", function () {
 
         // New owner (anotherUser) can create plans
         await expect(subscriptionContract.connect(anotherUser).createPlan(
-            anotherUser.address, mockToken.address, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+            anotherUser.address, mockToken.target, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress
         )).to.not.be.reverted;
 
         // Old owner cannot
         await expect(subscriptionContract.connect(owner).createPlan(
-            owner.address, mockToken.address, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
+            owner.address, mockToken.target, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress
         )).to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
         .withArgs(owner.address);
     });
@@ -907,12 +907,12 @@ describe("Pausable", function () {
         const fixedPrice = ethers.parseUnits("10", 18);
         await setup.subscriptionContract.connect(setup.owner).createPlan(
             setup.owner.address,
-            setup.mockToken.address,
+            setup.mockToken.target,
             fixedPrice,
             THIRTY_DAYS_IN_SECS,
             false,
             0,
-            ethers.constants.AddressZero
+            ethers.ZeroAddress
         );
         await setup.subscriptionContract.connect(setup.user1).subscribe(0);
         return { ...setup, fixedPrice };
@@ -938,12 +938,12 @@ describe("Pausable", function () {
 
         await expect(subscriptionContract.connect(owner).createPlan(
             owner.address,
-            ethers.constants.AddressZero,
+            ethers.ZeroAddress,
             fixedPrice,
             THIRTY_DAYS_IN_SECS,
             false,
             0,
-            ethers.constants.AddressZero
+            ethers.ZeroAddress
         )).to.be.revertedWith("Pausable: paused");
 
         await expect(subscriptionContract.connect(user1).subscribe(0)).to.be.revertedWith("Pausable: paused");
@@ -967,22 +967,22 @@ describe("Reentrancy protection", function () {
         const amount = ethers.parseUnits("100", 18);
         await maliciousToken.mint(user1.address, amount);
 
-        await maliciousToken.connect(user1).approve(subscriptionContract.address, amount);
+        await maliciousToken.connect(user1).approve(subscriptionContract.target, amount);
 
         const fixedPrice = ethers.parseUnits("10", 18);
         await subscriptionContract.connect(owner).createPlan(
             owner.address,
-            maliciousToken.address,
+            maliciousToken.target,
             fixedPrice,
             THIRTY_DAYS_IN_SECS,
             false,
             0,
-            ethers.constants.AddressZero
+            ethers.ZeroAddress
         );
 
         // Configure token to attempt reentrancy during subscribe
         const data = subscriptionContract.interface.encodeFunctionData("cancelSubscription", [0]);
-        await maliciousToken.setReentrancy(subscriptionContract.address, data);
+        await maliciousToken.setReentrancy(subscriptionContract.target, data);
 
         return { subscriptionContract, maliciousToken, owner, user1 };
     }
@@ -996,15 +996,36 @@ describe("Reentrancy protection", function () {
     it("processPayment rejects reentrancy", async function () {
         const { subscriptionContract, maliciousToken, owner, user1 } = await loadFixture(deployMaliciousFixture);
         // Disable reentrancy for initial subscribe
-        await maliciousToken.setReentrancy(ethers.constants.AddressZero, "0x");
+        await maliciousToken.setReentrancy(ethers.ZeroAddress, "0x");
         await subscriptionContract.connect(user1).subscribe(0);
 
         // Now attempt reentrancy during processPayment
         const data = subscriptionContract.interface.encodeFunctionData("subscribe", [0]);
-        await maliciousToken.setReentrancy(subscriptionContract.address, data);
+        await maliciousToken.setReentrancy(subscriptionContract.target, data);
 
         await time.increase(THIRTY_DAYS_IN_SECS + 1);
         await expect(subscriptionContract.connect(owner).processPayment(user1.address, 0))
             .to.be.revertedWithCustomError(subscriptionContract, "ReentrancyGuardReentrantCall");
+    });
+});
+
+describe("recoverERC20", function () {
+    it("Only owner can recover tokens", async function () {
+        const { subscriptionContract, mockToken, owner, user1 } = await loadFixture(deploySubscriptionFixture);
+
+        const amount = ethers.parseUnits("50", 18);
+        await mockToken.connect(owner).transfer(subscriptionContract.target, amount);
+
+        await expect(
+            subscriptionContract.connect(user1).recoverERC20(mockToken.target, amount)
+        )
+            .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+            .withArgs(user1.address);
+
+        const ownerBalBefore = await mockToken.balanceOf(owner.address);
+
+        await expect(subscriptionContract.connect(owner).recoverERC20(mockToken.target, amount)).to.not.be.reverted;
+
+        expect(await mockToken.balanceOf(owner.address)).to.equal(ownerBalBefore.add(amount));
     });
 });
