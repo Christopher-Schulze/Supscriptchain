@@ -7,16 +7,21 @@ function parseArgs() {
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === '--network' && args[i + 1]) {
-      result.network = args[i + 1];
-      i++;
-    } else if (arg.startsWith('--network=')) {
-      result.network = arg.split('=')[1];
-    } else if (arg === '--address' && args[i + 1]) {
-      result.address = args[i + 1];
-      i++;
-    } else if (arg.startsWith('--address=')) {
-      result.address = arg.split('=')[1];
+    switch (arg) {
+      case '--network':
+      case '-n':
+        result.network = args[++i];
+        break;
+      case '--address':
+      case '-a':
+        result.address = args[++i];
+        break;
+      default:
+        if (arg.startsWith('--network=')) {
+          result.network = arg.split('=')[1];
+        } else if (arg.startsWith('--address=')) {
+          result.address = arg.split('=')[1];
+        }
     }
   }
 
@@ -30,7 +35,7 @@ const address = addressArg || process.env.CONTRACT_ADDRESS;
 
 if (!network || !address) {
   console.error(
-    'NETWORK/--network and CONTRACT_ADDRESS/--address must be provided'
+    'Usage: ts-node scripts/prepare-subgraph.ts --network <name> --address <0x...>'
   );
   process.exit(1);
 }
