@@ -147,6 +147,19 @@ describe("Subscription Contract", function () {
                 owner.address, ethers.constants.AddressZero, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.constants.AddressZero
             )).to.be.revertedWith("Token address cannot be zero");
         });
+
+        it("Should revert if billingCycle is zero", async function () {
+            const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
+            await expect(subscriptionContract.connect(owner).createPlan(
+                owner.address,
+                mockToken.address,
+                1,
+                0,
+                false,
+                0,
+                ethers.constants.AddressZero
+            )).to.be.revertedWith("Billing cycle must be > 0");
+        });
     });
 
     describe("updatePlan", function () {
@@ -217,6 +230,13 @@ describe("Subscription Contract", function () {
             await expect(
                 subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, 1000, ethers.constants.AddressZero)
             ).to.be.revertedWith("Price feed address required for USD pricing");
+        });
+
+        it("Reverts when billingCycle is zero", async function () {
+            const { subscriptionContract, owner } = await loadFixture(fixtureWithExistingPlan);
+            await expect(
+                subscriptionContract.connect(owner).updatePlan(0, 0, 0, false, 0, ethers.constants.AddressZero)
+            ).to.be.revertedWith("Billing cycle must be > 0");
         });
 
         async function fixtureWithExistingUsdPlan() {

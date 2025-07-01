@@ -117,6 +117,12 @@ The command sets `REPORT_GAS=true` and prints a table similar to:
 
 Additional documentation can be found in the [docs](docs/) directory.
 
+## Creating a Plan
+
+When calling `createPlan`, the `billingCycle` parameter must be greater than
+zero. Attempts to create or update a plan with `billingCycle = 0` will
+revert with `"Billing cycle must be > 0"`.
+
 ## Access Control
 
 `Subscription.sol` uses OpenZeppelin's `AccessControl` to manage privileged

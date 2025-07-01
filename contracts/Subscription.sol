@@ -165,6 +165,7 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard 
         uint256 _usdPrice,
         address _priceFeedAddress
     ) public onlyOwner whenNotPaused {
+        require(_billingCycle > 0, "Billing cycle must be > 0");
         if (_priceInUsd) {
             require(_priceFeedAddress != address(0), "Price feed address required for USD pricing");
         }
@@ -210,6 +211,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard 
     ) public onlyOwner whenNotPaused {
         SubscriptionPlan storage plan = plans[_planId];
         require(plan.merchant != address(0), "Plan does not exist");
+
+        require(_billingCycle > 0, "Billing cycle must be > 0");
 
         if (_priceInUsd) {
             require(_priceFeedAddress != address(0), "Price feed address required for USD pricing");

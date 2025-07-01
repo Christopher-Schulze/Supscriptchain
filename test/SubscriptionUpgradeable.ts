@@ -120,6 +120,15 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
     return { ...base, cycle, aggregator, usdPrice };
   }
 
+  describe("createPlan", function () {
+    it("reverts when billingCycle is zero", async function () {
+      const { owner, token, proxy } = await loadFixture(deployUpgradeableFixture);
+      await expect(
+        proxy.connect(owner).createPlan(owner.address, token.address, 1, 0, false, 0, ethers.ZeroAddress)
+      ).to.be.revertedWith("Billing cycle must be > 0");
+    });
+  });
+
   describe("subscribeWithPermit", function () {
     it("reverts with expired permit signature", async function () {
       const { owner, user, proxy, token, price } = await loadFixture(permitPlanFixture);
@@ -227,6 +236,13 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
       expect(plan.price).to.equal(newPrice);
       expect(plan.priceFeedAddress).to.equal(ethers.ZeroAddress);
       expect(plan.usdPrice).to.equal(0);
+    });
+
+    it("reverts when billingCycle is zero", async function () {
+      const { proxy, owner } = await loadFixture(tokenPlanFixture);
+      await expect(
+        proxy.connect(owner).updatePlan(PLAN_ID, 0, 0, false, 0, ethers.ZeroAddress)
+      ).to.be.revertedWith("Billing cycle must be > 0");
     });
   });
 });
