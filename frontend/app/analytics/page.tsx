@@ -20,9 +20,11 @@ export default function Analytics() {
   const [subs, setSubs] = useState<SubscriptionData[]>([]);
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
         const [s, p] = await Promise.all([
           getActiveSubscriptions(),
@@ -33,6 +35,8 @@ export default function Analytics() {
       } catch (err) {
         console.error(err);
         setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -42,6 +46,7 @@ export default function Analytics() {
     <div>
       <h1>Analytics</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      {loading && <p>Loading...</p>}
       <h2>Active Subscriptions</h2>
       <ul>
         {subs.map((s) => (

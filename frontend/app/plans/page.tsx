@@ -18,9 +18,11 @@ export default function Plans() {
   const { account, connect } = useWallet();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
         const contract = await getContract();
         const nextId: bigint = await contract.nextPlanId();
@@ -33,6 +35,8 @@ export default function Plans() {
       } catch (err) {
         console.error(err);
         setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -42,6 +46,7 @@ export default function Plans() {
     <div>
       <h1>Available Plans</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
+      {loading && <p>Loading...</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <ul>
         {plans.map((p, idx) => (
