@@ -37,7 +37,7 @@ describe("SubscriptionUpgradeable upgrade", function () {
     const price = ethers.parseUnits("10", 18);
     const cycle = 30 * 24 * 60 * 60;
 
-    await proxy.connect(owner).createPlan(owner.address, token.address, price, cycle, false, 0, ethers.ZeroAddress);
+    await proxy.connect(owner).createPlan(owner.address, token.target, price, cycle, false, 0, ethers.ZeroAddress);
 
     await proxy.connect(user).subscribe(PLAN_ID);
     const subBefore = await proxy.userSubscriptions(user.address, PLAN_ID);
@@ -87,7 +87,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
     const cycle = 30 * 24 * 60 * 60;
     await token.mint(user.address, ethers.parseUnits("1000", 18));
 
-    await proxy.connect(owner).createPlan(owner.address, token.address, price, cycle, false, 0, ethers.ZeroAddress);
+    await proxy.connect(owner).createPlan(owner.address, token.target, price, cycle, false, 0, ethers.ZeroAddress);
 
     return { owner, user, proxy, token, price };
   }
@@ -96,7 +96,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
     const base = await deployUpgradeableFixture();
     const price = ethers.parseUnits("10", 18);
     const cycle = 30 * 24 * 60 * 60;
-    await base.proxy.connect(base.owner).createPlan(base.owner.address, base.token.address, price, cycle, false, 0, ethers.ZeroAddress);
+    await base.proxy.connect(base.owner).createPlan(base.owner.address, base.token.target, price, cycle, false, 0, ethers.ZeroAddress);
 
     const Agg = await ethers.getContractFactory("MockV3Aggregator", base.owner);
     const oraclePrice = ethers.toBigInt(2000) * 10n ** 8n;
@@ -115,7 +115,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
     await aggregator.waitForDeployment();
 
     const usdPrice = 1000;
-    await base.proxy.connect(base.owner).createPlan(base.owner.address, base.token.address, 0, cycle, true, usdPrice, await aggregator.getAddress());
+    await base.proxy.connect(base.owner).createPlan(base.owner.address, base.token.target, 0, cycle, true, usdPrice, await aggregator.getAddress());
 
     return { ...base, cycle, aggregator, usdPrice };
   }
@@ -271,6 +271,27 @@ describe("Reentrancy protection", function () {
 
     await time.increase(THIRTY_DAYS_IN_SECS + 1);
     await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWithCustomError(proxy, "ReentrancyGuardReentrantCall");
+  });
+});
+
+describe("recoverERC20", function () {
+  it("Only owner can recover tokens", async function () {
+    const { owner, user, token, proxy } = await loadFixture(deployUpgradeableFixture);
+
+    const amount = ethers.parseUnits("50", 18);
+    await token.connect(owner).transfer(await proxy.getAddress(), amount);
+
+    await expect(
+      proxy.connect(user).recoverERC20(await token.getAddress(), amount)
+    )
+      .to.be.revertedWithCustomError(proxy, "OwnableUnauthorizedAccount")
+      .withArgs(user.address);
+
+    const balBefore = await token.balanceOf(owner.address);
+
+    await expect(proxy.connect(owner).recoverERC20(await token.getAddress(), amount)).to.not.be.reverted;
+
+    expect(await token.balanceOf(owner.address)).to.equal(balBefore.add(amount));
   });
 });
 
