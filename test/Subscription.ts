@@ -737,10 +737,6 @@ describe("Subscription Contract", function () {
                 .to.be.reverted;
         });
     });
-    // Keep existing general failure tests for subscribe/processPayment (non-existent plan, not active, not due, insufficient funds/allowance)
-    // and adapt them if necessary or duplicate for USD plans if behavior might differ.
-    // For example, "Should revert if subscribing to a non-existent plan" is generic.
-    // "Should revert if token transfer fails (insufficient balance)" needs to be tested for both fixed and dynamic pricing.
 });
 
 
