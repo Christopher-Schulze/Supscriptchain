@@ -85,11 +85,13 @@ Install [Slither](https://github.com/crytic/slither) using `pip`:
 pip install slither-analyzer
 ```
 
-Run the analyzer against the project:
+Run the analyzer using the npm script:
 
 ```bash
-slither .
+npm run slither
 ```
+
+This executes `slither .` under the hood.
 
 CI will fail if Slither reports any high severity findings.
 
