@@ -13,11 +13,17 @@ interface SubscriberEntry {
   plans: number[];
 }
 
+interface FailedPayment {
+  user: string;
+  plan: number;
+  reason: string;
+}
+
 async function main() {
   const failOnFailure =
     process.env.FAIL_ON_FAILURE === 'true' ||
     process.env.FAIL_ON_FAILURE === '1';
-  const failures: { user: string; plan: number; reason: string }[] = [];
+  const failures: FailedPayment[] = [];
   const contractAddress = process.env.SUBSCRIPTION_ADDRESS;
   if (!contractAddress) {
     throw new Error('SUBSCRIPTION_ADDRESS not set');
@@ -90,6 +96,8 @@ async function main() {
       console.log(`- ${f.user} plan ${f.plan}: ${f.reason}`);
     }
     if (failOnFailure) {
+      process.exit(1);
+    } else {
       process.exitCode = 1;
     }
   }
