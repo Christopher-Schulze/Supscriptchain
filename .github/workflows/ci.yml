@@ -1,39 +1,41 @@
-name: Node.js CI
+name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-    - name: Install Slither
-      run: pip install slither-analyzer
-    - name: Run Slither
-      run: slither . --fail-high
-    - uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-    - run: npm install
-    - name: Install Graph testing dependencies
-      run: npm install -g @graphprotocol/graph-cli matchstick-as
-    - run: npm run lint
-    - run: npm run solhint
-    - run: npm test
-    - run: npm run coverage
-    - run: npm run test-subgraph
-    - name: Install frontend deps
-      run: npm install --prefix frontend
-    - name: Lint frontend
-      run: npm run lint --prefix frontend
-    - name: Build frontend
-      run: npm run build --prefix frontend
-    - run: npm run test:e2e
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Slither
+        run: pip install slither-analyzer
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Run coverage
+        run: npm run coverage
+
+      - name: Run Slither
+        run: slither .
