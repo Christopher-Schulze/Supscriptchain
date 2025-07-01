@@ -17,9 +17,11 @@ interface Plan {
 export default function Plans() {
   const { account, connect } = useWallet();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function load() {
+      setLoading(true);
       try {
         const contract = await getContract();
         const nextId: bigint = await contract.nextPlanId();
@@ -29,8 +31,11 @@ export default function Plans() {
           list.push(plan as Plan);
         }
         setPlans(list);
-      } catch (err) {
+      } catch (err: any) {
         console.error(err);
+        alert(err?.message || 'Failed to load plans');
+      } finally {
+        setLoading(false);
       }
     }
     load();
@@ -40,13 +45,17 @@ export default function Plans() {
     <div>
       <h1>Available Plans</h1>
       {!account && <button onClick={connect}>Connect Wallet</button>}
-      <ul>
-        {plans.map((p, idx) => (
-          <li key={idx}>
-            Plan {idx}: token {p.token} price {p.price.toString()} billing {p.billingCycle.toString()}s
-          </li>
-        ))}
-      </ul>
+      {loading ? (
+        <p>Loading plans...</p>
+      ) : (
+        <ul>
+          {plans.map((p, idx) => (
+            <li key={idx}>
+              Plan {idx}: token {p.token} price {p.price.toString()} billing {p.billingCycle.toString()}s
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

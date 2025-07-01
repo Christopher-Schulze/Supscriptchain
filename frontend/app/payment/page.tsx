@@ -7,13 +7,20 @@ export default function Payment() {
   const { account, connect } = useWallet();
   const [planId, setPlanId] = useState('0');
   const [user, setUser] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function trigger() {
+    setLoading(true);
     try {
       const contract = await getContract();
-      await contract.processPayment(user, BigInt(planId));
-    } catch (err) {
+      const tx = await contract.processPayment(user, BigInt(planId));
+      await tx.wait();
+      alert(`Payment successful. Tx: ${tx.hash}`);
+    } catch (err: any) {
       console.error(err);
+      alert(err?.message || 'Transaction failed');
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -29,7 +36,9 @@ export default function Payment() {
         <label>Plan ID: </label>
         <input value={planId} onChange={e => setPlanId(e.target.value)} />
       </div>
-      <button onClick={trigger}>Process</button>
+      <button onClick={trigger} disabled={loading}>
+        {loading ? 'Processing...' : 'Process'}
+      </button>
     </div>
   );
 }

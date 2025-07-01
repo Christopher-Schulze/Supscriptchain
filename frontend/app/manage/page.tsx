@@ -6,22 +6,36 @@ import useWallet from '../../lib/useWallet';
 export default function Manage() {
   const { account, connect } = useWallet();
   const [planId, setPlanId] = useState('0');
+  const [loadingSub, setLoadingSub] = useState(false);
+  const [loadingCancel, setLoadingCancel] = useState(false);
 
   async function subscribe() {
+    setLoadingSub(true);
     try {
       const contract = await getContract();
-      await contract.subscribe(BigInt(planId));
-    } catch (err) {
+      const tx = await contract.subscribe(BigInt(planId));
+      await tx.wait();
+      alert(`Subscribed. Tx: ${tx.hash}`);
+    } catch (err: any) {
       console.error(err);
+      alert(err?.message || 'Transaction failed');
+    } finally {
+      setLoadingSub(false);
     }
   }
 
   async function cancel() {
+    setLoadingCancel(true);
     try {
       const contract = await getContract();
-      await contract.cancelSubscription(BigInt(planId));
-    } catch (err) {
+      const tx = await contract.cancelSubscription(BigInt(planId));
+      await tx.wait();
+      alert(`Subscription cancelled. Tx: ${tx.hash}`);
+    } catch (err: any) {
       console.error(err);
+      alert(err?.message || 'Transaction failed');
+    } finally {
+      setLoadingCancel(false);
     }
   }
 
@@ -33,8 +47,12 @@ export default function Manage() {
         <label>Plan ID: </label>
         <input value={planId} onChange={e => setPlanId(e.target.value)} />
       </div>
-      <button onClick={subscribe}>Subscribe</button>
-      <button onClick={cancel}>Cancel</button>
+      <button onClick={subscribe} disabled={loadingSub}>
+        {loadingSub ? 'Subscribing...' : 'Subscribe'}
+      </button>
+      <button onClick={cancel} disabled={loadingCancel}>
+        {loadingCancel ? 'Cancelling...' : 'Cancel'}
+      </button>
     </div>
   );
 }
