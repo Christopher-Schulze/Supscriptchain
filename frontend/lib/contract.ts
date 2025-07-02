@@ -23,3 +23,14 @@ export async function getContract(): Promise<Subscription> {
   }
   return Subscription__factory.connect(address, signerOrProvider);
 }
+
+export async function subscribeWithPermit(
+  planId: bigint,
+  deadline: bigint,
+  v: number,
+  r: string,
+  s: string
+) {
+  const contract = await getContract();
+  return contract.subscribeWithPermit(planId, deadline, v, r, s);
+}
