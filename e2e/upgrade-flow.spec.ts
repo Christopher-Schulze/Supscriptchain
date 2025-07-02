@@ -174,6 +174,9 @@ test('upgrade flow', async ({ page }) => {
     return sub.nextPaymentDate > before;
   }).toBe(true);
 
+  // confirm the proxy now exposes the upgraded ABI
+  expect(await upgraded.version()).toBe('v2');
+
   const finalSub = await upgraded.userSubscriptions(user, 0);
   subgraphData.subscriptions[0].nextPaymentDate = finalSub.nextPaymentDate.toString();
   subgraphData.payments.push({
