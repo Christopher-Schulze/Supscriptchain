@@ -4,6 +4,7 @@
 export * as interfaces from "./interfaces";
 export * as mocks from "./mocks";
 export { MockToken__factory } from "./MockToken__factory";
+export { BaseSubscription__factory } from "./BaseSubscription__factory";
 export { Subscription__factory } from "./Subscription__factory";
 export { SubscriptionUpgradeable__factory } from "./SubscriptionUpgradeable__factory";
 export { SubscriptionUpgradeableV2__factory } from "./SubscriptionUpgradeableV2__factory";
