@@ -39,8 +39,10 @@ graph-node \
 ### 3. Prepare the Subgraph
 
 The `prepare-subgraph` script fills in the network and contract address in the
-manifest. If Hardhat deployments exist, the values are detected automatically.
-Otherwise provide them via environment variables or CLI arguments.
+manifest. When a deployment exists under `deployments/<network>` or an
+OpenZeppelin upgrades file in `.openzeppelin/`, the script automatically reads
+the network and address from those files. If nothing can be detected, provide
+the values via environment variables or CLI arguments.
 
 1. Generate the types with `npm run codegen`.
 2. Run `npm run prepare-subgraph` to create `subgraph/subgraph.local.yaml`.

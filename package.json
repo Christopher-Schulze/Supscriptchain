@@ -19,7 +19,9 @@
     "prettier": "^3.6.2",
     "solc": "^0.8.26",
     "solhint": "^5.2.0",
-    "typechain": "^8.3.2"
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.2",
+    "typescript": "^5.4.5"
   },
   "scripts": {
     "compile": "hardhat compile",
