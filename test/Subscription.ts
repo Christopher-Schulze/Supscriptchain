@@ -1,4 +1,4 @@
-import { ethers, BigNumber } from "hardhat"; // BigNumber may be needed for calculations
+import { ethers } from "hardhat";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
@@ -302,6 +302,21 @@ describe("Subscription Contract", function () {
             return setup;
         }
 
+        async function fixtureWithActiveFixedSubscription() {
+            const setup = await loadFixture(deploySubscriptionFixture);
+            await setup.subscriptionContract.connect(setup.owner).createPlan(
+                setup.owner.address,
+                setup.mockToken.target,
+                fixedPrice,
+                billingCycle,
+                false,
+                0,
+                ethers.ZeroAddress
+            );
+            await setup.subscriptionContract.connect(setup.user1).subscribe(planId);
+            return setup;
+        }
+
         it("Should allow user to subscribe to a fixed price plan", async function () {
             const { subscriptionContract, mockToken, user1, owner } = await loadFixture(fixtureWithFixedPlan);
             const merchantAddress = owner.address;
@@ -318,7 +333,24 @@ describe("Subscription Contract", function () {
             expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore.sub(fixedPrice));
             expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore.add(fixedPrice));
         });
-        // ... other fixed price subscribe tests (non-existent plan, insufficient balance/allowance, already subscribed)
+
+        it("Should revert when subscribing to a non-existent plan", async function () {
+            const { subscriptionContract, user1 } = await loadFixture(deploySubscriptionFixture);
+            await expect(subscriptionContract.connect(user1).subscribe(999)).to.be.revertedWith("Plan does not exist");
+        });
+
+        it("Should revert if contract has insufficient allowance for subscription", async function () {
+            const { subscriptionContract, mockToken, user1 } = await loadFixture(fixtureWithFixedPlan);
+            await mockToken.connect(user1).approve(subscriptionContract.target, 0);
+            await expect(subscriptionContract.connect(user1).subscribe(planId)).to.be.revertedWith("Insufficient allowance");
+        });
+
+        it("Should revert when already subscribed to the plan", async function () {
+            const { subscriptionContract, user1 } = await loadFixture(fixtureWithActiveFixedSubscription);
+            await expect(subscriptionContract.connect(user1).subscribe(planId)).to.be.revertedWith("Already actively subscribed to this plan");
+        });
+
+        // ... other fixed price subscribe tests
     });
 
     describe("subscribeWithPermit", function () {
