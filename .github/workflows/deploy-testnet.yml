@@ -1,0 +1,33 @@
+name: Deploy Testnet
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Deploy to Sepolia
+        env:
+          SEPOLIA_RPC_URL: ${{ secrets.SEPOLIA_RPC_URL }}
+          SEPOLIA_PRIVATE_KEY: ${{ secrets.SEPOLIA_PRIVATE_KEY }}
+          MERCHANT_ADDRESS: ${{ secrets.MERCHANT_ADDRESS }}
+          TOKEN_ADDRESS: ${{ secrets.TOKEN_ADDRESS }}
+          PRICE_FEED: ${{ secrets.PRICE_FEED }}
+          BILLING_CYCLE: ${{ secrets.BILLING_CYCLE }}
+          PRICE_IN_USD: ${{ secrets.PRICE_IN_USD }}
+          FIXED_PRICE: ${{ secrets.FIXED_PRICE }}
+          USD_PRICE: ${{ secrets.USD_PRICE }}
+        run: npx hardhat run scripts/deploy-testnet.ts --network sepolia
