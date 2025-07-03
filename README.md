@@ -278,7 +278,7 @@ Diese Task liest ebenfalls die Proxy-Adresse aus der Umgebungsvariablen
 The `subgraph/` directory contains a minimal [The Graph](https://thegraph.com) setup for indexing events emitted by `Subscription.sol`.
 Provide the network name and the deployed contract address via the `NETWORK` and
 `CONTRACT_ADDRESS` variables (or `--network` and `--address` arguments) before
-building:
+building. These variables are also used by `npm run prepare-subgraph`:
 
 ```bash
 NETWORK=sepolia CONTRACT_ADDRESS=0xYourContract npm run build-subgraph
