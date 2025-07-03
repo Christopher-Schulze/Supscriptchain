@@ -1,55 +1,22 @@
-// Usage Examples for SubscriptionUpgradeable (TypeScript, Bash, Environment, Curl, komplett in einem Block)
+# Usage Examples
 
-// --- TypeScript (Hardhat Console/Scripts) ---
+This page collects tips and commands for working with the repository.
 
-// Creating a Plan
-const subscription = await ethers.getContract("Subscription");
-await subscription.createPlan(
-  merchant.address,
-  token.address,
-  ethers.utils.parseUnits("10", 18), // token price
-  30 * 24 * 60 * 60,                 // billing cycle in seconds
-  false,                             // priceInUsd
-  0,
-  ethers.constants.AddressZero
-);
+## Running the Subgraph Locally {#running-the-subgraph-locally}
 
-// Subscribing
-await subscription.connect(user).subscribe(0);
+Follow these steps to generate the Graph files and deploy a local instance.
 
-// Subscribing with Permit
-const deadline = Math.floor(Date.now() / 1000) + 3600;
-const { v, r, s } = await getPermitSignature(
-  user,
-  token,
-  subscription.address,
-  price,
-  deadline
-);
-await subscription.connect(user).subscribeWithPermit(0, deadline, v, r, s);
+### 1. Install the Graph CLI
 
-// Processing Recurring Payment
-await subscription.connect(merchant).processPayment(user.address, 0);
-
-// Cancelling a Subscription
-await subscription.connect(user).cancelSubscription(0);
-
-// Updating a Plan
-await subscription.updatePlan(
-  0,                                   // planId
-  60 * 60 * 24 * 60,                   // new billing cycle
-  ethers.utils.parseUnits("20", 18),   // new price
-  false,                               // priceInUsd
-  0,
-  ethers.constants.AddressZero
-);
-
-// --- Subgraph Setup & Usage ---
-
-# 1. Install the Graph CLI
+```bash
 npm install -g @graphprotocol/graph-cli
+```
 
-# 2. Start Graph Node (Docker recommended)
+### 2. Start a Graph Node
+
+Using Docker is the quickest option:
+
+```bash
 docker run -it --rm -p 8000:8000 -p 8020:8020 \
   -e postgres_host=host.docker.internal \
   -e postgres_user=graph \
@@ -58,61 +25,78 @@ docker run -it --rm -p 8000:8000 -p 8020:8020 \
   -e ethereum=NETWORK:http://host.docker.internal:8545 \
   -e ipfs=host.docker.internal:5001 \
   graphprotocol/graph-node:latest
+```
 
-# OR: (if you want to run graph-node locally, not in Docker)
+Alternatively run the binary directly:
+
+```bash
 graph-node \
   --postgres-url postgresql://graph:password@localhost:5432/graph-node \
   --ethereum-rpc NETWORK:http://localhost:8545 \
   --ipfs 127.0.0.1:5001
+```
 
-# 3. Prepare & build the subgraph (replace <network> and <address>)
-# Set env or pass via command line, both are fine:
-NETWORK=<network> CONTRACT_ADDRESS=<address> \
-  npx ts-node scripts/prepare-subgraph.ts
+### 3. Prepare the Subgraph
+
+Set the network and contract address as environment variables or pass them via
+CLI arguments. Then generate the code and create a local manifest:
+
+```bash
+export NETWORK=sepolia
+export CONTRACT_ADDRESS=0xYourContract
 
 npm run codegen
-npm run prepare-subgraph -- --network <network> --address <address>
-npm run build-subgraph
+npm run prepare-subgraph -- --network $NETWORK --address $CONTRACT_ADDRESS
+```
 
-# ...OR directly (build-subgraph auto-runs prepare-subgraph)
-npm run build-subgraph -- --network <network> --address <address>
+### 4. Build the Subgraph
 
-# 4. Deploy to local graph-node
+The build script runs `prepare-subgraph` automatically:
+
+```bash
+npm run build-subgraph -- --network $NETWORK --address $CONTRACT_ADDRESS
+```
+
+This writes `subgraph/subgraph.local.yaml`.
+
+### 5. Deploy
+
+```bash
 graph deploy \
   --node http://localhost:8020/ \
   --ipfs http://localhost:5001/ \
   subscription-subgraph subgraph/subgraph.local.yaml
+```
 
-# 5. Query the subgraph (GraphiQL or Curl)
-# Web:
-# http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
+### 6. Query
 
-# Curl:
+Open GraphiQL at:
+
+```
+http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
+```
+
+Or query via cURL:
+
+```bash
 curl -X POST http://localhost:8000/subgraphs/name/subscription-subgraph/graphql \
   -H 'Content-Type: application/json' \
   -d '{"query":"{ plans { id merchant } }"}'
+```
 
-# Returns:
-# {
-#   "data": {
-#     "plans": [
-#       { "id": "...", "merchant": "..." },
-#       ...
-#     ]
-#   }
-# }
+### Environment Variables
 
-# --- Environment Variables for prepare-subgraph/build-subgraph ---
+The subgraph scripts read the following variables:
 
-# Export these for easy CI or local use:
-export NETWORK=sepolia
-export CONTRACT_ADDRESS=0xYourContract
-npm run build-subgraph
+- `NETWORK` – network name used when preparing the manifest
+- `CONTRACT_ADDRESS` – address of the deployed contract
+- `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint used by the frontend
 
-# --- Frontend Integration: .env.local for Analytics Page ---
+For the frontend create `frontend/.env.local` with:
 
-# In frontend/.env.local:
+```ini
 NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
+```
 
-// ----- END OF ONE-BLOCK USAGE-DOKU -----
-// Einfach alles in eins. Keine Splitter mehr, keine dummen Merge-Tags. Copy. Paste. Fertig. 💸
+Start the app with `npm run dev` and open `/analytics` once the subgraph has
+synced.
