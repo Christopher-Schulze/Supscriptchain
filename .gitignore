@@ -10,6 +10,7 @@ cache/
 artifacts/
 dist/
 build/
+generated/
 
 # OS-specific
 .DS_Store
