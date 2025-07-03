@@ -129,3 +129,25 @@ NEXT_PUBLIC_SUBGRAPH_URL=https://your-node.example.com/subgraphs/name/subscripti
 
 Monitoring the node can be automated with `npm run subgraph-server`, which
 restarts `graph-node` on failure and logs health check errors.
+
+`subgraph-server` accepts the following environment variables:
+
+- `GRAPH_NODE_CMD` – path to the `graph-node` binary (default `graph-node`)
+- `GRAPH_NODE_ARGS` – additional arguments passed to the process
+- `GRAPH_NODE_HEALTH` – healthcheck URL (default `http://localhost:8000/health`)
+- `GRAPH_NODE_HEALTH_INTERVAL` – interval between health checks in ms
+- `GRAPH_NODE_MAX_FAILS` – number of failed checks before a restart
+- `GRAPH_NODE_RESTART_DELAY` – delay before restarting in ms
+
+Example systemd service using these variables:
+
+```ini
+[Service]
+Environment=GRAPH_NODE_CMD=/usr/local/bin/graph-node
+Environment=GRAPH_NODE_ARGS=--config /etc/graph-node/config.toml
+Environment=GRAPH_NODE_HEALTH=http://localhost:8000/health
+Environment=GRAPH_NODE_HEALTH_INTERVAL=60000
+Environment=GRAPH_NODE_MAX_FAILS=5
+Environment=GRAPH_NODE_RESTART_DELAY=10000
+ExecStart=/usr/bin/npm run subgraph-server --prefix /opt/supscriptchain
+```

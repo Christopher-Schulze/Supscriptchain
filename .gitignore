@@ -34,3 +34,6 @@ coverage/
 # Frontend
 frontend/.next/
 frontend/.env.local
+# Generated subgraph files
+subgraph/subgraph.local.yaml
+subgraph/generated/

@@ -31,26 +31,47 @@ function parseArgs() {
 const { network: networkArg, address: addressArg } = parseArgs();
 
 function detectNetwork(): string | undefined {
+  if (process.env.HARDHAT_NETWORK) return process.env.HARDHAT_NETWORK;
+
   const deploymentsDir = path.join(__dirname, '../deployments');
-  if (!fs.existsSync(deploymentsDir)) return undefined;
-  const entries = fs
-    .readdirSync(deploymentsDir)
-    .filter((d) => fs.statSync(path.join(deploymentsDir, d)).isDirectory());
-  return entries.length === 1 ? entries[0] : undefined;
+  if (fs.existsSync(deploymentsDir)) {
+    const entries = fs
+      .readdirSync(deploymentsDir)
+      .filter((d) => fs.statSync(path.join(deploymentsDir, d)).isDirectory());
+    if (entries.length === 1) return entries[0];
+  }
+
+  const ozDir = path.join(__dirname, '../.openzeppelin');
+  if (fs.existsSync(ozDir)) {
+    const files = fs.readdirSync(ozDir).filter((f) => f.endsWith('.json'));
+    if (files.length === 1) return path.basename(files[0], '.json');
+  }
+  return undefined;
 }
 
 function loadAddress(net: string): string | undefined {
   const base = path.join(__dirname, '../deployments', net);
-  if (!fs.existsSync(base)) return undefined;
-  for (const name of ['SubscriptionUpgradeable.json', 'Subscription.json']) {
-    const file = path.join(base, name);
-    if (fs.existsSync(file)) {
-      try {
-        const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-        if (data.address) return data.address as string;
-      } catch {}
+  if (fs.existsSync(base)) {
+    for (const name of ['SubscriptionUpgradeable.json', 'Subscription.json']) {
+      const file = path.join(base, name);
+      if (fs.existsSync(file)) {
+        try {
+          const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+          if (data.address) return data.address as string;
+        } catch {}
+      }
     }
   }
+
+  const ozFile = path.join(__dirname, '../.openzeppelin', `${net}.json`);
+  if (fs.existsSync(ozFile)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(ozFile, 'utf8'));
+      const proxy = data.proxies?.[0]?.address as string | undefined;
+      if (proxy) return proxy;
+    } catch {}
+  }
+
   return undefined;
 }
 
@@ -67,7 +88,7 @@ if (network && !address) {
 
 if (!network || !address) {
   console.error(
-    'Usage: ts-node scripts/prepare-subgraph.ts --network <name> --address <0x...>'
+    'Usage: ts-node scripts/prepare-subgraph.ts --network <name> --address <0x...>',
   );
   process.exit(1);
 }
@@ -81,9 +102,8 @@ yaml = yaml
   .replace(/{{CONTRACT_ADDRESS}}/g, address)
   .replace(
     /..\/artifacts\/contracts\/Subscription\.sol\/Subscription\.json/g,
-    '../artifacts/contracts/SubscriptionUpgradeable.sol/SubscriptionUpgradeable.json'
+    '../artifacts/contracts/SubscriptionUpgradeable.sol/SubscriptionUpgradeable.json',
   );
 
 fs.writeFileSync(outputPath, yaml);
 console.log(`Wrote ${outputPath}`);
-
