@@ -9,6 +9,7 @@
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/node": "^24.0.7",
+    "dotenv": "^17.0.1",
     "eslint": "^9.30.0",
     "hardhat": "^2.22.4",
     "hardhat-coverage": "^0.9.19",

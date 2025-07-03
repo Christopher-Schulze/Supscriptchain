@@ -1,0 +1,33 @@
+name: Deploy Mainnet
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Deploy to Mainnet
+        env:
+          MAINNET_RPC_URL: ${{ secrets.MAINNET_RPC_URL }}
+          MAINNET_PRIVATE_KEY: ${{ secrets.MAINNET_PRIVATE_KEY }}
+          MERCHANT_ADDRESS: ${{ secrets.MERCHANT_ADDRESS }}
+          TOKEN_ADDRESS: ${{ secrets.TOKEN_ADDRESS }}
+          PRICE_FEED: ${{ secrets.PRICE_FEED }}
+          BILLING_CYCLE: ${{ secrets.BILLING_CYCLE }}
+          PRICE_IN_USD: ${{ secrets.PRICE_IN_USD }}
+          FIXED_PRICE: ${{ secrets.FIXED_PRICE }}
+          USD_PRICE: ${{ secrets.USD_PRICE }}
+        run: npx hardhat run scripts/deploy-mainnet.ts --network mainnet

@@ -264,11 +264,13 @@ Für reale Deployments steht das Skript `scripts/upgrade.ts` bereit, welches die
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
 ```
+
 Alternativ kann die eingebaute Hardhat-Task genutzt werden:
 
 ```bash
 npx hardhat upgrade --network <network>
 ```
+
 Diese Task liest ebenfalls die Proxy-Adresse aus der Umgebungsvariablen
 `SUBSCRIPTION_ADDRESS` und aktualisiert auf
 `SubscriptionUpgradeableV2`.
@@ -297,6 +299,17 @@ configure `NEXT_PUBLIC_SUBGRAPH_URL` for the frontend.
 The repository also contains a simple Next.js application under
 [`frontend/`](frontend/). Follow the instructions in
 [`frontend/README.md`](frontend/README.md) to run the interface.
+
+## CI/CD
+
+Automated workflows under `.github/workflows` handle contract and frontend deployments. Secrets provide all required keys.
+
+- **deploy-testnet.yml** deploys to Sepolia on pushes to `main` or via "Run workflow".
+- **deploy-mainnet.yml** deploys to mainnet when a version tag `v*.*.*` is pushed.
+- **deploy-frontend.yml** builds the Next.js app and deploys it to Vercel.
+- **release.yml** packages contracts, subgraph and frontend builds into a GitHub release.
+
+Example environment variables are listed in `deploy.env.example`. See `vercel.json.example` for a basic rewrite setup.
 
 ## License
 
