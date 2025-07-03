@@ -1,6 +1,8 @@
 import { ethers, upgrades } from "hardhat";
+import { checkEnv } from "./check-env";
 
 async function main() {
+  checkEnv();
   const merchant = process.env.MERCHANT_ADDRESS || ethers.constants.AddressZero;
   const token = process.env.TOKEN_ADDRESS || ethers.constants.AddressZero;
   const priceFeed = process.env.PRICE_FEED || ethers.constants.AddressZero;

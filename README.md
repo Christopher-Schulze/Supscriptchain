@@ -64,6 +64,9 @@ Two deployment scripts are provided under `scripts/`.
 - **Testnet** – `scripts/deploy-testnet.ts`
 - **Mainnet** – `scripts/deploy-mainnet.ts`
 
+Before deploying, each script runs `scripts/check-env.ts` to verify that all
+variables in `.env.example` are set.
+
 Both scripts require the following environment variables:
 
 - `MERCHANT_ADDRESS`
