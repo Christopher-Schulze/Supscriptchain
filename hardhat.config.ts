@@ -7,6 +7,7 @@ import "hardhat-gas-reporter";
 
 import path from "path";
 import * as dotenv from "dotenv";
+import "./tasks/upgrade";
 
 dotenv.config();
 

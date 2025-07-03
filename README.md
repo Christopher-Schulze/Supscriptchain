@@ -254,6 +254,11 @@ Für reale Deployments steht das Skript `scripts/upgrade.ts` bereit, welches die
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
 ```
+Alternativ kann die eingebaute Hardhat-Task genutzt werden:
+
+```bash
+npx hardhat upgrade --network <network>
+```
 
 ## Subgraph
 
