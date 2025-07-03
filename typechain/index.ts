@@ -62,6 +62,8 @@ export type { IERC165 } from "./@openzeppelin/contracts/utils/introspection/IERC
 export { IERC165__factory } from "./factories/@openzeppelin/contracts/utils/introspection/IERC165__factory";
 export type { ShortStrings } from "./@openzeppelin/contracts/utils/ShortStrings";
 export { ShortStrings__factory } from "./factories/@openzeppelin/contracts/utils/ShortStrings__factory";
+export type { BaseSubscription } from "./contracts/BaseSubscription";
+export { BaseSubscription__factory } from "./factories/contracts/BaseSubscription__factory";
 export type { AggregatorV3Interface } from "./contracts/interfaces/AggregatorV3Interface";
 export { AggregatorV3Interface__factory } from "./factories/contracts/interfaces/AggregatorV3Interface__factory";
 export type { MaliciousToken } from "./contracts/mocks/MaliciousToken";
