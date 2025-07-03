@@ -1,9 +1,8 @@
-# Usage Examples
+// Usage Examples for SubscriptionUpgradeable (TypeScript, Bash, Environment, Curl, komplett in einem Block)
 
-Below are small snippets showing how to interact with the Subscription contract from a Hardhat script or console. The contract is deployed as an upgradeable proxy (`SubscriptionUpgradeable`).
+// --- TypeScript (Hardhat Console/Scripts) ---
 
-## Creating a Plan
-```ts
+// Creating a Plan
 const subscription = await ethers.getContract("Subscription");
 await subscription.createPlan(
   merchant.address,
@@ -14,15 +13,11 @@ await subscription.createPlan(
   0,
   ethers.constants.AddressZero
 );
-```
 
-## Subscribing
-```ts
+// Subscribing
 await subscription.connect(user).subscribe(0);
-```
 
-## Subscribing with Permit
-```ts
+// Subscribing with Permit
 const deadline = Math.floor(Date.now() / 1000) + 3600;
 const { v, r, s } = await getPermitSignature(
   user,
@@ -32,126 +27,92 @@ const { v, r, s } = await getPermitSignature(
   deadline
 );
 await subscription.connect(user).subscribeWithPermit(0, deadline, v, r, s);
-```
 
-## Processing Recurring Payment
-```ts
+// Processing Recurring Payment
 await subscription.connect(merchant).processPayment(user.address, 0);
-```
 
-## Cancelling a Subscription
-```ts
+// Cancelling a Subscription
 await subscription.connect(user).cancelSubscription(0);
-```
 
-## Updating a Plan
-```ts
+// Updating a Plan
 await subscription.updatePlan(
-  0,                              // planId
-  60 * 60 * 24 * 60,             // new billing cycle
-  ethers.utils.parseUnits("20", 18), // new price
-  false,                         // priceInUsd
+  0,                                   // planId
+  60 * 60 * 24 * 60,                   // new billing cycle
+  ethers.utils.parseUnits("20", 18),   // new price
+  false,                               // priceInUsd
   0,
   ethers.constants.AddressZero
 );
-```
 
-## Running the Subgraph Locally
+// --- Subgraph Setup & Usage ---
 
-The `subgraph/` folder contains a basic [The Graph](https://thegraph.com) setup
-that indexes events from the upgradeable `SubscriptionUpgradeable.sol` contract.
-To start a local Graph node and
-query the data, follow these steps:
+# 1. Install the Graph CLI
+npm install -g @graphprotocol/graph-cli
 
-1. Install the Graph CLI:
+# 2. Start Graph Node (Docker recommended)
+docker run -it --rm -p 8000:8000 -p 8020:8020 \
+  -e postgres_host=host.docker.internal \
+  -e postgres_user=graph \
+  -e postgres_pass=password \
+  -e postgres_db=graph-node \
+  -e ethereum=NETWORK:http://host.docker.internal:8545 \
+  -e ipfs=host.docker.internal:5001 \
+  graphprotocol/graph-node:latest
 
-   ```bash
-   npm install -g @graphprotocol/graph-cli
-   ```
+# OR: (if you want to run graph-node locally, not in Docker)
+graph-node \
+  --postgres-url postgresql://graph:password@localhost:5432/graph-node \
+  --ethereum-rpc NETWORK:http://localhost:8545 \
+  --ipfs 127.0.0.1:5001
 
-2. Install `graph-node` using the [official packages](https://github.com/graphprotocol/graph-node/releases)
-   or by building it from source. `graph-node` requires a running PostgreSQL
-   database and an IPFS daemon. Create a database called `graph-node` and ensure
-   IPFS is available on `localhost:5001`.
+# 3. Prepare & build the subgraph (replace <network> and <address>)
+# Set env or pass via command line, both are fine:
+NETWORK=<network> CONTRACT_ADDRESS=<address> \
+  npx ts-node scripts/prepare-subgraph.ts
 
-   A quick way to start the node is using Docker:
+npm run codegen
+npm run prepare-subgraph -- --network <network> --address <address>
+npm run build-subgraph
 
-   ```bash
-   docker run -it --rm -p 8000:8000 -p 8020:8020 \
-     -e postgres_host=host.docker.internal \
-     -e postgres_user=graph \
-     -e postgres_pass=password \
-     -e postgres_db=graph-node \
-     -e ethereum=NETWORK:http://host.docker.internal:8545 \
-     -e ipfs=host.docker.internal:5001 \
-     graphprotocol/graph-node:latest
-   ```
+# ...OR directly (build-subgraph auto-runs prepare-subgraph)
+npm run build-subgraph -- --network <network> --address <address>
 
-   If you have the binary installed locally, start it as follows:
+# 4. Deploy to local graph-node
+graph deploy \
+  --node http://localhost:8020/ \
+  --ipfs http://localhost:5001/ \
+  subscription-subgraph subgraph/subgraph.local.yaml
 
-   ```bash
-   graph-node \
-     --postgres-url postgresql://graph:password@localhost:5432/graph-node \
-     --ethereum-rpc NETWORK:http://localhost:8545 \
-     --ipfs 127.0.0.1:5001
-   ```
+# 5. Query the subgraph (GraphiQL or Curl)
+# Web:
+# http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
 
-3. In another terminal, generate types and prepare the manifest. Supply the
-   network name and the deployed contract address either via environment
-   variables or command line arguments:
+# Curl:
+curl -X POST http://localhost:8000/subgraphs/name/subscription-subgraph/graphql \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ plans { id merchant } }"}'
 
-   ```bash
-   npm run codegen
-   npm run prepare-subgraph -- --network <network> --address <address>
-   npm run build-subgraph
-   ```
+# Returns:
+# {
+#   "data": {
+#     "plans": [
+#       { "id": "...", "merchant": "..." },
+#       ...
+#     ]
+#   }
+# }
 
-   The `build-subgraph` script automatically invokes `prepare-subgraph`, so you
-   can also pass the options directly:
+# --- Environment Variables for prepare-subgraph/build-subgraph ---
 
-   ```bash
-   npm run build-subgraph -- --network <network> --address <address>
-   ```
-
-   Deploy the compiled subgraph to your local node:
-
-   ```bash
-   graph deploy \
-     --node http://localhost:8020/ \
-     --ipfs http://localhost:5001/ \
-     subscription-subgraph subgraph/subgraph.local.yaml
-   ```
-
-4. Query the subgraph via GraphiQL at
-   `http://localhost:8000/subgraphs/name/subscription-subgraph/graphql` or using
-   `curl`:
-
-   ```bash
-   curl -X POST http://localhost:8000/subgraphs/name/subscription-subgraph/graphql \
-     -H 'Content-Type: application/json' \
-     -d '{"query":"{ plans { id merchant } }"}'
-   ```
-
-This returns the list of created plans indexed from your local chain.
-
-### Environment Variables
-
-`prepare-subgraph` reads two variables:
-
-- `NETWORK` – the blockchain network name (e.g. `sepolia` or `mainnet`)
-- `CONTRACT_ADDRESS` – address of your deployed `SubscriptionUpgradeable` contract
-
-You can export them before running the build script:
-
-```bash
+# Export these for easy CI or local use:
 export NETWORK=sepolia
 export CONTRACT_ADDRESS=0xYourContract
 npm run build-subgraph
-```
 
-Once the node is running, set `NEXT_PUBLIC_SUBGRAPH_URL` in
-`frontend/.env.local` to the GraphQL endpoint so the analytics page can query the subgraph:
+# --- Frontend Integration: .env.local for Analytics Page ---
 
-```env
+# In frontend/.env.local:
 NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
-```
+
+// ----- END OF ONE-BLOCK USAGE-DOKU -----
+// Einfach alles in eins. Keine Splitter mehr, keine dummen Merge-Tags. Copy. Paste. Fertig. 💸
