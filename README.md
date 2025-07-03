@@ -288,8 +288,9 @@ This command runs `npm run prepare-subgraph` internally and produces
 `subgraph/subgraph.local.yaml`.
 
 See [docs/usage-examples.md#running-the-subgraph-locally](docs/usage-examples.md#running-the-subgraph-locally)
-for a step-by-step guide, including how to set `NEXT_PUBLIC_SUBGRAPH_URL` for
-the frontend.
+for a step-by-step guide on `npm run prepare-subgraph` and `npm run build-subgraph`.
+That section also lists the required environment variables and explains how to
+configure `NEXT_PUBLIC_SUBGRAPH_URL` for the frontend.
 
 ## Frontend
 
