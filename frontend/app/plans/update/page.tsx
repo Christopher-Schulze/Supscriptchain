@@ -43,7 +43,7 @@ export default function UpdatePlan() {
   return (
     <div className="form">
       <h1>Update Plan</h1>
-      {error && <p style={{color:'red'}}>{error}</p>}
+      {error && <p className="error">{error}</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <label>
         Plan ID

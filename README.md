@@ -312,6 +312,32 @@ Automated workflows under `.github/workflows` handle contract and frontend deplo
 
 Example environment variables are listed in `deploy.env.example`. See `vercel.json.example` for a basic rewrite setup.
 
+## Production Deployment
+
+To deploy the entire stack for production use:
+
+1. Build and deploy the subgraph:
+
+   ```bash
+   NETWORK=<network> CONTRACT_ADDRESS=<deployed contract> npm run build-subgraph
+   # deploy using graph-cli as needed
+   ```
+
+2. Deploy the contracts via Hardhat:
+
+   ```bash
+   npx hardhat run scripts/deploy.ts --network <network>
+   ```
+
+3. Build the Next.js frontend and upload it to your hosting provider (Vercel is used in CI):
+
+   ```bash
+   cd frontend
+   npm run build
+   ```
+
+   Ensure `NEXT_PUBLIC_CONTRACT_ADDRESS`, `NEXT_PUBLIC_RPC_URL` and `NEXT_PUBLIC_SUBGRAPH_URL` are set in `.env.local` before building.
+
 ## License
 
 Released under the MIT License. See [LICENSE](LICENSE).

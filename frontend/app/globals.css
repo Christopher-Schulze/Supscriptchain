@@ -47,6 +47,18 @@ body {
   border-radius: 4px;
 }
 
+.message-bar {
+  background: #e0ffe0;
+  padding: 8px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+}
+
+.error {
+  color: #c00;
+  margin-bottom: 8px;
+}
+
 .list {
   margin-top: 12px;
   line-height: 1.5;

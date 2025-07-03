@@ -34,7 +34,7 @@ export default function Payment() {
   return (
     <div>
       <h1>Process Payment</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
       {loading && <p>Processing...</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <div>

@@ -1,7 +1,15 @@
-export function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Environment variable ${name} is required`);
-  }
-  return value;
-}
+import { z } from 'zod';
+
+const envSchema = z.object({
+  NEXT_PUBLIC_CONTRACT_ADDRESS: z.string().nonempty(),
+  NEXT_PUBLIC_RPC_URL: z.string().url(),
+  NEXT_PUBLIC_SUBGRAPH_URL: z.string().url(),
+});
+
+export const env = envSchema.parse({
+  NEXT_PUBLIC_CONTRACT_ADDRESS: process.env.NEXT_PUBLIC_CONTRACT_ADDRESS,
+  NEXT_PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_RPC_URL,
+  NEXT_PUBLIC_SUBGRAPH_URL: process.env.NEXT_PUBLIC_SUBGRAPH_URL,
+});
+
+export type Env = typeof env;
