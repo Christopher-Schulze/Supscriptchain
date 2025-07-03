@@ -42,6 +42,7 @@ export interface SubscriptionUpgradeableV2Interface extends Interface {
       | "pendingOwner"
       | "plans"
       | "processPayment"
+      | "recoverERC20"
       | "renounceOwnership"
       | "renounceRole"
       | "revokeRole"
@@ -133,6 +134,10 @@ export interface SubscriptionUpgradeableV2Interface extends Interface {
     values: [AddressLike, BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "recoverERC20",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
@@ -213,6 +218,10 @@ export interface SubscriptionUpgradeableV2Interface extends Interface {
   decodeFunctionResult(functionFragment: "plans", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "processPayment",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "recoverERC20",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -619,6 +628,12 @@ export interface SubscriptionUpgradeableV2 extends BaseContract {
     "nonpayable"
   >;
 
+  recoverERC20: TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
 
   renounceRole: TypedContractMethod<
@@ -778,6 +793,13 @@ export interface SubscriptionUpgradeableV2 extends BaseContract {
     nameOrSignature: "processPayment"
   ): TypedContractMethod<
     [_user: AddressLike, _planId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "recoverERC20"
+  ): TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish],
     [void],
     "nonpayable"
   >;
