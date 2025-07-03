@@ -96,12 +96,26 @@ query the data, follow these steps:
      --ipfs 127.0.0.1:5001
    ```
 
-3. In another terminal, generate and deploy the subgraph. The build step will
-   automatically create a local manifest:
+3. In another terminal, generate types and prepare the manifest. Supply the
+   network name and the deployed contract address either via environment
+   variables or command line arguments:
 
    ```bash
    npm run codegen
+   npm run prepare-subgraph -- --network <network> --address <address>
+   npm run build-subgraph
+   ```
+
+   The `build-subgraph` script automatically invokes `prepare-subgraph`, so you
+   can also pass the options directly:
+
+   ```bash
    npm run build-subgraph -- --network <network> --address <address>
+   ```
+
+   Deploy the compiled subgraph to your local node:
+
+   ```bash
    graph deploy \
      --node http://localhost:8020/ \
      --ipfs http://localhost:5001/ \
@@ -119,3 +133,25 @@ query the data, follow these steps:
    ```
 
 This returns the list of created plans indexed from your local chain.
+
+### Environment Variables
+
+`prepare-subgraph` reads two variables:
+
+- `NETWORK` – the blockchain network name (e.g. `sepolia` or `mainnet`)
+- `CONTRACT_ADDRESS` – address of your deployed `SubscriptionUpgradeable` contract
+
+You can export them before running the build script:
+
+```bash
+export NETWORK=sepolia
+export CONTRACT_ADDRESS=0xYourContract
+npm run build-subgraph
+```
+
+Once the node is running, set `NEXT_PUBLIC_SUBGRAPH_URL` in
+`frontend/.env.local` to the GraphQL endpoint so the analytics page can query the subgraph:
+
+```env
+NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
+```
