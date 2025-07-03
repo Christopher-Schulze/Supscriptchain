@@ -18,9 +18,19 @@ export async function getContract(): Promise<Subscription> {
     const signer = await provider.getSigner();
     signerOrProvider = signer;
   } else {
-    const rpc = process.env.NEXT_PUBLIC_RPC_URL;
-    if (!rpc) throw new Error("NEXT_PUBLIC_RPC_URL is not defined and no wallet is available");
+    const rpc = requireEnv("NEXT_PUBLIC_RPC_URL");
     signerOrProvider = new ethers.JsonRpcProvider(rpc);
   }
   return Subscription__factory.connect(address, signerOrProvider);
+}
+
+export async function subscribeWithPermit(
+  planId: bigint,
+  deadline: bigint,
+  v: number,
+  r: string,
+  s: string
+) {
+  const contract = await getContract();
+  return contract.subscribeWithPermit(planId, deadline, v, r, s);
 }

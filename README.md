@@ -82,6 +82,21 @@ private keys from `.env` as well:
 - `MAINNET_RPC_URL`
 - `MAINNET_PRIVATE_KEY`
 
+Your `hardhat.config.ts` should include network settings that load these values:
+
+```ts
+networks: {
+  sepolia: {
+    url: process.env.SEPOLIA_RPC_URL || "",
+    accounts: process.env.SEPOLIA_PRIVATE_KEY ? [process.env.SEPOLIA_PRIVATE_KEY] : [],
+  },
+  mainnet: {
+    url: process.env.MAINNET_RPC_URL || "",
+    accounts: process.env.MAINNET_PRIVATE_KEY ? [process.env.MAINNET_PRIVATE_KEY] : [],
+  },
+}
+```
+
 Example deployment to a testnet network configured in `hardhat.config.ts`:
 
 ```bash
@@ -154,6 +169,7 @@ The command sets `REPORT_GAS=true` and prints a table similar to:
 
 ## Contracts
 
+- `BaseSubscription.sol` – shared internal logic used by the concrete subscription contracts.
 - `Subscription.sol` – core subscription logic. Uses `Ownable2Step` and `SafeERC20`. Includes `recoverERC20` for the owner to withdraw tokens.
 - `SubscriptionUpgradeable.sol` – upgradeable variant with the same functionality including `recoverERC20`.
 - `MockV3Aggregator.sol` – mock oracle implementing the Chainlink Aggregator interface.
@@ -248,17 +264,32 @@ Für reale Deployments steht das Skript `scripts/upgrade.ts` bereit, welches die
 ```bash
 npx hardhat run scripts/upgrade.ts --network <network>
 ```
+Alternativ kann die eingebaute Hardhat-Task genutzt werden:
+
+```bash
+npx hardhat upgrade --network <network>
+```
+Diese Task liest ebenfalls die Proxy-Adresse aus der Umgebungsvariablen
+`SUBSCRIPTION_ADDRESS` und aktualisiert auf
+`SubscriptionUpgradeableV2`.
 
 ## Subgraph
 
-The `subgraph/` directory contains a minimal [The Graph](https://thegraph.com) setup for indexing events emitted by `Subscription.sol`. Run the following commands to generate types and build the manifest:
+The `subgraph/` directory contains a minimal [The Graph](https://thegraph.com) setup for indexing events emitted by `Subscription.sol`.
+Provide the network name and the deployed contract address via the `NETWORK` and
+`CONTRACT_ADDRESS` variables (or `--network` and `--address` arguments) before
+building:
 
 ```bash
-npm run codegen
-npm run build-subgraph
+NETWORK=sepolia CONTRACT_ADDRESS=0xYourContract npm run build-subgraph
 ```
 
-See [docs/usage-examples.md](docs/usage-examples.md) for instructions on running a local Graph node.
+This command runs `npm run prepare-subgraph` internally and produces
+`subgraph/subgraph.local.yaml`.
+
+See [docs/usage-examples.md#running-the-subgraph-locally](docs/usage-examples.md#running-the-subgraph-locally)
+for a step-by-step guide, including how to set `NEXT_PUBLIC_SUBGRAPH_URL` for
+the frontend.
 
 ## Frontend
 

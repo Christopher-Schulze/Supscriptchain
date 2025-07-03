@@ -7,6 +7,7 @@ import "hardhat-gas-reporter";
 
 import path from "path";
 import * as dotenv from "dotenv";
+import "./tasks/upgrade";
 
 dotenv.config();
 
@@ -30,6 +31,7 @@ const config: HardhatUserConfig = {
     enabled: true,
   },
   networks: {
+    // Example settings reading RPC URLs and keys from `.env`
     sepolia: {
       url: process.env.SEPOLIA_RPC_URL || "",
       accounts: process.env.SEPOLIA_PRIVATE_KEY ? [process.env.SEPOLIA_PRIVATE_KEY] : [],

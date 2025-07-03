@@ -6,6 +6,7 @@ export type { interfaces };
 import type * as mocks from "./mocks";
 export type { mocks };
 export type { MockToken } from "./MockToken";
+export type { BaseSubscription } from "./BaseSubscription";
 export type { Subscription } from "./Subscription";
 export type { SubscriptionUpgradeable } from "./SubscriptionUpgradeable";
 export type { SubscriptionUpgradeableV2 } from "./SubscriptionUpgradeableV2";
