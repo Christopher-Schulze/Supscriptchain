@@ -21,13 +21,13 @@ export default function CreatePlan() {
     setLoading(true);
     setError(null);
     try {
-      if (!token) throw new Error('Token address required');
+      if (!/^0x[0-9a-fA-F]{40}$/.test(token)) throw new Error('Token address invalid');
       if (!billing || Number(billing) <= 0) throw new Error('Billing cycle > 0');
       if (priceInUsd) {
-        if (!usdPrice) throw new Error('USD price required');
-        if (!feed) throw new Error('Price feed required');
+        if (!/^[0-9]+$/.test(usdPrice)) throw new Error('USD price required');
+        if (!/^0x[0-9a-fA-F]{40}$/.test(feed)) throw new Error('Price feed required');
       } else {
-        if (!price) throw new Error('Token price required');
+        if (!/^[0-9]+$/.test(price)) throw new Error('Token price required');
       }
       const tx = await createPlan(
         merchant || account || '0x0000000000000000000000000000000000000000',

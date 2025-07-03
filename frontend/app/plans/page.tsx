@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { getContract } from '../../lib/contract';
+import { useState } from 'react';
+import { usePlans } from '../../lib/plansStore';
 import useWallet from '../../lib/useWallet';
 
 interface Plan {
@@ -16,31 +16,22 @@ interface Plan {
 
 export default function Plans() {
   const { account, connect } = useWallet();
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const { plans, reload } = usePlans();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const contract = await getContract();
-        const nextId: bigint = await contract.nextPlanId();
-        const list: Plan[] = [];
-        for (let i = 0n; i < nextId; i++) {
-          const plan = await contract.plans(i);
-          list.push(plan as Plan);
-        }
-        setPlans(list);
-      } catch (err) {
-        console.error(err);
-        setError(err instanceof Error ? err.message : String(err));
-      } finally {
-        setLoading(false);
-      }
+  async function refresh() {
+    setLoading(true);
+    setError(null);
+    try {
+      await reload();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
     }
-    load();
-  }, []);
+  }
 
   return (
     <div>
@@ -50,9 +41,9 @@ export default function Plans() {
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <div style={{ marginBottom: 10 }}>
         <a href="/plans/create">Create Plan</a> |{' '}
-        <a href="/plans/update">Update Plan</a>
+        <a href="/plans/manage">Manage Plans</a>
       </div>
-      <ul>
+      <ul className="list">
         {plans.map((p, idx) => (
           <li key={idx}>
             Plan {idx}: token {p.token} price {p.price.toString()} billing {p.billingCycle.toString()}s

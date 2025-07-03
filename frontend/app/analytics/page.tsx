@@ -70,7 +70,8 @@ export default function Analytics() {
       )}
       {loading && <p>Loading...</p>}
       <h2>Active Subscriptions</h2>
-      <ul>
+      {subs.length === 0 && <p>No active subscriptions</p>}
+      <ul className="list">
         {subs.map((s) => (
           <li key={s.id}>
             {s.user} plan {s.planId} next payment {s.nextPaymentDate}
@@ -78,7 +79,8 @@ export default function Analytics() {
         ))}
       </ul>
       <h2>Payments</h2>
-      <ul>
+      {payments.length === 0 && <p>No payments</p>}
+      <ul className="list">
         {payments.map((p) => (
           <li key={p.id}>
             {p.user} plan {p.planId} amount {p.amount}
