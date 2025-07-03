@@ -257,14 +257,21 @@ npx hardhat run scripts/upgrade.ts --network <network>
 
 ## Subgraph
 
-The `subgraph/` directory contains a minimal [The Graph](https://thegraph.com) setup for indexing events emitted by `Subscription.sol`. Run the following commands to generate types and build the manifest:
+The `subgraph/` directory contains a minimal [The Graph](https://thegraph.com) setup for indexing events emitted by `Subscription.sol`.
+Provide the network name and the deployed contract address via the `NETWORK` and
+`CONTRACT_ADDRESS` variables (or `--network` and `--address` arguments) before
+building:
 
 ```bash
-npm run codegen
-npm run build-subgraph
+NETWORK=sepolia CONTRACT_ADDRESS=0xYourContract npm run build-subgraph
 ```
 
-See [docs/usage-examples.md](docs/usage-examples.md) for instructions on running a local Graph node.
+This command runs `npm run prepare-subgraph` internally and produces
+`subgraph/subgraph.local.yaml`.
+
+See [docs/usage-examples.md#running-the-subgraph-locally](docs/usage-examples.md#running-the-subgraph-locally)
+for a step-by-step guide, including how to set `NEXT_PUBLIC_SUBGRAPH_URL` for
+the frontend.
 
 ## Frontend
 
