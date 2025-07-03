@@ -38,8 +38,12 @@ graph-node \
 
 ### 3. Prepare the Subgraph
 
-Set the network and contract address as environment variables or pass them via
-CLI arguments. Then generate the code and create a local manifest:
+The `prepare-subgraph` script fills in the network and contract address in the
+manifest. Run it after generating the AssemblyScript types:
+
+1. Export the required values (or pass them as CLI arguments).
+2. Generate the types with `npm run codegen`.
+3. Execute `npm run prepare-subgraph` to create `subgraph/subgraph.local.yaml`.
 
 ```bash
 export NETWORK=sepolia
@@ -51,13 +55,14 @@ npm run prepare-subgraph -- --network $NETWORK --address $CONTRACT_ADDRESS
 
 ### 4. Build the Subgraph
 
-The build script runs `prepare-subgraph` automatically:
+The build script first runs `prepare-subgraph` and then compiles the subgraph:
 
 ```bash
 npm run build-subgraph -- --network $NETWORK --address $CONTRACT_ADDRESS
 ```
 
-This writes `subgraph/subgraph.local.yaml`.
+The compiled files are written to `subgraph/build/` and the manifest used by
+`graph build` is `subgraph/subgraph.local.yaml`.
 
 ### 5. Deploy
 
@@ -86,13 +91,15 @@ curl -X POST http://localhost:8000/subgraphs/name/subscription-subgraph/graphql 
 
 ### Environment Variables
 
-The subgraph scripts read the following variables:
+`npm run prepare-subgraph` and `npm run build-subgraph` read the following
+variables:
 
 - `NETWORK` – network name used when preparing the manifest
 - `CONTRACT_ADDRESS` – address of the deployed contract
-- `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint used by the frontend
+- `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint consumed by the frontend
 
-For the frontend create `frontend/.env.local` with:
+Export them in your shell or provide `--network` and `--address` on the command
+line. To connect the frontend create `frontend/.env.local` with:
 
 ```ini
 NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgraph/graphql
