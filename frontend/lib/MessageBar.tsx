@@ -5,7 +5,7 @@ export default function MessageBar() {
   const { message, setMessage } = useStore();
   if (!message) return null;
   return (
-    <div style={{background:'#e0ffe0', padding:8, marginBottom:8}} onClick={()=>setMessage(null)}>
+    <div className="message-bar" onClick={() => setMessage(null)}>
       {message}
     </div>
   );

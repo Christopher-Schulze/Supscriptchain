@@ -1,8 +1,8 @@
 import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
-import { requireEnv } from './env';
+import { env } from './env';
 
 const client = new ApolloClient({
-  uri: requireEnv('NEXT_PUBLIC_SUBGRAPH_URL'),
+  uri: env.NEXT_PUBLIC_SUBGRAPH_URL,
   cache: new InMemoryCache(),
 });
 
@@ -29,6 +29,15 @@ export const PAYMENTS_QUERY = gql`
   }
 `;
 
+export const PLANS_QUERY = gql`
+  query Plans {
+    plans {
+      id
+      totalPaid
+    }
+  }
+`;
+
 export async function getActiveSubscriptions() {
   const { data } = await client.query({ query: ACTIVE_SUBSCRIPTIONS_QUERY });
   return data.subscriptions;
@@ -37,6 +46,11 @@ export async function getActiveSubscriptions() {
 export async function getPayments() {
   const { data } = await client.query({ query: PAYMENTS_QUERY });
   return data.payments;
+}
+
+export async function getPlans() {
+  const { data } = await client.query({ query: PLANS_QUERY });
+  return data.plans;
 }
 
 export default client;

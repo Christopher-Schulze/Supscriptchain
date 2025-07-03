@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getActiveSubscriptions, getPayments } from '../../lib/subgraph';
+import { getActiveSubscriptions, getPayments, getPlans } from '../../lib/subgraph';
 
 interface SubscriptionData {
   id: string;
@@ -19,6 +19,7 @@ interface PaymentData {
 export default function Analytics() {
   const [subs, setSubs] = useState<SubscriptionData[]>([]);
   const [payments, setPayments] = useState<PaymentData[]>([]);
+  const [plans, setPlans] = useState<{ id: string; totalPaid: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -26,12 +27,14 @@ export default function Analytics() {
     async function load() {
       setLoading(true);
       try {
-        const [s, p] = await Promise.all([
+        const [s, p, pl] = await Promise.all([
           getActiveSubscriptions(),
           getPayments(),
+          getPlans(),
         ]);
         setSubs(s);
         setPayments(p);
+        setPlans(pl);
       } catch (err) {
         console.error(err);
         setError(err instanceof Error ? err.message : String(err));
@@ -46,12 +49,14 @@ export default function Analytics() {
     setError(null);
     setLoading(true);
     try {
-      const [s, p] = await Promise.all([
+      const [s, p, pl] = await Promise.all([
         getActiveSubscriptions(),
         getPayments(),
+        getPlans(),
       ]);
       setSubs(s);
       setPayments(p);
+      setPlans(pl);
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
@@ -64,7 +69,7 @@ export default function Analytics() {
     <div>
       <h1>Analytics</h1>
       {error && (
-        <p style={{ color: 'red' }}>
+        <p className="error">
           {error} <button onClick={reload}>Retry</button>
         </p>
       )}
@@ -75,6 +80,15 @@ export default function Analytics() {
         {subs.map((s) => (
           <li key={s.id}>
             {s.user} plan {s.planId} next payment {s.nextPaymentDate}
+          </li>
+        ))}
+      </ul>
+      <h2>Plan Totals</h2>
+      {plans.length === 0 && <p>No plans</p>}
+      <ul className="list">
+        {plans.map((p) => (
+          <li key={p.id}>
+            Plan {p.id} total paid {p.totalPaid}
           </li>
         ))}
       </ul>

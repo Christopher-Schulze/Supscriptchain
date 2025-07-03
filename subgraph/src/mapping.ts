@@ -6,6 +6,7 @@ import {
   SubscriptionCancelled
 } from "../generated/Subscription/Subscription"
 import { Plan, Subscription, Payment } from "../generated/schema"
+import { BigInt } from "@graphprotocol/graph-ts"
 
 export function handlePlanCreated(event: PlanCreated): void {
   let plan = new Plan(event.params.planId.toString())
@@ -17,6 +18,7 @@ export function handlePlanCreated(event: PlanCreated): void {
   plan.priceInUsd = event.params.priceInUsd
   plan.usdPrice = event.params.usdPrice
   plan.priceFeedAddress = event.params.priceFeedAddress
+  plan.totalPaid = BigInt.zero()
   plan.save()
 }
 
@@ -52,6 +54,12 @@ export function handlePaymentProcessed(event: PaymentProcessed): void {
   payment.amount = event.params.amount
   payment.newNextPaymentDate = event.params.newNextPaymentDate
   payment.save()
+
+  let plan = Plan.load(event.params.planId.toString())
+  if (plan) {
+    plan.totalPaid = (plan.totalPaid || BigInt.zero()).plus(event.params.amount)
+    plan.save()
+  }
 
   let subId = event.params.user.toHexString() + "-" + event.params.planId.toString()
   let sub = Subscription.load(subId)

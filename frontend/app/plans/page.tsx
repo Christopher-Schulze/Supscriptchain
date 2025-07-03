@@ -36,7 +36,7 @@ export default function Plans() {
   return (
     <div>
       <h1>Available Plans</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p className="error">{error}</p>}
       {loading && <p>Loading...</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <div style={{ marginBottom: 10 }}>

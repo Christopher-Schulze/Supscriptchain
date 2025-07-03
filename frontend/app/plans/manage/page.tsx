@@ -44,7 +44,7 @@ export default function ManagePlans() {
     <div className="form">
       <h1>Manage Plans</h1>
       {!account && <button onClick={connect}>Connect Wallet</button>}
-      {error && <p style={{color:'red'}}>{error}</p>}
+      {error && <p className="error">{error}</p>}
       <label>
         Select Plan
         <select value={selected ?? ''} onChange={e => setSelected(Number(e.target.value))}>

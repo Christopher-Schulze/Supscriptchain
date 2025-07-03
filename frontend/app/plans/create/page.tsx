@@ -51,7 +51,7 @@ export default function CreatePlan() {
   return (
     <div className="form">
       <h1>Create Plan</h1>
-      {error && <p style={{color:'red'}}>{error}</p>}
+      {error && <p className="error">{error}</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <label>
         Merchant

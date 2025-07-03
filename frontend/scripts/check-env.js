@@ -1,18 +1,23 @@
-const fs = require('fs');
 const path = require('path');
+const { config } = require('dotenv');
+const { z } = require('zod');
 
 function check() {
-  const envExamplePath = path.resolve(__dirname, '..', '.env.local.example');
-  const lines = fs.readFileSync(envExamplePath, 'utf-8').split(/\r?\n/);
-  const keys = lines
-    .map((l) => l.trim())
-    .filter((l) => l && !l.startsWith('#'))
-    .map((l) => l.split('=')[0]);
-  const missing = keys.filter((k) => !process.env[k]);
-  if (missing.length > 0) {
-    throw new Error(
-      `Missing required environment variables: ${missing.join(', ')}`,
-    );
+  const envPath = path.resolve(__dirname, '..', '.env.local');
+  config({ path: envPath });
+
+  const schema = z.object({
+    NEXT_PUBLIC_CONTRACT_ADDRESS: z.string().nonempty(),
+    NEXT_PUBLIC_RPC_URL: z.string().url(),
+    NEXT_PUBLIC_SUBGRAPH_URL: z.string().url(),
+  });
+
+  const result = schema.safeParse(process.env);
+  if (!result.success) {
+    const issues = result.error.issues
+      .map((i) => `${i.path.join('.')}: ${i.message}`)
+      .join(', ');
+    throw new Error(`Invalid environment variables: ${issues}`);
   }
 }
 
