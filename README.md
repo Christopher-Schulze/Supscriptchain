@@ -159,6 +159,7 @@ The command sets `REPORT_GAS=true` and prints a table similar to:
 
 ## Contracts
 
+- `BaseSubscription.sol` – shared internal logic used by the concrete subscription contracts.
 - `Subscription.sol` – core subscription logic. Uses `Ownable2Step` and `SafeERC20`. Includes `recoverERC20` for the owner to withdraw tokens.
 - `SubscriptionUpgradeable.sol` – upgradeable variant with the same functionality including `recoverERC20`.
 - `MockV3Aggregator.sol` – mock oracle implementing the Chainlink Aggregator interface.
