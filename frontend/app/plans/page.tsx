@@ -48,6 +48,10 @@ export default function Plans() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {loading && <p>Loading...</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
+      <div style={{ marginBottom: 10 }}>
+        <a href="/plans/create">Create Plan</a> |{' '}
+        <a href="/plans/update">Update Plan</a>
+      </div>
       <ul>
         {plans.map((p, idx) => (
           <li key={idx}>

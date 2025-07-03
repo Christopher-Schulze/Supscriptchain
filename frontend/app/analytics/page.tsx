@@ -42,10 +42,32 @@ export default function Analytics() {
     load();
   }, []);
 
+  async function reload() {
+    setError(null);
+    setLoading(true);
+    try {
+      const [s, p] = await Promise.all([
+        getActiveSubscriptions(),
+        getPayments(),
+      ]);
+      setSubs(s);
+      setPayments(p);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div>
       <h1>Analytics</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && (
+        <p style={{ color: 'red' }}>
+          {error} <button onClick={reload}>Retry</button>
+        </p>
+      )}
       {loading && <p>Loading...</p>}
       <h2>Active Subscriptions</h2>
       <ul>
