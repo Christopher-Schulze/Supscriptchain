@@ -146,6 +146,8 @@ abstract contract BaseSubscription {
             uint8 tokenDecimals = plan.tokenDecimals;
             uint8 priceFeedDecimals = priceFeed.decimals();
 
+            require(tokenDecimals <= 38 && priceFeedDecimals <= 38, "decimals too large");
+
             require(uint256(latestPrice) > 0, "Oracle price must be positive");
             amount = (plan.usdPrice * (10 ** tokenDecimals) * (10 ** priceFeedDecimals)) / (100 * uint256(latestPrice));
             return amount;
@@ -253,6 +255,72 @@ abstract contract BaseSubscription {
 
     function _recoverERC20(address token, uint256 amount, address recipient) internal {
         IERC20(token).safeTransfer(recipient, amount);
+    }
+
+    // ----- Public wrappers to be overridden with access control -----
+
+    function createPlan(
+        address _merchantAddress,
+        address _token,
+        uint256 _price,
+        uint256 _billingCycle,
+        bool _priceInUsd,
+        uint256 _usdPrice,
+        address _priceFeedAddress
+    ) public virtual {
+        _createPlan(
+            _merchantAddress,
+            _token,
+            _price,
+            _billingCycle,
+            _priceInUsd,
+            _usdPrice,
+            _priceFeedAddress
+        );
+    }
+
+    function updatePlan(
+        uint256 _planId,
+        uint256 _billingCycle,
+        uint256 _price,
+        bool _priceInUsd,
+        uint256 _usdPrice,
+        address _priceFeedAddress
+    ) public virtual {
+        _updatePlan(
+            _planId,
+            _billingCycle,
+            _price,
+            _priceInUsd,
+            _usdPrice,
+            _priceFeedAddress
+        );
+    }
+
+    function subscribe(uint256 _planId) public virtual {
+        _subscribe(_planId, msg.sender);
+    }
+
+    function subscribeWithPermit(
+        uint256 _planId,
+        uint256 _deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public virtual {
+        _subscribeWithPermit(_planId, _deadline, v, r, s, msg.sender);
+    }
+
+    function processPayment(address _user, uint256 _planId) public virtual {
+        _processPayment(_user, _planId);
+    }
+
+    function cancelSubscription(uint256 _planId) public virtual {
+        _cancelSubscription(_planId, msg.sender);
+    }
+
+    function recoverERC20(address token, uint256 amount) external virtual {
+        _recoverERC20(token, amount, msg.sender);
     }
 }
 
