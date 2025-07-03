@@ -34,3 +34,28 @@ export async function subscribeWithPermit(
   const contract = await getContract();
   return contract.subscribeWithPermit(planId, deadline, v, r, s);
 }
+
+export async function createPlan(
+  merchant: string,
+  token: string,
+  price: bigint,
+  billing: bigint,
+  priceInUsd: boolean,
+  usdPrice: bigint,
+  feed: string
+) {
+  const contract = await getContract();
+  return contract.createPlan(merchant, token, price, billing, priceInUsd, usdPrice, feed);
+}
+
+export async function updatePlan(
+  planId: bigint,
+  billing: bigint,
+  price: bigint,
+  priceInUsd: boolean,
+  usdPrice: bigint,
+  feed: string
+) {
+  const contract = await getContract();
+  return contract.updatePlan(planId, billing, price, priceInUsd, usdPrice, feed);
+}

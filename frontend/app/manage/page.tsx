@@ -4,9 +4,11 @@ import { ethers } from 'ethers';
 import { getContract, subscribeWithPermit } from '../../lib/contract';
 import { AggregatorV3Interface__factory } from 'typechain/factories/contracts/interfaces/AggregatorV3Interface__factory';
 import useWallet from '../../lib/useWallet';
+import { useStore } from '../../lib/store';
 
 export default function Manage() {
   const { account, connect } = useWallet();
+  const { setMessage } = useStore();
   const [planId, setPlanId] = useState('0');
   const [deadline, setDeadline] = useState('');
   const [v, setV] = useState('');
@@ -18,15 +20,15 @@ export default function Manage() {
   async function subscribe() {
     setLoading(true);
     try {
+      if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
       const contract = await getContract();
       const tx = await contract.subscribe(BigInt(planId));
       await tx.wait();
-      alert(`Subscribed! Tx: ${tx.hash}`);
+      setMessage(`Subscribed! Tx: ${tx.hash}`);
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
-      alert(`Subscription failed: ${message}`);
     } finally {
       setLoading(false);
     }
@@ -35,25 +37,27 @@ export default function Manage() {
   async function cancel() {
     setLoading(true);
     try {
+      if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
       const contract = await getContract();
       const tx = await contract.cancelSubscription(BigInt(planId));
       await tx.wait();
-      alert(`Cancelled! Tx: ${tx.hash}`);
+      setMessage(`Cancelled! Tx: ${tx.hash}`);
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
-      alert(`Cancellation failed: ${message}`);
     } finally {
       setLoading(false);
     }
   }
 
   async function requestPermit() {
-    if (!account) return alert('Connect Wallet first');
+    if (!account) return setMessage('Connect Wallet first');
     setLoading(true);
     setError(null);
     try {
+      if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
+      if (!/^[0-9]+$/.test(deadline)) throw new Error('invalid deadline');
       const contract = await getContract();
       const plan = await contract.plans(BigInt(planId));
       const provider = new ethers.BrowserProvider((window as any).ethereum);
@@ -101,6 +105,11 @@ export default function Manage() {
     setLoading(true);
     setError(null);
     try {
+      if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
+      if (!/^[0-9]+$/.test(deadline)) throw new Error('invalid deadline');
+      if (!/^[0-9]+$/.test(v)) throw new Error('invalid v');
+      if (!/^0x[0-9a-fA-F]{64}$/.test(r)) throw new Error('invalid r');
+      if (!/^0x[0-9a-fA-F]{64}$/.test(s)) throw new Error('invalid s');
       const tx = await subscribeWithPermit(
         BigInt(planId),
         BigInt(deadline),
@@ -109,12 +118,11 @@ export default function Manage() {
         s as `0x${string}`
       );
       await tx.wait();
-      alert(`Subscribed with permit! Tx: ${tx.hash}`);
+      setMessage(`Subscribed with permit! Tx: ${tx.hash}`);
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
-      alert(`Subscription failed: ${message}`);
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { getContract } from '../../lib/contract';
 import useWallet from '../../lib/useWallet';
+import { useStore } from '../../lib/store';
 
 export default function Payment() {
   const { account, connect } = useWallet();
@@ -9,19 +10,21 @@ export default function Payment() {
   const [user, setUser] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { setMessage } = useStore();
 
   async function trigger() {
     setLoading(true);
     try {
+      if (!/^0x[0-9a-fA-F]{40}$/.test(user)) throw new Error('invalid user');
+      if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
       const contract = await getContract();
       const tx = await contract.processPayment(user, BigInt(planId));
       await tx.wait();
-      alert(`Payment processed! Tx: ${tx.hash}`);
+      setMessage(`Payment processed! Tx: ${tx.hash}`);
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
-      alert(`Payment failed: ${message}`);
     } finally {
       setLoading(false);
     }

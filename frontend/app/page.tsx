@@ -7,6 +7,8 @@ export default function Home() {
       <h1>Supscriptchain Frontend</h1>
       <ul>
         <li><Link href="/plans">Plan Overview</Link></li>
+        <li><Link href="/plans/create">Create Plan</Link></li>
+        <li><Link href="/plans/update">Update Plan</Link></li>
         <li><Link href="/manage">Subscription Management</Link></li>
         <li><Link href="/payment">Payment</Link></li>
         <li><Link href="/analytics">Analytics</Link></li>
