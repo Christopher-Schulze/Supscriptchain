@@ -16,7 +16,8 @@ export default function Payment() {
     setLoading(true);
     try {
       if (!/^0x[0-9a-fA-F]{40}$/.test(user)) throw new Error('invalid user');
-      if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
+      if (!/^[0-9]+$/.test(planId) || Number(planId) < 0)
+        throw new Error('invalid plan id');
       const contract = await getContract();
       const tx = await contract.processPayment(user, BigInt(planId));
       await tx.wait();
