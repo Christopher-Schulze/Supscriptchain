@@ -130,7 +130,17 @@ abstract contract BaseSubscription {
         if (plan.priceInUsd) {
             require(plan.priceFeedAddress != address(0), "Price feed not set for USD plan");
             AggregatorV3Interface priceFeed = AggregatorV3Interface(plan.priceFeedAddress);
-            (, int256 latestPrice, , uint256 updatedAt, ) = priceFeed.latestRoundData();
+            (
+                uint80 roundId,
+                int256 latestPrice,
+                uint256 startedAt,
+                uint256 updatedAt,
+                uint80 answeredInRound
+            ) = priceFeed.latestRoundData();
+            // Prevent unused-variable compiler warnings
+            roundId;
+            startedAt;
+            answeredInRound;
             require(block.timestamp - updatedAt < MAX_STALE_TIME, "Price feed stale");
 
             uint8 tokenDecimals = plan.tokenDecimals;
@@ -215,6 +225,7 @@ abstract contract BaseSubscription {
         require(userSub.isActive, "Subscription is not active");
         require(plan.merchant != address(0), "Plan does not exist");
         require(msg.sender == plan.merchant, "Only plan merchant can process payment");
+        require(userSub.subscriber == _user, "Subscriber mismatch");
         require(block.timestamp >= userSub.nextPaymentDate, "Payment not due yet");
 
         IERC20 token = IERC20(plan.token);

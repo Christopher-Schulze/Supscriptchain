@@ -46,3 +46,6 @@ Both versions of the contract inherit from `ReentrancyGuard`. Functions that tra
 The contract follows the checks-effects-interactions pattern. State updates now occur **before** external token transfers to minimize reentrancy risk. Each token transfer additionally checks the spender's allowance to prevent unintended transfers.
 
 `MaliciousToken`'s `setReentrancy` helper validates that the target address is non-zero. Price feed data is verified for staleness and positive values, mitigating oracle manipulation.
+`processPayment` additionally checks that the subscriber address passed in
+matches the stored subscription to stop merchants from charging arbitrary
+users even if they have approved allowances.
