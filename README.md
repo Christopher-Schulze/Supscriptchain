@@ -259,6 +259,9 @@ Alternativ kann die eingebaute Hardhat-Task genutzt werden:
 ```bash
 npx hardhat upgrade --network <network>
 ```
+Diese Task liest ebenfalls die Proxy-Adresse aus der Umgebungsvariablen
+`SUBSCRIPTION_ADDRESS` und aktualisiert auf
+`SubscriptionUpgradeableV2`.
 
 ## Subgraph
 
