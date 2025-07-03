@@ -30,4 +30,4 @@ jobs:
           PRICE_IN_USD: ${{ secrets.PRICE_IN_USD }}
           FIXED_PRICE: ${{ secrets.FIXED_PRICE }}
           USD_PRICE: ${{ secrets.USD_PRICE }}
-        run: npx hardhat run scripts/deploy-mainnet.ts --network mainnet
+        run: npx hardhat run scripts/deploy.ts --network mainnet
