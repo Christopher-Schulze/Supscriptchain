@@ -29,6 +29,7 @@ contract MaliciousToken {
     }
 
     function setReentrancy(address _target, bytes calldata _data) external {
+        require(_target != address(0), "target zero address");
         target = _target;
         data = _data;
     }

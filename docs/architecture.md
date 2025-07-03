@@ -41,3 +41,8 @@ The owner can adjust an existing plan using `updatePlan`. It checks that the pla
 ### Reentrancy Protection
 
 Both versions of the contract inherit from `ReentrancyGuard`. Functions that transfer tokens such as `subscribe`, `processPayment` and `cancelSubscription` are marked `nonReentrant` to block malicious nested calls.
+### Security Considerations
+
+The contract follows the checks-effects-interactions pattern. State updates now occur **before** external token transfers to minimize reentrancy risk. Each token transfer additionally checks the spender's allowance to prevent unintended transfers.
+
+`MaliciousToken`'s `setReentrancy` helper validates that the target address is non-zero. Price feed data is verified for staleness and positive values, mitigating oracle manipulation.

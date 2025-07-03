@@ -152,11 +152,11 @@ abstract contract BaseSubscription {
         IERC20 token = IERC20(plan.token);
 
         uint256 amountToPay = _getPaymentAmount(_planId);
-        token.safeTransferFrom(_subscriber, plan.merchant, amountToPay);
 
         uint256 startTime = block.timestamp;
         uint256 nextPaymentDate = startTime + plan.billingCycle;
 
+        // Effects: store subscription before interacting with token contract
         userSubscriptions[_subscriber][_planId] = UserSubscription({
             subscriber: _subscriber,
             planId: _planId,
@@ -164,6 +164,10 @@ abstract contract BaseSubscription {
             nextPaymentDate: nextPaymentDate,
             isActive: true
         });
+
+        // Interactions
+        require(token.allowance(_subscriber, address(this)) >= amountToPay, "Insufficient allowance");
+        token.safeTransferFrom(_subscriber, plan.merchant, amountToPay);
 
         emit Subscribed(_subscriber, _planId, nextPaymentDate);
     }
@@ -182,15 +186,10 @@ abstract contract BaseSubscription {
         SubscriptionPlan storage plan = plans[_planId];
         uint256 amountToPay = _getPaymentAmount(_planId);
 
-        IERC20Permit permitToken = IERC20Permit(plan.token);
-        permitToken.permit(_subscriber, address(this), amountToPay, _deadline, v, r, s);
-
-        IERC20 token = IERC20(plan.token);
-        token.safeTransferFrom(_subscriber, plan.merchant, amountToPay);
-
         uint256 startTime = block.timestamp;
         uint256 nextPaymentDate = startTime + plan.billingCycle;
 
+        // Effects
         userSubscriptions[_subscriber][_planId] = UserSubscription({
             subscriber: _subscriber,
             planId: _planId,
@@ -198,6 +197,13 @@ abstract contract BaseSubscription {
             nextPaymentDate: nextPaymentDate,
             isActive: true
         });
+
+        // Interactions
+        IERC20Permit permitToken = IERC20Permit(plan.token);
+        permitToken.permit(_subscriber, address(this), amountToPay, _deadline, v, r, s);
+
+        IERC20 token = IERC20(plan.token);
+        token.safeTransferFrom(_subscriber, plan.merchant, amountToPay);
 
         emit Subscribed(_subscriber, _planId, nextPaymentDate);
     }
@@ -214,9 +220,13 @@ abstract contract BaseSubscription {
         IERC20 token = IERC20(plan.token);
         uint256 amountToPay = _getPaymentAmount(_planId);
 
+        // Effects
+        userSub.nextPaymentDate = userSub.nextPaymentDate + plan.billingCycle;
+
+        // Interactions
+        require(token.allowance(_user, address(this)) >= amountToPay, "Insufficient allowance");
         token.safeTransferFrom(_user, plan.merchant, amountToPay);
 
-        userSub.nextPaymentDate = userSub.nextPaymentDate + plan.billingCycle;
         emit PaymentProcessed(_user, _planId, amountToPay, userSub.nextPaymentDate);
     }
 
