@@ -30,8 +30,40 @@ function parseArgs() {
 
 const { network: networkArg, address: addressArg } = parseArgs();
 
-const network = networkArg || process.env.NETWORK;
-const address = addressArg || process.env.CONTRACT_ADDRESS;
+function detectNetwork(): string | undefined {
+  const deploymentsDir = path.join(__dirname, '../deployments');
+  if (!fs.existsSync(deploymentsDir)) return undefined;
+  const entries = fs
+    .readdirSync(deploymentsDir)
+    .filter((d) => fs.statSync(path.join(deploymentsDir, d)).isDirectory());
+  return entries.length === 1 ? entries[0] : undefined;
+}
+
+function loadAddress(net: string): string | undefined {
+  const base = path.join(__dirname, '../deployments', net);
+  if (!fs.existsSync(base)) return undefined;
+  for (const name of ['SubscriptionUpgradeable.json', 'Subscription.json']) {
+    const file = path.join(base, name);
+    if (fs.existsSync(file)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+        if (data.address) return data.address as string;
+      } catch {}
+    }
+  }
+  return undefined;
+}
+
+let network = networkArg || process.env.NETWORK;
+let address = addressArg || process.env.CONTRACT_ADDRESS;
+
+if (!network) {
+  network = detectNetwork();
+}
+
+if (network && !address) {
+  address = loadAddress(network);
+}
 
 if (!network || !address) {
   console.error(

@@ -39,18 +39,19 @@ graph-node \
 ### 3. Prepare the Subgraph
 
 The `prepare-subgraph` script fills in the network and contract address in the
-manifest. Run it after generating the AssemblyScript types:
+manifest. If Hardhat deployments exist, the values are detected automatically.
+Otherwise provide them via environment variables or CLI arguments.
 
-1. Export the required values (or pass them as CLI arguments).
-2. Generate the types with `npm run codegen`.
-3. Execute `npm run prepare-subgraph` to create `subgraph/subgraph.local.yaml`.
+1. Generate the types with `npm run codegen`.
+2. Run `npm run prepare-subgraph` to create `subgraph/subgraph.local.yaml`.
 
 ```bash
+# Optional overrides
 export NETWORK=sepolia
 export CONTRACT_ADDRESS=0xYourContract
 
 npm run codegen
-npm run prepare-subgraph -- --network $NETWORK --address $CONTRACT_ADDRESS
+npm run prepare-subgraph
 ```
 
 ### 4. Build the Subgraph
@@ -107,3 +108,24 @@ NEXT_PUBLIC_SUBGRAPH_URL=http://localhost:8000/subgraphs/name/subscription-subgr
 
 Start the app with `npm run dev` and open `/analytics` once the subgraph has
 synced.
+
+## Deploying to a Hosted Graph Node
+
+If you run a Graph Node on a remote server, point `graph deploy` to that node
+and set the frontend URL accordingly:
+
+```bash
+graph deploy \
+  --node https://your-node.example.com:8020/ \
+  --ipfs https://your-node.example.com:5001/ \
+  subscription-subgraph subgraph/subgraph.local.yaml
+```
+
+Configure the frontend with the hosted endpoint:
+
+```ini
+NEXT_PUBLIC_SUBGRAPH_URL=https://your-node.example.com/subgraphs/name/subscription-subgraph/graphql
+```
+
+Monitoring the node can be automated with `npm run subgraph-server`, which
+restarts `graph-node` on failure and logs health check errors.
