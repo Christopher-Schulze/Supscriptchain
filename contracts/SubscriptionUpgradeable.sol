@@ -55,8 +55,16 @@ contract SubscriptionUpgradeable is
         bool _priceInUsd,
         uint256 _usdPrice,
         address _priceFeedAddress
-    ) public onlyOwner whenNotPaused {
-        _createPlan(_merchantAddress, _token, _price, _billingCycle, _priceInUsd, _usdPrice, _priceFeedAddress);
+    ) public override onlyOwner whenNotPaused {
+        super.createPlan(
+            _merchantAddress,
+            _token,
+            _price,
+            _billingCycle,
+            _priceInUsd,
+            _usdPrice,
+            _priceFeedAddress
+        );
     }
 
     function updatePlan(
@@ -66,13 +74,20 @@ contract SubscriptionUpgradeable is
         bool _priceInUsd,
         uint256 _usdPrice,
         address _priceFeedAddress
-    ) public onlyOwner whenNotPaused {
-        _updatePlan(_planId, _billingCycle, _price, _priceInUsd, _usdPrice, _priceFeedAddress);
+    ) public override onlyOwner whenNotPaused {
+        super.updatePlan(
+            _planId,
+            _billingCycle,
+            _price,
+            _priceInUsd,
+            _usdPrice,
+            _priceFeedAddress
+        );
     }
 
 
-    function subscribe(uint256 _planId) public whenNotPaused nonReentrant {
-        _subscribe(_planId, msg.sender);
+    function subscribe(uint256 _planId) public override whenNotPaused nonReentrant {
+        super.subscribe(_planId);
     }
 
     function subscribeWithPermit(
@@ -81,16 +96,16 @@ contract SubscriptionUpgradeable is
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public whenNotPaused nonReentrant {
-        _subscribeWithPermit(_planId, _deadline, v, r, s, msg.sender);
+    ) public override whenNotPaused nonReentrant {
+        super.subscribeWithPermit(_planId, _deadline, v, r, s);
     }
 
-    function processPayment(address _user, uint256 _planId) public whenNotPaused nonReentrant {
-        _processPayment(_user, _planId);
+    function processPayment(address _user, uint256 _planId) public override whenNotPaused nonReentrant {
+        super.processPayment(_user, _planId);
     }
 
-    function cancelSubscription(uint256 _planId) public whenNotPaused nonReentrant {
-        _cancelSubscription(_planId, msg.sender);
+    function cancelSubscription(uint256 _planId) public override whenNotPaused nonReentrant {
+        super.cancelSubscription(_planId);
     }
 
     /**
@@ -99,7 +114,7 @@ contract SubscriptionUpgradeable is
      * @param token The ERC20 token address.
      * @param amount The amount of tokens to recover.
      */
-    function recoverERC20(address token, uint256 amount) external onlyOwner {
+    function recoverERC20(address token, uint256 amount) external override onlyOwner {
         _recoverERC20(token, amount, owner());
     }
 

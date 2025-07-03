@@ -27,12 +27,19 @@ function log(message: string) {
 }
 
 function start() {
-  child = spawn(cmd, args, { stdio: 'inherit' });
+  try {
+    child = spawn(cmd, args, { stdio: 'inherit' });
+  } catch (err) {
+    console.error('Failed to spawn graph-node:', err);
+    log(`Spawn error: ${(err as Error).message}`);
+    process.exit(1);
+  }
   fails = 0;
   log(`Started graph-node with PID ${child.pid}`);
   child.on('error', (err) => {
     console.error('Failed to start graph-node:', err);
     log(`Start error: ${err.message}`);
+    process.exitCode = 1;
   });
   child.on('exit', (code, signal) => {
     const msg = `graph-node exited with code ${code} signal ${signal}, restarting in ${restartDelay}ms`;

@@ -59,10 +59,8 @@ npx playwright test --headless
 
 ## Deployment
 
-Two deployment scripts are provided under `scripts/`.
-
-- **Testnet** – `scripts/deploy-testnet.ts`
-- **Mainnet** – `scripts/deploy-mainnet.ts`
+Deployment is handled by a single script `scripts/deploy.ts`.
+Specify the Hardhat network via the `--network` flag.
 
 Before deploying, each script runs `scripts/check-env.ts` to verify that all
 variables in `.env.example` are set.
@@ -103,7 +101,7 @@ networks: {
 Example deployment to a testnet network configured in `hardhat.config.ts`:
 
 ```bash
-npx hardhat run scripts/deploy-testnet.ts --network sepolia
+npx hardhat run scripts/deploy.ts --network sepolia
 ```
 
 ## Contract Verification
@@ -302,6 +300,8 @@ configure `NEXT_PUBLIC_SUBGRAPH_URL` for the frontend.
 The repository also contains a simple Next.js application under
 [`frontend/`](frontend/). Follow the instructions in
 [`frontend/README.md`](frontend/README.md) to run the interface.
+The frontend build runs `frontend/scripts/check-env.js` to ensure
+all variables from `.env.local.example` are provided.
 
 ## CI/CD
 

@@ -55,8 +55,16 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
         bool _priceInUsd,
         uint256 _usdPrice,
         address _priceFeedAddress
-    ) public onlyOwner whenNotPaused {
-        _createPlan(_merchantAddress, _token, _price, _billingCycle, _priceInUsd, _usdPrice, _priceFeedAddress);
+    ) public override onlyOwner whenNotPaused {
+        super.createPlan(
+            _merchantAddress,
+            _token,
+            _price,
+            _billingCycle,
+            _priceInUsd,
+            _usdPrice,
+            _priceFeedAddress
+        );
     }
 
     /**
@@ -76,8 +84,15 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
         bool _priceInUsd,
         uint256 _usdPrice,
         address _priceFeedAddress
-    ) public onlyOwner whenNotPaused {
-        _updatePlan(_planId, _billingCycle, _price, _priceInUsd, _usdPrice, _priceFeedAddress);
+    ) public override onlyOwner whenNotPaused {
+        super.updatePlan(
+            _planId,
+            _billingCycle,
+            _price,
+            _priceInUsd,
+            _usdPrice,
+            _priceFeedAddress
+        );
     }
 
     /**
@@ -92,8 +107,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @dev Transfers initial payment from user to merchant. User must approve contract for token spending.
      * @param _planId The ID of the plan to subscribe to.
      */
-    function subscribe(uint256 _planId) public whenNotPaused nonReentrant {
-        _subscribe(_planId, msg.sender);
+    function subscribe(uint256 _planId) public override whenNotPaused nonReentrant {
+        super.subscribe(_planId);
     }
 
     /**
@@ -111,8 +126,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) public whenNotPaused nonReentrant {
-        _subscribeWithPermit(_planId, _deadline, v, r, s, msg.sender);
+    ) public override whenNotPaused nonReentrant {
+        super.subscribeWithPermit(_planId, _deadline, v, r, s);
     }
 
     /**
@@ -122,8 +137,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @param _user The address of the subscriber whose payment is being processed.
      * @param _planId The ID of the plan for which payment is processed.
      */
-    function processPayment(address _user, uint256 _planId) public whenNotPaused nonReentrant {
-        _processPayment(_user, _planId);
+    function processPayment(address _user, uint256 _planId) public override whenNotPaused nonReentrant {
+        super.processPayment(_user, _planId);
     }
 
     /**
@@ -131,8 +146,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @dev Sets the subscription to inactive. No refunds for the current billing cycle.
      * @param _planId The ID of the plan to cancel.
      */
-    function cancelSubscription(uint256 _planId) public whenNotPaused nonReentrant {
-        _cancelSubscription(_planId, msg.sender);
+    function cancelSubscription(uint256 _planId) public override whenNotPaused nonReentrant {
+        super.cancelSubscription(_planId);
     }
 
     /**
@@ -141,7 +156,7 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @param token The ERC20 token address.
      * @param amount The amount of tokens to recover.
      */
-    function recoverERC20(address token, uint256 amount) external onlyOwner {
+    function recoverERC20(address token, uint256 amount) external override onlyOwner {
         _recoverERC20(token, amount, owner());
     }
 }
