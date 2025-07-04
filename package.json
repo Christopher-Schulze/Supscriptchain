@@ -21,7 +21,8 @@
     "solhint": "^5.2.0",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.4.5",
+    "zod": "^3.25.73"
   },
   "scripts": {
     "compile": "hardhat compile",
