@@ -25,7 +25,7 @@ export default function Payment() {
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
-      setError(message);
+      setMessage(message);
     } finally {
       setLoading(false);
     }

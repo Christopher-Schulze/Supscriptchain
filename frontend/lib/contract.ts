@@ -4,6 +4,25 @@ import type { Subscription } from "typechain/contracts/Subscription.sol/Subscrip
 import { Subscription__factory } from "typechain/factories/contracts/Subscription.sol/Subscription__factory";
 import { env } from "./env";
 
+function parseEthersError(err: unknown): string {
+  const e = err as any;
+  return (
+    e?.shortMessage ||
+    e?.reason ||
+    e?.error?.message ||
+    e?.data?.message ||
+    (err instanceof Error ? err.message : String(err))
+  );
+}
+
+async function handleEthersError<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    throw new Error(parseEthersError(err));
+  }
+}
+
 declare global {
   interface Window {
     ethereum?: ExternalProvider;
@@ -32,7 +51,9 @@ export async function subscribeWithPermit(
   s: string
 ) {
   const contract = await getContract();
-  return contract.subscribeWithPermit(planId, deadline, v, r, s);
+  return handleEthersError(() =>
+    contract.subscribeWithPermit(planId, deadline, v, r, s)
+  );
 }
 
 export async function createPlan(
@@ -45,7 +66,17 @@ export async function createPlan(
   feed: string
 ) {
   const contract = await getContract();
-  return contract.createPlan(merchant, token, price, billing, priceInUsd, usdPrice, feed);
+  return handleEthersError(() =>
+    contract.createPlan(
+      merchant,
+      token,
+      price,
+      billing,
+      priceInUsd,
+      usdPrice,
+      feed
+    )
+  );
 }
 
 export async function updatePlan(
@@ -57,5 +88,7 @@ export async function updatePlan(
   feed: string
 ) {
   const contract = await getContract();
-  return contract.updatePlan(planId, billing, price, priceInUsd, usdPrice, feed);
+  return handleEthersError(() =>
+    contract.updatePlan(planId, billing, price, priceInUsd, usdPrice, feed)
+  );
 }
