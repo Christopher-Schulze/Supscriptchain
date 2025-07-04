@@ -109,4 +109,56 @@ describe('process-due-payments script', function () {
     expect(res.status).to.equal(1);
     expect(res.stderr).to.match(/Invalid environment variables/);
   });
+
+  it('skips entries with invalid addresses', async function () {
+    const { merchant, userSuccess, subscription } = await loadFixture(deployFixture);
+
+    const tmpJson = path.join(__dirname, 'subscribers.invalidaddr.tmp.json');
+    const data = [userSuccess.address, '0xINVALID'];
+    fs.writeFileSync(tmpJson, JSON.stringify(data, null, 2));
+
+    const res = spawnSync('node', ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts'], {
+      env: {
+        ...process.env,
+        TS_NODE_TRANSPILE_ONLY: '1',
+        SUBSCRIPTION_ADDRESS: subscription.target,
+        PLAN_ID: '0',
+        SUBSCRIBERS_FILE: tmpJson,
+        MERCHANT_PRIVATE_KEY: merchant.privateKey,
+      },
+      encoding: 'utf8',
+    });
+
+    fs.unlinkSync(tmpJson);
+
+    expect(res.status).to.equal(0);
+    expect(res.stderr).to.match(/Invalid address/);
+    expect(res.stdout).to.match(new RegExp(`Processing payment for ${userSuccess.address}`));
+  });
+
+  it('skips entries with invalid plan ids', async function () {
+    const { merchant, userSuccess, subscription } = await loadFixture(deployFixture);
+
+    const tmpJson = path.join(__dirname, 'subscribers.invalidplan.tmp.json');
+    const data = [userSuccess.address, { user: userSuccess.address, plan: -1 }];
+    fs.writeFileSync(tmpJson, JSON.stringify(data, null, 2));
+
+    const res = spawnSync('node', ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts'], {
+      env: {
+        ...process.env,
+        TS_NODE_TRANSPILE_ONLY: '1',
+        SUBSCRIPTION_ADDRESS: subscription.target,
+        PLAN_ID: '0',
+        SUBSCRIBERS_FILE: tmpJson,
+        MERCHANT_PRIVATE_KEY: merchant.privateKey,
+      },
+      encoding: 'utf8',
+    });
+
+    fs.unlinkSync(tmpJson);
+
+    expect(res.status).to.equal(0);
+    expect(res.stderr).to.match(/No valid plan IDs/);
+    expect(res.stdout).to.match(new RegExp(`Processing payment for ${userSuccess.address}`));
+  });
 });

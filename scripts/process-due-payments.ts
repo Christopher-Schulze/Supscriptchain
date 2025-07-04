@@ -46,28 +46,44 @@ async function runOnce(log: (...args: any[]) => void) {
   );
 
   const raw = JSON.parse(fs.readFileSync(listPath, 'utf8'));
-  const subscribers: SubscriberEntry[] = Array.isArray(raw)
-    ? raw.map((entry: any) => {
-        if (typeof entry === 'string') {
-          return { user: entry, plans: [defaultPlanId] } as SubscriberEntry;
-        }
+  const subscribers: SubscriberEntry[] = [];
 
-        const planField = entry.plans ?? entry.plan ?? defaultPlanId;
-        const planArray = Array.isArray(planField)
-          ? planField
-          : String(planField)
-              .split(',')
-              .map((p: string) => p.trim())
-              .filter((p: string) => p !== '');
+  if (Array.isArray(raw)) {
+    for (const entry of raw) {
+      let user: string;
+      let planField: any;
 
-        const plans = [...new Set(planArray.map((p: any) => Number(p)))] as number[];
+      if (typeof entry === 'string') {
+        user = entry;
+        planField = [defaultPlanId];
+      } else {
+        user = entry.user;
+        planField = entry.plans ?? entry.plan ?? defaultPlanId;
+      }
 
-        return {
-          user: entry.user,
-          plans,
-        } as SubscriberEntry;
-      })
-    : [];
+      const planArray = Array.isArray(planField)
+        ? planField
+        : String(planField)
+            .split(',')
+            .map((p: string) => p.trim())
+            .filter((p: string) => p !== '');
+
+      if (!/^0x[a-fA-F0-9]{40}$/.test(user)) {
+        console.error(`Invalid address ${user}, skipping entry`);
+        continue;
+      }
+
+      const plans = [...new Set(planArray.map((p: any) => Number(p)))]
+        .filter((p) => !Number.isNaN(p) && p >= 0);
+
+      if (plans.length === 0) {
+        console.error(`No valid plan IDs for ${user}, skipping entry`);
+        continue;
+      }
+
+      subscribers.push({ user, plans });
+    }
+  }
 
   const now = Math.floor(Date.now() / 1000);
 
