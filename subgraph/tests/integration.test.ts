@@ -73,7 +73,7 @@ describe('Subgraph integration', function () {
     if (hardhat) hardhat.kill('SIGINT');
   });
 
-  it('indexes events from Subscription', async () => {
+  it('indexes events across upgrades', async () => {
     const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545');
     const [owner, user] = await provider.listAccounts();
     const ownerSigner = provider.getSigner(owner);
@@ -99,19 +99,85 @@ describe('Subgraph integration', function () {
         path.join(
           'artifacts',
           'contracts',
-          'Subscription.sol',
-          'Subscription.json',
+          'SubscriptionUpgradeable.sol',
+          'SubscriptionUpgradeable.json',
         ),
         'utf8',
       ),
     );
-    const subFactory = new ethers.ContractFactory(
+    const subV2Json = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          'artifacts',
+          'contracts',
+          'SubscriptionUpgradeableV2.sol',
+          'SubscriptionUpgradeableV2.json',
+        ),
+        'utf8',
+      ),
+    );
+    const proxyJson = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          'artifacts',
+          '@openzeppelin',
+          'contracts',
+          'proxy',
+          'transparent',
+          'TransparentUpgradeableProxy.sol',
+          'TransparentUpgradeableProxy.json',
+        ),
+        'utf8',
+      ),
+    );
+    const adminJson = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          'artifacts',
+          '@openzeppelin',
+          'contracts',
+          'proxy',
+          'transparent',
+          'ProxyAdmin.sol',
+          'ProxyAdmin.json',
+        ),
+        'utf8',
+      ),
+    );
+
+    const implFactory = new ethers.ContractFactory(
       subJson.abi,
       subJson.bytecode,
       ownerSigner,
     );
-    const subscription = await subFactory.deploy();
-    await subscription.waitForDeployment();
+    const impl = await implFactory.deploy();
+    await impl.waitForDeployment();
+
+    const adminFactory = new ethers.ContractFactory(
+      adminJson.abi,
+      adminJson.bytecode,
+      ownerSigner,
+    );
+    const admin = await adminFactory.deploy();
+    await admin.waitForDeployment();
+
+    const initData = impl.interface.encodeFunctionData('initialize', [owner]);
+    const proxyFactory = new ethers.ContractFactory(
+      proxyJson.abi,
+      proxyJson.bytecode,
+      ownerSigner,
+    );
+    const proxyDeploy = await proxyFactory.deploy(
+      await impl.getAddress(),
+      await admin.getAddress(),
+      initData,
+    );
+    await proxyDeploy.waitForDeployment();
+    let subscription = new ethers.Contract(
+      await proxyDeploy.getAddress(),
+      subJson.abi,
+      ownerSigner,
+    );
 
     await token
       .connect(userSigner)
@@ -128,6 +194,24 @@ describe('Subgraph integration', function () {
         ethers.ZeroAddress,
       );
     await subscription.connect(userSigner).subscribe(0);
+
+    const subV2Factory = new ethers.ContractFactory(
+      subV2Json.abi,
+      subV2Json.bytecode,
+      ownerSigner,
+    );
+    const impl2 = await subV2Factory.deploy();
+    await impl2.waitForDeployment();
+
+    const adminContract = new ethers.Contract(
+      await admin.getAddress(),
+      adminJson.abi,
+      ownerSigner,
+    );
+    await adminContract.upgrade(await proxyDeploy.getAddress(), await impl2.getAddress());
+    subscription = new ethers.Contract(await proxyDeploy.getAddress(), subV2Json.abi, ownerSigner);
+
+    await subscription.connect(ownerSigner).processPayment(user, 0);
 
     process.env.NETWORK = 'hardhat';
     process.env.CONTRACT_ADDRESS = await subscription.getAddress();
@@ -156,10 +240,17 @@ describe('Subgraph integration', function () {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: '{ subscriptions { id } }' }),
+        body: JSON.stringify({
+          query:
+            '{ plans { id totalPaid } subscriptions { id } payments { id planId amount } }',
+        }),
       },
     );
     const json = await res.json();
     expect(json.data.subscriptions.length).to.equal(1);
+    expect(json.data.payments.length).to.equal(1);
+    expect(json.data.plans[0].totalPaid).to.equal(
+      ethers.parseUnits('1', 18).toString(),
+    );
   });
 });
