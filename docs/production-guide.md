@@ -50,3 +50,13 @@ Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIV
 For the subgraph, monitor the Graph Node via its `/health` endpoint. The helper script `npm run subgraph-server` can automatically restart the node when a healthcheck fails. Configure the interval and URL using the `GRAPH_NODE_HEALTH_*` environment variables.
 
 Consider setting up additional service-level monitoring for your contract interactions and Docker containers.
+
+## Docker Compose Setup
+
+An example compose file at `docs/docker-compose.example.yml` runs the full stack including Graph Node, a local Ethereum node and the frontend. Adjust the environment variables as needed and start the services with:
+
+```bash
+docker compose -f docs/docker-compose.example.yml up -d
+```
+
+This command launches Postgres, IPFS, Graph Node, an `anvil` chain and the production frontend.

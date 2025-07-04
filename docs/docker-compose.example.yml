@@ -1,0 +1,60 @@
+version: '3.9'
+services:
+  postgres:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: graph
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: graph-node
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  ipfs:
+    image: ipfs/go-ipfs:v0.18
+    restart: unless-stopped
+    volumes:
+      - ipfs:/data/ipfs
+    ports:
+      - "5001:5001"
+
+  ethereum:
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: anvil --host 0.0.0.0
+    ports:
+      - "8545:8545"
+
+  graph-node:
+    image: graphprotocol/graph-node:latest
+    depends_on:
+      - postgres
+      - ipfs
+      - ethereum
+    ports:
+      - "8000:8000"
+      - "8020:8020"
+    environment:
+      postgres_host: postgres
+      postgres_user: graph
+      postgres_pass: password
+      postgres_db: graph-node
+      ipfs: ipfs:5001
+      ethereum: mainnet:http://ethereum:8545
+      GRAPH_LOG: info
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ../frontend:/app
+    environment:
+      NEXT_PUBLIC_CONTRACT_ADDRESS: ${NEXT_PUBLIC_CONTRACT_ADDRESS}
+      NEXT_PUBLIC_RPC_URL: ${NEXT_PUBLIC_RPC_URL}
+      NEXT_PUBLIC_SUBGRAPH_URL: ${NEXT_PUBLIC_SUBGRAPH_URL}
+    command: sh -c "npm install --omit=dev && npm run build && npm start"
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:
+  ipfs:
