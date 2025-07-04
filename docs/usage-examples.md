@@ -153,3 +153,15 @@ Environment=GRAPH_NODE_MAX_FAILS=5
 Environment=GRAPH_NODE_RESTART_DELAY=10000
 ExecStart=/usr/bin/npm run subgraph-server --prefix /opt/supscriptchain
 ```
+
+## Running Subgraph Integration Tests
+
+The integration tests spin up a local Hardhat node and a Graph Node Docker
+container. Ensure Docker is installed and running, then execute:
+
+```bash
+npx hardhat test subgraph/tests/integration.test.ts
+```
+
+This compiles the contracts, deploys both `SubscriptionUpgradeable` versions
+through a proxy and verifies indexed events by querying the running Graph Node.
