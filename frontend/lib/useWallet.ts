@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useStore } from "./store";
+import WalletConnectProvider from "@walletconnect/web3-provider";
+import { env } from "./env";
 
 interface EthereumProvider {
   request(args: { method: string; params?: unknown[] }): Promise<unknown>;
@@ -21,10 +23,20 @@ export default function useWallet() {
 
   async function connect() {
     if (typeof window === "undefined") return;
-    const eth = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
+    let eth = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
     if (!eth) {
-      setMessage("MetaMask not found");
-      return;
+      try {
+        const wc = new WalletConnectProvider({
+          rpc: {
+            1: env.NEXT_PUBLIC_RPC_URL,
+          },
+        });
+        await wc.enable();
+        eth = wc as unknown as EthereumProvider;
+      } catch {
+        setMessage("Wallet not found");
+        return;
+      }
     }
     try {
       const accounts = (await eth.request({ method: "eth_requestAccounts" })) as string[];
