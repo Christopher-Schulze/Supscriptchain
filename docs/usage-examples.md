@@ -44,7 +44,8 @@ OpenZeppelin upgrades file in `.openzeppelin/`, the script automatically reads
 the network and address from those files. If nothing can be detected, provide
 the values via environment variables or CLI arguments.
 
-1. Generate the types with `npm run codegen`.
+1. Generate the types with `npm run codegen` (automatically done by
+   `npm run build-subgraph`).
 2. Run `npm run prepare-subgraph` to create `subgraph/subgraph.local.yaml`.
 
 ```bash
@@ -58,7 +59,8 @@ npm run prepare-subgraph
 
 ### 4. Build the Subgraph
 
-The build script first runs `prepare-subgraph` and then compiles the subgraph:
+The build script runs `npm run codegen` and `npm run prepare-subgraph` before
+compiling the subgraph:
 
 ```bash
 npm run build-subgraph -- --network $NETWORK --address $CONTRACT_ADDRESS

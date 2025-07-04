@@ -301,8 +301,8 @@ building. These variables are also used by `npm run prepare-subgraph`:
 NETWORK=sepolia CONTRACT_ADDRESS=0xYourContract npm run build-subgraph
 ```
 
-This command runs `npm run prepare-subgraph` internally and produces
-`subgraph/subgraph.local.yaml`.
+This command runs `npm run codegen` and `npm run prepare-subgraph` internally and
+produces `subgraph/subgraph.local.yaml`.
 
 See [docs/usage-examples.md#running-the-subgraph-locally](docs/usage-examples.md#running-the-subgraph-locally)
 for a step-by-step guide on `npm run prepare-subgraph` and `npm run build-subgraph`.

@@ -38,7 +38,7 @@
     "typechain": "typechain --target ethers-v6 --out-dir typechain ./artifacts/**/*.json",
     "codegen": "graph codegen subgraph/subgraph.yaml",
     "prepare-subgraph": "npx --yes ts-node scripts/prepare-subgraph.ts",
-    "build-subgraph": "npm run prepare-subgraph && graph build subgraph/subgraph.local.yaml",
+    "build-subgraph": "npm run prepare-subgraph && npm run codegen && graph build subgraph/subgraph.local.yaml",
     "prepare": "husky install",
     "subgraph-server": "ts-node scripts/subgraph-server.ts",
     "coverage": "hardhat coverage",
