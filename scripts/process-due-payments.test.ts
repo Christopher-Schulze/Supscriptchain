@@ -37,9 +37,10 @@ describe('process-due-payments script', function () {
     const data = [userSuccess.address, { user: userFail.address, plan: 0 }];
     fs.writeFileSync(tmpJson, JSON.stringify(data, null, 2));
 
-    const res = spawnSync('npx', ['ts-node', 'scripts/process-due-payments.ts'], {
+    const res = spawnSync('node', ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts'], {
       env: {
         ...process.env,
+        TS_NODE_TRANSPILE_ONLY: '1',
         SUBSCRIPTION_ADDRESS: subscription.target,
         PLAN_ID: '0',
         SUBSCRIBERS_FILE: tmpJson,
@@ -53,6 +54,35 @@ describe('process-due-payments script', function () {
     expect(res.status).to.equal(1);
     expect(res.stdout).to.match(new RegExp(`Processing payment for ${userSuccess.address}`));
     expect(res.stdout).to.match(/Failed payments summary/);
+
+    const sub = await subscription.userSubscriptions(userSuccess.address, 0);
+    expect(sub.nextPaymentDate).to.be.gt(BigInt(await time.latest()));
+  });
+
+  it('runs in interval mode', async function () {
+    const { merchant, userSuccess, subscription } = await loadFixture(deployFixture);
+
+    const tmpJson = path.join(__dirname, 'subscribers.interval.tmp.json');
+    fs.writeFileSync(tmpJson, JSON.stringify([userSuccess.address], null, 2));
+
+    const res = spawnSync('node', ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts'], {
+      env: {
+        ...process.env,
+        TS_NODE_TRANSPILE_ONLY: '1',
+        SUBSCRIPTION_ADDRESS: subscription.target,
+        PLAN_ID: '0',
+        SUBSCRIBERS_FILE: tmpJson,
+        MERCHANT_PRIVATE_KEY: merchant.privateKey,
+        INTERVAL: '1',
+      },
+      encoding: 'utf8',
+      timeout: 2000,
+    });
+
+    fs.unlinkSync(tmpJson);
+
+    expect(res.signal).to.equal('SIGTERM');
+    expect(res.stdout).to.match(new RegExp(`Processing payment for ${userSuccess.address}`));
 
     const sub = await subscription.userSubscriptions(userSuccess.address, 0);
     expect(sub.nextPaymentDate).to.be.gt(BigInt(await time.latest()));

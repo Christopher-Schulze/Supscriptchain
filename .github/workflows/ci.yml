@@ -38,6 +38,9 @@ jobs:
       - name: Run tests
         run: npm test
 
+      - name: Run process-due-payments script test
+        run: npx hardhat test scripts/process-due-payments.test.ts
+
       - name: Run coverage
         run: npm run coverage
 
