@@ -1,6 +1,6 @@
 # Supscriptchain
 
-[![CI](https://github.com/OWNER/Supscriptchain/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/Supscriptchain/actions/workflows/ci.yml)
+[![CI](https://github.com/<Organisation oder Nutzername>/Supscriptchain/actions/workflows/ci.yml/badge.svg)](https://github.com/<Organisation oder Nutzername>/Supscriptchain/actions/workflows/ci.yml)
 
 This project contains a simple subscription smart contract written in Solidity along with TypeScript tests using Hardhat. It allows merchants to create subscription plans that can be paid in ERC20 tokens or in USD via a Chainlink price feed.
 
