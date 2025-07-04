@@ -3,35 +3,11 @@ import { useState } from 'react';
 import { usePlans } from '../../lib/plansStore';
 import useWallet from '../../lib/useWallet';
 
-interface Plan {
-  merchant: string;
-  token: string;
-  tokenDecimals: bigint;
-  price: bigint;
-  billingCycle: bigint;
-  priceInUsd: boolean;
-  usdPrice: bigint;
-  priceFeedAddress: string;
-}
-
 export default function Plans() {
   const { account, connect } = useWallet();
-  const { plans, reload } = usePlans();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function refresh() {
-    setLoading(true);
-    setError(null);
-    try {
-      await reload();
-    } catch (err) {
-      console.error(err);
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
-    }
-  }
+  const { plans } = usePlans();
+  const [loading] = useState(false);
+  const [error] = useState<string | null>(null);
 
   return (
     <div>
