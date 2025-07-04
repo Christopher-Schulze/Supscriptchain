@@ -61,6 +61,12 @@ abstract contract BaseSubscription {
         address priceFeedAddress
     );
 
+    event MerchantUpdated(
+        uint256 planId,
+        address oldMerchant,
+        address newMerchant
+    );
+
     event Subscribed(address indexed user, uint256 indexed planId, uint256 nextPaymentDate);
     event PaymentProcessed(address indexed user, uint256 indexed planId, uint256 amount, uint256 newNextPaymentDate);
     event SubscriptionCancelled(address indexed user, uint256 indexed planId);
@@ -124,6 +130,15 @@ abstract contract BaseSubscription {
         plan.priceFeedAddress = _priceFeedAddress;
 
         emit PlanUpdated(_planId, _billingCycle, _price, _priceInUsd, _usdPrice, _priceFeedAddress);
+    }
+
+    function _updateMerchant(uint256 _planId, address _newMerchant) internal {
+        SubscriptionPlan storage plan = plans[_planId];
+        require(plan.merchant != address(0), "Plan does not exist");
+        require(_newMerchant != address(0), "Merchant cannot be zero");
+        address oldMerchant = plan.merchant;
+        plan.merchant = _newMerchant;
+        emit MerchantUpdated(_planId, oldMerchant, _newMerchant);
     }
 
     function _getPaymentAmount(uint256 _planId) internal view returns (uint256 amount) {
@@ -313,6 +328,10 @@ abstract contract BaseSubscription {
             _usdPrice,
             _priceFeedAddress
         );
+    }
+
+    function updateMerchant(uint256 _planId, address _newMerchant) public virtual {
+        _updateMerchant(_planId, _newMerchant);
     }
 
     function subscribe(uint256 _planId) public virtual {

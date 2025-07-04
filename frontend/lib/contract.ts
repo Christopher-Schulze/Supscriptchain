@@ -104,3 +104,8 @@ export async function updatePlan(
     contract.updatePlan(planId, billing, price, priceInUsd, usdPrice, feed)
   );
 }
+
+export async function updateMerchant(planId: bigint, merchant: string) {
+  const contract = await getContract();
+  return handleEthersError(() => contract.updateMerchant(planId, merchant));
+}

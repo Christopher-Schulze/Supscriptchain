@@ -287,6 +287,48 @@ describe("Subscription Contract", function () {
         });
     });
 
+    describe("updateMerchant", function () {
+        async function fixtureWithActiveSubscription() {
+            const setup = await loadFixture(deploySubscriptionFixture);
+            const price = ethers.parseUnits("10", 18);
+            await setup.subscriptionContract.connect(setup.owner).createPlan(
+                setup.owner.address,
+                setup.mockToken.target,
+                price,
+                THIRTY_DAYS_IN_SECS,
+                false,
+                0,
+                ethers.ZeroAddress
+            );
+            await setup.subscriptionContract.connect(setup.user1).subscribe(0);
+            return { ...setup, price };
+        }
+
+        it("Owner can change merchant and new merchant processes payment", async function () {
+            const { subscriptionContract, mockToken, owner, merchant, user1, price } = await loadFixture(fixtureWithActiveSubscription);
+            let sub = await subscriptionContract.userSubscriptions(user1.address, 0);
+            await time.increaseTo(sub.nextPaymentDate.add(1));
+            await expect(subscriptionContract.connect(owner).updateMerchant(0, merchant.address))
+                .to.emit(subscriptionContract, "MerchantUpdated")
+                .withArgs(0, owner.address, merchant.address);
+
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, 0))
+                .to.be.revertedWith("Only plan merchant can process payment");
+
+            const balBefore = await mockToken.balanceOf(merchant.address);
+            await expect(subscriptionContract.connect(merchant).processPayment(user1.address, 0))
+                .to.emit(subscriptionContract, "PaymentProcessed");
+            expect(await mockToken.balanceOf(merchant.address)).to.equal(balBefore.add(price));
+        });
+
+        it("Non-owner cannot update merchant", async function () {
+            const { subscriptionContract, user1, merchant } = await loadFixture(fixtureWithActiveSubscription);
+            await expect(subscriptionContract.connect(user1).updateMerchant(0, merchant.address))
+                .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+                .withArgs(user1.address);
+        });
+    });
+
     describe("subscribe (Fixed Price Plan)", function () {
         const planId = 0;
         const fixedPrice = ethers.parseUnits("10", 18); // mockTokenDecimals is 18
