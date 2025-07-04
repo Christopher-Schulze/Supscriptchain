@@ -45,8 +45,54 @@ docker run --env-file .env payments
 
 Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIVATE_KEY`. The container runs `scripts/process-due-payments.ts` and exits with a non-zero status when any payments fail if `FAIL_ON_FAILURE=true`.
 
-## Monitoring and Healthchecks
+## Monitoring
 
-For the subgraph, monitor the Graph Node via its `/health` endpoint. The helper script `npm run subgraph-server` can automatically restart the node when a healthcheck fails. Configure the interval and URL using the `GRAPH_NODE_HEALTH_*` environment variables.
+`scripts/subgraph-server.ts` runs the Graph Node with automatic restarts when
+its health endpoint becomes unreachable. In production you typically want this
+script supervised by `systemd` or a process manager such as **PM2**.
 
-Consider setting up additional service-level monitoring for your contract interactions and Docker containers.
+### Using systemd
+
+Create a unit file `/etc/systemd/system/subgraph-server.service`:
+
+```ini
+[Unit]
+Description=Supscriptchain subgraph server
+After=network.target
+
+[Service]
+WorkingDirectory=/path/to/app
+EnvironmentFile=/path/to/.env
+ExecStart=/usr/bin/npm run subgraph-server
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Reload the systemd daemon with `systemctl daemon-reload` and enable the service
+via `systemctl enable --now subgraph-server.service`.
+
+### Using PM2
+
+Alternatively run the server under PM2:
+
+```bash
+pm2 start scripts/subgraph-server.ts --name subgraph-server --interpreter ts-node
+pm2 save
+pm2 startup
+```
+
+PM2 keeps the process alive and can integrate with systemd through
+`pm2 startup`.
+
+### Healthchecks
+
+Monitor the Graph Node via its `/health` endpoint. The helper script `npm run
+subgraph-server` can automatically restart the node when a healthcheck fails.
+Configure the interval and URL with the `GRAPH_NODE_HEALTH_*` environment
+variables. Tools like **Prometheus** and **Grafana** are helpful for storing
+metrics and visualizing the health status of your node.
+
+Consider setting up additional service-level monitoring for your contract
+interactions and Docker containers.
