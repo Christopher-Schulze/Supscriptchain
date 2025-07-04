@@ -15,3 +15,20 @@ test('connect uses injected provider', async () => {
   });
   expect(result.current.account).toBe('0xabc');
 });
+
+test('connect falls back to WalletConnect using env chain id', async () => {
+  const request = jest.fn().mockResolvedValue(['0xdef']);
+  const enable = jest.fn();
+  const WalletConnectProvider = require('@walletconnect/web3-provider') as jest.Mock;
+  WalletConnectProvider.mockImplementation(() => ({ enable, request }));
+  (window as any).ethereum = undefined;
+  const { result } = renderHook(() => useWallet(), { wrapper: StoreProvider });
+  await act(async () => {
+    await result.current.connect();
+  });
+  expect(WalletConnectProvider).toHaveBeenCalledWith({
+    rpc: { [Number(process.env.NEXT_PUBLIC_CHAIN_ID)]: process.env.NEXT_PUBLIC_RPC_URL },
+  });
+  expect(enable).toHaveBeenCalled();
+  expect(result.current.account).toBe('0xdef');
+});
