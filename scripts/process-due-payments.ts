@@ -1,6 +1,7 @@
 import { ethers } from 'hardhat';
 import fs from 'fs';
 import path from 'path';
+import util from 'util';
 
 /**
  * Parsed subscriber entry from JSON.
@@ -19,7 +20,7 @@ interface FailedPayment {
   reason: string;
 }
 
-async function main() {
+async function runOnce(log: (...args: any[]) => void) {
   const failOnFailure =
     process.env.FAIL_ON_FAILURE === 'true' ||
     process.env.FAIL_ON_FAILURE === '1';
@@ -91,15 +92,32 @@ async function main() {
   }
 
   if (failures.length > 0) {
-    console.log('\nFailed payments summary:');
+    log('\nFailed payments summary:');
     for (const f of failures) {
-      console.log(`- ${f.user} plan ${f.plan}: ${f.reason}`);
+      log(`- ${f.user} plan ${f.plan}: ${f.reason}`);
     }
     if (failOnFailure) {
       process.exit(1);
     } else {
       process.exitCode = 1;
     }
+  }
+}
+
+async function main() {
+  const logFile = process.env.LOG_FILE;
+  const log = logFile
+    ? (...args: any[]) =>
+        fs.appendFileSync(logFile, util.format(...args) + '\n')
+    : console.log;
+  const interval = parseInt(process.env.INTERVAL || '0', 10);
+  if (interval > 0) {
+    while (true) {
+      await runOnce(log);
+      await new Promise((res) => setTimeout(res, interval * 1000));
+    }
+  } else {
+    await runOnce(log);
   }
 }
 

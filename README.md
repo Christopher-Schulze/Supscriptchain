@@ -22,6 +22,8 @@ Copy `.env.example` to `.env` and adjust the values for your deployment:
 cp .env.example .env
 ```
 
+See [docs/env-vars.md](docs/env-vars.md) for a full list of environment variables used across the project.
+
 ## Running Tests
 
 ```bash
@@ -253,6 +255,14 @@ To automate processing, add a cron entry. This example runs hourly:
 
 ```cron
 0 * * * * cd /path/to/project && npx hardhat run scripts/process-due-payments.ts --network <network> >> cron.log 2>&1
+```
+
+The repository also provides `Dockerfile.payments` to run the script in a
+container:
+
+```bash
+docker build -f Dockerfile.payments -t payments .
+docker run --env-file .env payments
 ```
 
 ## Upgradeprozess
