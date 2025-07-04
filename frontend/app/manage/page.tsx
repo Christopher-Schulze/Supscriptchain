@@ -60,7 +60,9 @@ export default function Manage() {
       if (!/^[0-9]+$/.test(deadline)) throw new Error('invalid deadline');
       const contract = await getContract();
       const plan = await contract.plans(BigInt(planId));
-      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const provider = new ethers.BrowserProvider(
+        (window as unknown as { ethereum: ethers.Eip1193Provider }).ethereum,
+      );
       const signer = await provider.getSigner();
       const token = new ethers.Contract(
         plan.token,

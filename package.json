@@ -27,7 +27,7 @@
     "compile": "hardhat compile",
     "test": "HARDHAT_DISABLE_DOWNLOAD_COMPILERS=true hardhat test",
     "gas": "HARDHAT_DISABLE_DOWNLOAD_COMPILERS=true REPORT_GAS=true hardhat test",
-    "lint": "eslint --ext .ts .",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint --ext .ts .",
     "format": "prettier --write .",
     "solhint": "solhint 'contracts/**/*.sol'",
     "typechain": "typechain --target ethers-v6 --out-dir typechain ./artifacts/**/*.json",
