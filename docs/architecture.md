@@ -41,6 +41,7 @@ The owner can adjust an existing plan using `updatePlan`. It checks that the pla
 ### Reentrancy Protection
 
 Both versions of the contract inherit from `ReentrancyGuard`. Functions that transfer tokens such as `subscribe`, `processPayment` and `cancelSubscription` are marked `nonReentrant` to block malicious nested calls.
+
 ### Security Considerations
 
 The contract follows the checks-effects-interactions pattern. State updates now occur **before** external token transfers to minimize reentrancy risk. Each token transfer additionally checks the spender's allowance to prevent unintended transfers.
@@ -49,3 +50,7 @@ The contract follows the checks-effects-interactions pattern. State updates now 
 `processPayment` additionally checks that the subscriber address passed in
 matches the stored subscription to stop merchants from charging arbitrary
 users even if they have approved allowances.
+
+### Gas Report
+
+The CI workflow runs `npm run gas` to generate `gas-report.txt`. Each row of the report lists a contract with its minimum, maximum and average gas usage during tests. Use the report to monitor how updates affect deployment and execution costs.
