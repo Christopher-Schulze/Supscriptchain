@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import "./interfaces/AggregatorV3Interface.sol";
 
@@ -149,11 +150,28 @@ abstract contract BaseSubscription {
             require(tokenDecimals <= 38 && priceFeedDecimals <= 38, "decimals too large");
 
             require(uint256(latestPrice) > 0, "Oracle price must be positive");
-            amount = (plan.usdPrice * (10 ** tokenDecimals) * (10 ** priceFeedDecimals)) / (100 * uint256(latestPrice));
+
+            uint256 exponent = uint256(tokenDecimals) + uint256(priceFeedDecimals);
+            uint256 digits = _numDigits(plan.usdPrice);
+            require(exponent + digits <= 77, "price overflow");
+
+            uint256 multiplier = 10 ** exponent;
+            amount = Math.mulDiv(plan.usdPrice, multiplier, 100 * uint256(latestPrice));
             return amount;
         } else {
             return plan.price;
         }
+    }
+
+    function _numDigits(uint256 number) internal pure returns (uint256 digits) {
+        while (number != 0) {
+            digits++;
+            number /= 10;
+        }
+        if (digits == 0) {
+            digits = 1;
+        }
+        return digits;
     }
 
     function _subscribe(uint256 _planId, address _subscriber) internal {
