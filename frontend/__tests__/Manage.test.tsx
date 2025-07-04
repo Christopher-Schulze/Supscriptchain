@@ -46,3 +46,32 @@ test('shows message when subscribe fails', async () => {
   await userEvent.click(screen.getByText('Subscribe'));
   expect(await screen.findByText('fail')).toBeInTheDocument();
 });
+
+test('shows error on invalid v signature', async () => {
+  render(<Wrapper />);
+  const inputs = screen.getAllByRole('textbox');
+  await userEvent.clear(inputs[0]);
+  await userEvent.type(inputs[0], '1');
+  await userEvent.clear(inputs[1]);
+  await userEvent.type(inputs[1], '100');
+  await userEvent.type(inputs[2], 'abc');
+  await userEvent.type(inputs[3], '0x' + '1'.repeat(64));
+  await userEvent.type(inputs[4], '0x' + '2'.repeat(64));
+  await userEvent.click(screen.getByText('Subscribe with Permit'));
+  expect(await screen.findByText('invalid v')).toBeInTheDocument();
+});
+
+test('shows error on invalid r signature', async () => {
+  render(<Wrapper />);
+  const inputs = screen.getAllByRole('textbox');
+  await userEvent.clear(inputs[0]);
+  await userEvent.type(inputs[0], '1');
+  await userEvent.clear(inputs[1]);
+  await userEvent.type(inputs[1], '100');
+  await userEvent.type(inputs[2], '27');
+  await userEvent.type(inputs[3], '0x123');
+  await userEvent.type(inputs[4], '0x' + '2'.repeat(64));
+  await userEvent.click(screen.getByText('Subscribe with Permit'));
+  expect(await screen.findByText('invalid r')).toBeInTheDocument();
+});
+
