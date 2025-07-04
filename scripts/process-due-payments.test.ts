@@ -87,4 +87,26 @@ describe('process-due-payments script', function () {
     const sub = await subscription.userSubscriptions(userSuccess.address, 0);
     expect(sub.nextPaymentDate).to.be.gt(BigInt(await time.latest()));
   });
+
+  it('fails on invalid env vars', async function () {
+    const res = spawnSync('node', ['-r', 'ts-node/register/transpile-only', 'scripts/check-env.ts'], {
+      env: {
+        ...process.env,
+        TS_NODE_TRANSPILE_ONLY: '1',
+        MERCHANT_ADDRESS: 'invalid',
+        TOKEN_ADDRESS: 'invalid',
+        PRICE_FEED: 'invalid',
+        BILLING_CYCLE: 'abc',
+        PRICE_IN_USD: 'maybe',
+        FIXED_PRICE: 'x',
+        USD_PRICE: 'y',
+        SUBSCRIPTION_ADDRESS: 'invalid',
+        PLAN_ID: 'z',
+      },
+      encoding: 'utf8',
+    });
+
+    expect(res.status).to.equal(1);
+    expect(res.stderr).to.match(/Invalid environment variables/);
+  });
 });

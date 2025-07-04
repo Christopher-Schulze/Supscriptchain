@@ -2,6 +2,7 @@ import { ethers } from 'hardhat';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
+import { checkEnv } from './check-env';
 
 /**
  * Parsed subscriber entry from JSON.
@@ -105,6 +106,7 @@ async function runOnce(log: (...args: any[]) => void) {
 }
 
 async function main() {
+  checkEnv();
   const logFile = process.env.LOG_FILE;
   const log = logFile
     ? (...args: any[]) =>
