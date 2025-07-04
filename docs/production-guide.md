@@ -24,6 +24,13 @@ Avoid committing this file to version control. Use different files per environme
 
 Production deployments should inject secrets via your hosting provider's secret store or environment variables rather than storing them in plain text. Limit access to the `.env` file and do not reuse private keys across environments. When using Docker, mount secrets as read-only files or pass them via the `--env-file` option.
 
+- Rotate private keys and API credentials regularly to reduce the impact of leaked secrets.
+
+## Managing `PAUSER_ROLE`
+
+- Grant the role only to accounts that must pause and unpause the contract in emergencies.
+- Review assignments periodically and revoke the role from unused addresses.
+
 ## Deploying the Subgraph
 
 Generate the Graph manifest and compile the subgraph:
@@ -50,3 +57,5 @@ Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIV
 For the subgraph, monitor the Graph Node via its `/health` endpoint. The helper script `npm run subgraph-server` can automatically restart the node when a healthcheck fails. Configure the interval and URL using the `GRAPH_NODE_HEALTH_*` environment variables.
 
 Consider setting up additional service-level monitoring for your contract interactions and Docker containers.
+
+- Expose metrics to Prometheus and build Grafana dashboards to visualize contract and service performance.
