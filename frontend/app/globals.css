@@ -48,10 +48,18 @@ body {
 }
 
 .message-bar {
-  background: #e0ffe0;
   padding: 8px;
   margin-bottom: 8px;
   border-radius: 4px;
+}
+.message-bar.success {
+  background: #e0ffe0;
+}
+.message-bar.error {
+  background: #ffe0e0;
+}
+.message-bar.warning {
+  background: #fff5cc;
 }
 
 .error {

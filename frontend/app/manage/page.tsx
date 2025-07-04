@@ -24,11 +24,11 @@ export default function Manage() {
       const contract = await getContract();
       const tx = await contract.subscribe(BigInt(planId));
       await tx.wait();
-      setMessage(`Subscribed! Tx: ${tx.hash}`);
+      setMessage({ text: `Subscribed! Tx: ${tx.hash}`, type: 'success' });
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
-      setMessage(message);
+      setMessage({ text: message, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -41,18 +41,18 @@ export default function Manage() {
       const contract = await getContract();
       const tx = await contract.cancelSubscription(BigInt(planId));
       await tx.wait();
-      setMessage(`Cancelled! Tx: ${tx.hash}`);
+      setMessage({ text: `Cancelled! Tx: ${tx.hash}`, type: 'success' });
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
-      setMessage(message);
+      setMessage({ text: message, type: 'error' });
     } finally {
       setLoading(false);
     }
   }
 
   async function requestPermit() {
-    if (!account) return setMessage('Connect Wallet first');
+    if (!account) return setMessage({ text: 'Connect Wallet first', type: 'warning' });
     setLoading(true);
     setError(null);
     try {
@@ -120,11 +120,11 @@ export default function Manage() {
         s as `0x${string}`
       );
       await tx.wait();
-      setMessage(`Subscribed with permit! Tx: ${tx.hash}`);
+      setMessage({ text: `Subscribed with permit! Tx: ${tx.hash}`, type: 'success' });
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
-      setMessage(message);
+      setMessage({ text: message, type: 'error' });
     } finally {
       setLoading(false);
     }

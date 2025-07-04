@@ -6,6 +6,18 @@ import { env } from "./env";
 
 function parseEthersError(err: unknown): string {
   const e = err as any;
+  const rpc = e?.error ?? e;
+  if (rpc && typeof rpc === "object" && "message" in rpc) {
+    let msg = (rpc as any).message as string;
+    if (typeof (rpc as any).code !== "undefined") {
+      msg += ` (code ${(rpc as any).code})`;
+    }
+    if ((rpc as any).data) {
+      const d = (rpc as any).data;
+      msg += `: ${typeof d === "string" ? d : JSON.stringify(d)}`;
+    }
+    return msg;
+  }
   return (
     e?.shortMessage ||
     e?.reason ||

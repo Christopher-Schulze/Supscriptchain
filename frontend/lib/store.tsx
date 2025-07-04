@@ -1,15 +1,20 @@
 'use client';
 import { createContext, useContext, useState } from 'react';
 
+export interface Message {
+  text: string;
+  type?: 'success' | 'warning' | 'error';
+}
+
 interface State {
-  message: string | null;
-  setMessage: (m: string | null) => void;
+  message: Message | null;
+  setMessage: (m: Message | null) => void;
 }
 
 const Ctx = createContext<State | undefined>(undefined);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<Message | null>(null);
   return <Ctx.Provider value={{ message, setMessage }}>{children}</Ctx.Provider>;
 }
 

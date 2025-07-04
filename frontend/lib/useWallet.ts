@@ -34,7 +34,7 @@ export default function useWallet() {
         await wc.enable();
         eth = wc as unknown as EthereumProvider;
       } catch {
-        setMessage("Wallet not found");
+        setMessage({ text: "Wallet not found", type: 'warning' });
         return;
       }
     }
@@ -43,7 +43,7 @@ export default function useWallet() {
       setAccount(accounts[0]);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to connect";
-      setMessage(msg);
+      setMessage({ text: msg, type: 'error' });
     }
   }
 

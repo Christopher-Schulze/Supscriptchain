@@ -39,7 +39,7 @@ export default function UpdatePlan() {
         feed || '0x0000000000000000000000000000000000000000'
       );
       await tx.wait();
-      setMessage(`Plan updated: ${tx.hash}`);
+      setMessage({ text: `Plan updated: ${tx.hash}`, type: 'success' });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));

@@ -21,11 +21,11 @@ export default function Payment() {
       const contract = await getContract();
       const tx = await contract.processPayment(user, BigInt(planId));
       await tx.wait();
-      setMessage(`Payment processed! Tx: ${tx.hash}`);
+      setMessage({ text: `Payment processed! Tx: ${tx.hash}`, type: 'success' });
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
-      setMessage(message);
+      setMessage({ text: message, type: 'error' });
     } finally {
       setLoading(false);
     }

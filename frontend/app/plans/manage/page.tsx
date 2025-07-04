@@ -30,7 +30,7 @@ export default function ManagePlans() {
         '0x0000000000000000000000000000000000000000'
       );
       await tx.wait();
-      setMessage('Plan updated');
+      setMessage({ text: 'Plan updated', type: 'success' });
       await reload();
     } catch (err) {
       console.error(err);
