@@ -179,6 +179,8 @@ The command sets `REPORT_GAS=true` and prints a table similar to:
 - `MockToken.sol` – simple ERC20 token for testing.
 
 Additional documentation can be found in the [docs](docs/) directory.
+For a step-by-step production deployment guide see
+[docs/production-guide.md](docs/production-guide.md).
 
 ## Creating a Plan
 
