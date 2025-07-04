@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { updatePlan } from '../../../lib/contract';
+import { validateAddress, validatePositiveInt } from '../../../lib/validation';
 import useWallet from '../../../lib/useWallet';
 import { useStore } from '../../../lib/store';
 
@@ -21,7 +22,14 @@ export default function UpdatePlan() {
     setError(null);
     try {
       if (!planId) throw new Error('plan id required');
-      if (!billing || Number(billing) <= 0) throw new Error('billing cycle > 0');
+      validatePositiveInt(planId, 'plan id');
+      validatePositiveInt(billing, 'billing cycle');
+      if (priceInUsd) {
+        validatePositiveInt(usdPrice, 'USD price');
+        validateAddress(feed, 'Price feed');
+      } else {
+        validatePositiveInt(price, 'Token price');
+      }
       const tx = await updatePlan(
         BigInt(planId),
         BigInt(billing),
