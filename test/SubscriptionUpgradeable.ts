@@ -245,6 +245,52 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
       ).to.be.revertedWith("Billing cycle must be > 0");
     });
   });
+
+  describe("updateMerchant", function () {
+    async function activePlanFixture() {
+      const [owner, user, merchant] = await ethers.getSigners();
+
+      const TokenFactory = await ethers.getContractFactory("MockToken", owner);
+      const token = await TokenFactory.deploy("MockToken", "MTK", 18);
+      await token.waitForDeployment();
+      await token.mint(user.address, ethers.parseUnits("1000", 18));
+
+      const SubFactory = await ethers.getContractFactory("SubscriptionUpgradeable", owner);
+      const proxy = (await upgrades.deployProxy(SubFactory, [owner.address], { initializer: "initialize" })) as SubscriptionUpgradeable;
+      await proxy.waitForDeployment();
+
+      await token.connect(user).approve(await proxy.getAddress(), ethers.parseUnits("1000", 18));
+
+      const price = ethers.parseUnits("10", 18);
+      await proxy.connect(owner).createPlan(owner.address, await token.getAddress(), price, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress);
+      await proxy.connect(user).subscribe(PLAN_ID);
+      return { owner, user, merchant, proxy, token, price };
+    }
+
+    it("owner changes merchant and new merchant processes payment", async function () {
+      const { owner, user, merchant, proxy, token, price } = await loadFixture(activePlanFixture);
+      const sub = await proxy.userSubscriptions(user.address, PLAN_ID);
+      await time.increaseTo(sub.nextPaymentDate + 1n);
+      await expect(proxy.connect(owner).updateMerchant(PLAN_ID, merchant.address))
+        .to.emit(proxy, "MerchantUpdated")
+        .withArgs(PLAN_ID, owner.address, merchant.address);
+
+      await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWith(
+        "Only plan merchant can process payment"
+      );
+
+      const balBefore = await token.balanceOf(merchant.address);
+      await expect(proxy.connect(merchant).processPayment(user.address, PLAN_ID)).to.emit(proxy, "PaymentProcessed");
+      expect(await token.balanceOf(merchant.address)).to.equal(balBefore.add(price));
+    });
+
+    it("non-owner cannot update merchant", async function () {
+      const { user, merchant, proxy } = await loadFixture(activePlanFixture);
+      await expect(proxy.connect(user).updateMerchant(PLAN_ID, merchant.address))
+        .to.be.revertedWithCustomError(proxy, "OwnableUnauthorizedAccount")
+        .withArgs(user.address);
+    });
+  });
 });
 
 describe("Reentrancy protection", function () {

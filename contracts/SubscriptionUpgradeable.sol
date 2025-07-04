@@ -85,6 +85,10 @@ contract SubscriptionUpgradeable is
         );
     }
 
+    function updateMerchant(uint256 _planId, address _newMerchant) public override onlyOwner whenNotPaused {
+        super.updateMerchant(_planId, _newMerchant);
+    }
+
 
     function subscribe(uint256 _planId) public override whenNotPaused nonReentrant {
         super.subscribe(_planId);
