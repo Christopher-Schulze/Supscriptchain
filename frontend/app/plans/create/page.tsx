@@ -41,7 +41,7 @@ export default function CreatePlan() {
         feed || '0x0000000000000000000000000000000000000000'
       );
       await tx.wait();
-      setMessage(`Plan created: ${tx.hash}`);
+      setMessage({ text: `Plan created: ${tx.hash}`, type: 'success' });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));

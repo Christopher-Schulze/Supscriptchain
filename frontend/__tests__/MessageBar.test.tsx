@@ -8,7 +8,7 @@ test('shows and hides message', async () => {
     const { setMessage } = useStore();
     return (
       <div>
-        <button onClick={() => setMessage('hello')}>set</button>
+        <button onClick={() => setMessage({ text: 'hello', type: 'success' })}>set</button>
         <MessageBar />
       </div>
     );
@@ -19,7 +19,9 @@ test('shows and hides message', async () => {
     </StoreProvider>
   );
   await userEvent.click(screen.getByText('set'));
-  expect(screen.getByText('hello')).toBeInTheDocument();
-  await userEvent.click(screen.getByText('hello'));
+  const bar = screen.getByText('hello');
+  expect(bar).toBeInTheDocument();
+  expect(bar.className).toContain('success');
+  await userEvent.click(bar);
   expect(screen.queryByText('hello')).toBeNull();
 });
