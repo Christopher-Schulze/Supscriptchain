@@ -21,6 +21,7 @@ abstract contract BaseSubscription {
         bool priceInUsd;
         uint256 usdPrice;
         address priceFeedAddress;
+        bool active;
     }
 
     mapping(uint256 => SubscriptionPlan) public plans;
@@ -67,6 +68,8 @@ abstract contract BaseSubscription {
         address newMerchant
     );
 
+    event PlanDisabled(uint256 planId);
+
     event Subscribed(address indexed user, uint256 indexed planId, uint256 nextPaymentDate);
     event PaymentProcessed(address indexed user, uint256 indexed planId, uint256 amount, uint256 newNextPaymentDate);
     event SubscriptionCancelled(address indexed user, uint256 indexed planId);
@@ -100,7 +103,8 @@ abstract contract BaseSubscription {
             billingCycle: _billingCycle,
             priceInUsd: _priceInUsd,
             usdPrice: _usdPrice,
-            priceFeedAddress: _priceFeedAddress
+            priceFeedAddress: _priceFeedAddress,
+            active: true
         });
         nextPlanId++;
         emit PlanCreated(planId, merchant, _token, tokenDecimals, _price, _billingCycle, _priceInUsd, _usdPrice, _priceFeedAddress);
@@ -139,6 +143,14 @@ abstract contract BaseSubscription {
         address oldMerchant = plan.merchant;
         plan.merchant = _newMerchant;
         emit MerchantUpdated(_planId, oldMerchant, _newMerchant);
+    }
+
+    function _disablePlan(uint256 _planId) internal {
+        SubscriptionPlan storage plan = plans[_planId];
+        require(plan.merchant != address(0), "Plan does not exist");
+        require(plan.active, "Plan already disabled");
+        plan.active = false;
+        emit PlanDisabled(_planId);
     }
 
     function _getPaymentAmount(uint256 _planId) internal view returns (uint256 amount) {
@@ -191,6 +203,7 @@ abstract contract BaseSubscription {
 
     function _subscribe(uint256 _planId, address _subscriber) internal {
         require(plans[_planId].merchant != address(0), "Plan does not exist");
+        require(plans[_planId].active, "Plan is disabled");
         require(!userSubscriptions[_subscriber][_planId].isActive, "Already actively subscribed to this plan");
 
         SubscriptionPlan storage plan = plans[_planId];
@@ -226,6 +239,7 @@ abstract contract BaseSubscription {
         address _subscriber
     ) internal {
         require(plans[_planId].merchant != address(0), "Plan does not exist");
+        require(plans[_planId].active, "Plan is disabled");
         require(!userSubscriptions[_subscriber][_planId].isActive, "Already actively subscribed to this plan");
 
         SubscriptionPlan storage plan = plans[_planId];
@@ -259,6 +273,7 @@ abstract contract BaseSubscription {
 
         require(userSub.isActive, "Subscription is not active");
         require(plan.merchant != address(0), "Plan does not exist");
+        require(plan.active, "Plan is disabled");
         require(msg.sender == plan.merchant, "Only plan merchant can process payment");
         require(userSub.subscriber == _user, "Subscriber mismatch");
         require(block.timestamp >= userSub.nextPaymentDate, "Payment not due yet");
@@ -334,6 +349,10 @@ abstract contract BaseSubscription {
 
     function updateMerchant(uint256 _planId, address _newMerchant) public virtual {
         _updateMerchant(_planId, _newMerchant);
+    }
+
+    function disablePlan(uint256 _planId) public virtual {
+        _disablePlan(_planId);
     }
 
     function subscribe(uint256 _planId) public virtual {

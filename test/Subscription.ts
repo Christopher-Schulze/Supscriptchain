@@ -329,6 +329,42 @@ describe("Subscription Contract", function () {
         });
     });
 
+    describe("disablePlan", function () {
+        async function fixtureWithPlan() {
+            const setup = await loadFixture(deploySubscriptionFixture);
+            const price = ethers.parseUnits("10", 18);
+            await setup.subscriptionContract.connect(setup.owner).createPlan(
+                setup.owner.address,
+                setup.mockToken.target,
+                price,
+                THIRTY_DAYS_IN_SECS,
+                false,
+                0,
+                ethers.ZeroAddress
+            );
+            return { ...setup, price };
+        }
+
+        it("Owner can disable plan", async function () {
+            const { subscriptionContract, owner } = await loadFixture(fixtureWithPlan);
+            await expect(subscriptionContract.connect(owner).disablePlan(0))
+                .to.emit(subscriptionContract, "PlanDisabled").withArgs(0);
+            const plan = await subscriptionContract.plans(0);
+            expect(plan.active).to.be.false;
+        });
+
+        it("Disabled plan rejects new subscriptions and payments", async function () {
+            const { subscriptionContract, owner, user1 } = await loadFixture(fixtureWithPlan);
+            await subscriptionContract.connect(owner).disablePlan(0);
+            await expect(subscriptionContract.connect(user1).subscribe(0)).to.be.revertedWith(
+                "Plan is disabled"
+            );
+            await expect(subscriptionContract.connect(owner).processPayment(user1.address, 0)).to.be.revertedWith(
+                "Plan is disabled"
+            );
+        });
+    });
+
     describe("subscribe (Fixed Price Plan)", function () {
         const planId = 0;
         const fixedPrice = ethers.parseUnits("10", 18); // mockTokenDecimals is 18

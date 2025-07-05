@@ -25,6 +25,8 @@ dataSources:
           handler: handlePlanCreated
         - event: PlanUpdated(uint256,uint256,uint256,bool,uint256,address)
           handler: handlePlanUpdated
+        - event: PlanDisabled(uint256)
+          handler: handlePlanDisabled
         - event: Subscribed(address,uint256,uint256)
           handler: handleSubscribed
         - event: PaymentProcessed(address,uint256,uint256,uint256)
