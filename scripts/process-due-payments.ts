@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import http from 'http';
 import pLimit from 'p-limit';
+import yaml from 'js-yaml';
 import { loadEnv } from './env';
 import { createLogger, LogFn, LogLevel } from './log';
 import {
@@ -10,6 +11,36 @@ import {
   Registry,
   collectDefaultMetrics,
 } from 'prom-client';
+
+let configPath: string | undefined;
+const argIdx = process.argv.indexOf('--config');
+if (argIdx !== -1 && process.argv[argIdx + 1]) {
+  configPath = process.argv[argIdx + 1];
+} else if (process.env.PAYMENT_CONFIG) {
+  configPath = process.env.PAYMENT_CONFIG;
+}
+
+if (configPath) {
+  const resolved = path.resolve(configPath);
+  const raw = fs.readFileSync(resolved, 'utf8');
+  let parsed: any;
+  try {
+    if (resolved.endsWith('.yaml') || resolved.endsWith('.yml')) {
+      parsed = yaml.load(raw);
+    } else {
+      parsed = JSON.parse(raw);
+    }
+  } catch (err) {
+    throw new Error(`Failed to parse config file ${resolved}: ${err}`);
+  }
+  if (parsed && typeof parsed === 'object') {
+    for (const [k, v] of Object.entries(parsed)) {
+      if (v !== undefined) {
+        process.env[k] = String(v);
+      }
+    }
+  }
+}
 
 const env = loadEnv();
 
