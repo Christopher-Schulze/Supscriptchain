@@ -267,12 +267,27 @@ To automate processing, add a cron entry. This example runs hourly:
 0 * * * * cd /path/to/project && npx hardhat run scripts/process-due-payments.ts --network <network> >> cron.log 2>&1
 ```
 
-The repository also provides `Dockerfile.payments` to run the script in a
-container:
+## Zahlungs-Skript in Docker
+
+Um für die Verarbeitung offener Zahlungen keinen separaten Node-Task betreiben zu müssen, lässt sich `scripts/process-due-payments.ts` auch in einem Container starten. Das bereitgestellte `Dockerfile.payments` liest alle Variablen aus einer `.env`-Datei.
 
 ```bash
 docker build -f Dockerfile.payments -t payments .
 docker run --env-file .env payments
+```
+
+### Subgraph-Server
+
+Der Dienst `scripts/subgraph-server.ts` überwacht einen Graph Node. In der mitgelieferten `docker-compose.yml` wird er als Service `subgraph` eingebunden und lässt sich zusammen mit Hardhat und dem Frontend starten:
+
+```bash
+docker compose up --build
+```
+
+Das Skript kann ebenso eigenständig ausgeführt werden:
+
+```bash
+npm run subgraph-server
 ```
 
 ## Upgradeprozess
@@ -308,6 +323,7 @@ optionally `GRAPH_ACCESS_TOKEN` and `SUBGRAPH_VERSION`) and run:
 ```bash
 npm run deploy-subgraph
 ```
+
 That section also lists the required environment variables and explains how to
 configure `NEXT_PUBLIC_SUBGRAPH_URL` for the frontend.
 
