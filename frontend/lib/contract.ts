@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import type { ExternalProvider } from "ethers";
-import type { Subscription } from "typechain/contracts/Subscription.sol/Subscription";
-import { Subscription__factory } from "typechain/factories/contracts/Subscription.sol/Subscription__factory";
+import type { Subscription } from "typechain/contracts/Subscription";
+import { Subscription__factory } from "typechain/factories/contracts/Subscription__factory";
 import { env } from "./env";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

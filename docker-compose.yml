@@ -34,6 +34,9 @@ services:
     command: sh -c "npm run build && npm start"
     env_file:
       - .env
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
     depends_on:
       - hardhat
     ports:
