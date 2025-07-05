@@ -53,34 +53,51 @@ export default function UpdatePlan() {
       <h1>Update Plan</h1>
       {error && <p className="error">{error}</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
-      <label>
-        Plan ID
-        <input value={planId} onChange={e=>setPlanId(e.target.value)} required />
-      </label>
-      <label>
-        Billing (seconds)
-        <input value={billing} onChange={e=>setBilling(e.target.value)} required />
-      </label>
+      <label htmlFor="update-plan-id">Plan ID</label>
+      <input
+        id="update-plan-id"
+        value={planId}
+        onChange={(e) => setPlanId(e.target.value)}
+        required
+      />
+      <label htmlFor="update-billing">Billing (seconds)</label>
+      <input
+        id="update-billing"
+        value={billing}
+        onChange={(e) => setBilling(e.target.value)}
+        required
+      />
       <label>
         Price in USD
         <input type="checkbox" checked={priceInUsd} onChange={e=>setPriceInUsd(e.target.checked)} />
       </label>
       {priceInUsd ? (
         <>
-          <label>
-            USD Price (cents)
-            <input value={usdPrice} onChange={e=>setUsdPrice(e.target.value)} required />
-          </label>
-          <label>
-            Price Feed
-            <input value={feed} onChange={e=>setFeed(e.target.value)} required />
-          </label>
+          <label htmlFor="update-usd-price">USD Price (cents)</label>
+          <input
+            id="update-usd-price"
+            value={usdPrice}
+            onChange={(e) => setUsdPrice(e.target.value)}
+            required
+          />
+          <label htmlFor="update-price-feed">Price Feed</label>
+          <input
+            id="update-price-feed"
+            value={feed}
+            onChange={(e) => setFeed(e.target.value)}
+            required
+          />
         </>
       ) : (
-        <label>
-          Token Price
-          <input value={price} onChange={e=>setPrice(e.target.value)} required />
-        </label>
+        <>
+          <label htmlFor="update-token-price">Token Price</label>
+          <input
+            id="update-token-price"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+        </>
       )}
       <button disabled={loading} onClick={submit}>Update</button>
     </div>

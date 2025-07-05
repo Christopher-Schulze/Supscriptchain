@@ -55,38 +55,57 @@ export default function CreatePlan() {
       <h1>Create Plan</h1>
       {error && <p className="error">{error}</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
-      <label>
-        Merchant
-        <input value={merchant} onChange={e=>setMerchant(e.target.value)} />
-      </label>
-      <label>
-        Token
-        <input value={token} onChange={e=>setToken(e.target.value)} required />
-      </label>
-      <label>
-        Billing (seconds)
-        <input value={billing} onChange={e=>setBilling(e.target.value)} required />
-      </label>
+      <label htmlFor="merchant">Merchant</label>
+      <input
+        id="merchant"
+        value={merchant}
+        onChange={(e) => setMerchant(e.target.value)}
+      />
+      <label htmlFor="token">Token</label>
+      <input
+        id="token"
+        value={token}
+        onChange={(e) => setToken(e.target.value)}
+        required
+      />
+      <label htmlFor="billing">Billing (seconds)</label>
+      <input
+        id="billing"
+        value={billing}
+        onChange={(e) => setBilling(e.target.value)}
+        required
+      />
       <label>
         Price in USD
         <input type="checkbox" checked={priceInUsd} onChange={e=>setPriceInUsd(e.target.checked)} />
       </label>
       {priceInUsd ? (
         <>
-          <label>
-            USD Price (cents)
-            <input value={usdPrice} onChange={e=>setUsdPrice(e.target.value)} required />
-          </label>
-          <label>
-            Price Feed
-            <input value={feed} onChange={e=>setFeed(e.target.value)} required />
-          </label>
+          <label htmlFor="usd-price">USD Price (cents)</label>
+          <input
+            id="usd-price"
+            value={usdPrice}
+            onChange={(e) => setUsdPrice(e.target.value)}
+            required
+          />
+          <label htmlFor="price-feed">Price Feed</label>
+          <input
+            id="price-feed"
+            value={feed}
+            onChange={(e) => setFeed(e.target.value)}
+            required
+          />
         </>
       ) : (
-        <label>
-          Token Price
-          <input value={price} onChange={e=>setPrice(e.target.value)} required />
-        </label>
+        <>
+          <label htmlFor="token-price">Token Price</label>
+          <input
+            id="token-price"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+        </>
       )}
       <button disabled={loading} onClick={submit}>Create</button>
     </div>
