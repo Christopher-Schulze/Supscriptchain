@@ -280,16 +280,6 @@ Für reale Deployments steht das Skript `scripts/upgrade.ts` bereit, welches die
 npx hardhat run scripts/upgrade.ts --network <network>
 ```
 
-Alternativ kann die eingebaute Hardhat-Task genutzt werden:
-
-```bash
-npx hardhat upgrade --network <network>
-```
-
-Diese Task liest ebenfalls die Proxy-Adresse aus der Umgebungsvariablen
-`SUBSCRIPTION_ADDRESS` und aktualisiert auf
-`SubscriptionUpgradeableV2`.
-
 ## Subgraph
 
 The `subgraph/` directory contains a minimal [The Graph](https://thegraph.com) setup for indexing events emitted by `Subscription.sol`.
