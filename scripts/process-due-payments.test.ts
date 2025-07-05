@@ -167,4 +167,38 @@ describe('process-due-payments script', function () {
     expect(res.stderr).to.match(/No valid plan IDs/);
     expect(res.stdout).to.match(new RegExp(`Processing payment for ${userSuccess.address}`));
   });
+
+  it('overrides env vars using a config file', async function () {
+    const { merchant, userSuccess, userFail, subscription } = await loadFixture(deployFixture);
+
+    const subsJson = path.join(__dirname, 'subscribers.config.tmp.json');
+    const cfgYaml = path.join(__dirname, 'payment.config.tmp.yaml');
+    const data = [userSuccess.address, { user: userFail.address, plan: 0 }];
+    fs.writeFileSync(subsJson, JSON.stringify(data, null, 2));
+    fs.writeFileSync(cfgYaml, 'LOG_LEVEL: error\nMAX_CONCURRENCY: 2\n');
+
+    const res = spawnSync(
+      'node',
+      ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts', '--config', cfgYaml],
+      {
+        env: {
+          ...process.env,
+          TS_NODE_TRANSPILE_ONLY: '1',
+          SUBSCRIPTION_ADDRESS: subscription.target,
+          PLAN_ID: '0',
+          SUBSCRIBERS_FILE: subsJson,
+          MERCHANT_PRIVATE_KEY: merchant.privateKey,
+          LOG_LEVEL: 'info',
+        },
+        encoding: 'utf8',
+      },
+    );
+
+    fs.unlinkSync(subsJson);
+    fs.unlinkSync(cfgYaml);
+
+    expect(res.status).to.equal(1);
+    expect(res.stdout).to.not.match(/Processing payment/);
+    expect(res.stderr).to.match(new RegExp(userFail.address));
+  });
 });

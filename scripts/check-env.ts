@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 export function checkEnv(): void {
   const envPath = path.resolve(__dirname, '..', '.env');
-  config({ path: envPath });
+  config({ path: envPath, quiet: true });
 
   const envExamplePath = path.resolve(__dirname, '..', '.env.example');
   const lines = fs.readFileSync(envExamplePath, 'utf-8').split(/\r?\n/);

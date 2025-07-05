@@ -19,6 +19,7 @@
     "@types/node": "^24.0.7",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
     "@typescript-eslint/parser": "^8.35.1",
+    "concurrently": "^9.2.0",
     "dotenv": "^17.0.1",
     "eslint": "^9.30.0",
     "ethers": "^6.15.0",
@@ -26,6 +27,7 @@
     "hardhat-coverage": "^0.9.19",
     "hardhat-gas-reporter": "^2.3.0",
     "husky": "^9.1.7",
+    "js-yaml": "^4.1.0",
     "lint-staged": "^16.1.2",
     "matchstick-as": "^0.6.0",
     "playwright": "^1.53.2",
@@ -36,8 +38,7 @@
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.4.5",
-    "zod": "^3.25.73",
-    "concurrently": "^9.2.0"
+    "zod": "^3.25.73"
   },
   "scripts": {
     "compile": "hardhat compile",
