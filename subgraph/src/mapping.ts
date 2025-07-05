@@ -57,6 +57,7 @@ export function handleSubscribed(event: Subscribed): void {
     sub = new Subscription(id)
     sub.user = event.params.user
     sub.planId = event.params.planId
+    sub.totalPayments = BigInt.zero()
   }
   sub.nextPaymentDate = event.params.nextPaymentDate
   sub.cancelled = false
@@ -82,6 +83,7 @@ export function handlePaymentProcessed(event: PaymentProcessed): void {
   let sub = Subscription.load(subId)
   if (sub) {
     sub.nextPaymentDate = event.params.newNextPaymentDate
+    sub.totalPayments = (sub.totalPayments || BigInt.zero()).plus(BigInt.fromI32(1))
     sub.save()
   }
 }

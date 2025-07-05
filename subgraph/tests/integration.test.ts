@@ -243,12 +243,13 @@ describe('Subgraph integration', function () {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query:
-            '{ plans { id totalPaid merchant } subscriptions { id } payments { id planId amount } }',
+            '{ plans { id totalPaid merchant } subscriptions { id totalPayments } payments { id planId amount } }',
         }),
       },
     );
     const json = await res.json();
     expect(json.data.subscriptions.length).to.equal(1);
+    expect(json.data.subscriptions[0].totalPayments).to.equal('1');
     expect(json.data.payments.length).to.equal(1);
     expect(json.data.plans[0].totalPaid).to.equal(
       ethers.parseUnits('1', 18).toString(),
