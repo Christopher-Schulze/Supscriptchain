@@ -59,4 +59,30 @@ describe('Hardhat tasks', function () {
     plan = await proxy.plans(0);
     expect(plan.active).to.equal(false);
   });
+
+  it('runs update-merchant task', async function () {
+    const { owner, token, proxy } = await loadFixture(deployFixture);
+    const [, newMerchant] = await ethers.getSigners();
+    const addr = await proxy.getAddress();
+
+    await run('create-plan', {
+      subscription: addr,
+      merchant: owner.address,
+      token: token.target,
+      price: '100',
+      billingCycle: '60',
+      priceInUsd: false,
+      usdPrice: '0',
+      priceFeed: ethers.ZeroAddress,
+    });
+
+    await run('update-merchant', {
+      subscription: addr,
+      planId: '0',
+      merchant: newMerchant.address,
+    });
+
+    const plan = await proxy.plans(0);
+    expect(plan.merchant).to.equal(newMerchant.address);
+  });
 });
