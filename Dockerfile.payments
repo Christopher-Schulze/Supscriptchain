@@ -2,5 +2,9 @@ FROM node:20-alpine
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --legacy-peer-deps
-COPY . .
+
+# Copy only the files required to run the payment processor
+COPY hardhat.config.ts tsconfig.json ./
+COPY scripts ./scripts
+COPY contracts ./contracts
 CMD ["npx", "ts-node", "scripts/process-due-payments.ts"]

@@ -1,0 +1,29 @@
+# Dependency directories
+node_modules
+frontend/node_modules
+
+# Version control
+.git
+
+# Build artifacts
+artifacts
+cache
+dist
+build
+
+# Logs and coverage
+*.log
+logs/
+coverage
+
+# IDE/OS files
+.vscode
+.idea
+.DS_Store
+
+# Environment files
+.env
+.env.*
+
+# Next.js build output
+frontend/.next
