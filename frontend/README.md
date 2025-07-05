@@ -57,6 +57,13 @@ Wallet connectivity supports MetaMask (injected provider), WalletConnect and
 Coinbase Wallet. If no wallet is available the app falls back to the RPC URL for
 read‑only operations.
 
+## Internationalisierung
+
+Alle Texte des Frontends werden über `next-i18next` bereitgestellt. Aktuell
+stehen Deutsch und Englisch zur Auswahl. Die Sprache lässt sich über den
+Sprachschalter oben rechts oder den Query-Parameter `?lng=de` bzw. `?lng=en`
+wechseln.
+
 ## Using the Subgraph
 
 The analytics page queries a Subgraph instance. To run one locally follow the

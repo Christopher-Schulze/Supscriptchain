@@ -4,6 +4,7 @@ import { createPlan } from '../../../lib/contract';
 import { validateAddress, validatePositiveInt } from '../../../lib/validation';
 import useWallet from '../../../lib/useWallet';
 import { useStore } from '../../../lib/store';
+import { useTranslation } from 'react-i18next';
 
 export default function CreatePlan() {
   const { account, connect } = useWallet();
@@ -17,6 +18,7 @@ export default function CreatePlan() {
   const [error, setError] = useState<string|null>(null);
   const [loading, setLoading] = useState(false);
   const { setMessage } = useStore();
+  const { t } = useTranslation();
 
   async function submit() {
     setLoading(true);
@@ -52,23 +54,23 @@ export default function CreatePlan() {
 
   return (
     <div className="form">
-      <h1>Create Plan</h1>
+      <h1>{t('create.title')}</h1>
       {error && <p className="error">{error}</p>}
-      {!account && <button onClick={connect}>Connect Wallet</button>}
-      <label htmlFor="merchant">Merchant</label>
+      {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
+      <label htmlFor="merchant">{t('create.merchant')}</label>
       <input
         id="merchant"
         value={merchant}
         onChange={(e) => setMerchant(e.target.value)}
       />
-      <label htmlFor="token">Token</label>
+      <label htmlFor="token">{t('create.token')}</label>
       <input
         id="token"
         value={token}
         onChange={(e) => setToken(e.target.value)}
         required
       />
-      <label htmlFor="billing">Billing (seconds)</label>
+      <label htmlFor="billing">{t('create.billing')}</label>
       <input
         id="billing"
         value={billing}
@@ -76,19 +78,19 @@ export default function CreatePlan() {
         required
       />
       <label>
-        Price in USD
+        {t('create.price_in_usd')}
         <input type="checkbox" checked={priceInUsd} onChange={e=>setPriceInUsd(e.target.checked)} />
       </label>
       {priceInUsd ? (
         <>
-          <label htmlFor="usd-price">USD Price (cents)</label>
+          <label htmlFor="usd-price">{t('create.usd_price')}</label>
           <input
             id="usd-price"
             value={usdPrice}
             onChange={(e) => setUsdPrice(e.target.value)}
             required
           />
-          <label htmlFor="price-feed">Price Feed</label>
+          <label htmlFor="price-feed">{t('create.price_feed')}</label>
           <input
             id="price-feed"
             value={feed}
@@ -98,7 +100,7 @@ export default function CreatePlan() {
         </>
       ) : (
         <>
-          <label htmlFor="token-price">Token Price</label>
+          <label htmlFor="token-price">{t('create.token_price')}</label>
           <input
             id="token-price"
             value={price}
@@ -107,7 +109,7 @@ export default function CreatePlan() {
           />
         </>
       )}
-      <button disabled={loading} onClick={submit}>Create</button>
+      <button disabled={loading} onClick={submit}>{t('create.submit')}</button>
     </div>
   );
 }

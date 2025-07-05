@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { processPayment as contractProcessPayment } from '../../lib/contract';
 import useWallet from '../../lib/useWallet';
 import { useStore } from '../../lib/store';
+import { useTranslation } from 'react-i18next';
 
 export default function Payment() {
   const { account, connect } = useWallet();
@@ -11,6 +12,7 @@ export default function Payment() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setMessage } = useStore();
+  const { t } = useTranslation();
 
   async function trigger() {
     setLoading(true);
@@ -32,12 +34,12 @@ export default function Payment() {
 
   return (
     <div>
-      <h1>Process Payment</h1>
+      <h1>{t('payment.title')}</h1>
       {error && <p className="error">{error}</p>}
-      {loading && <p>Processing...</p>}
-      {!account && <button onClick={connect}>Connect Wallet</button>}
+      {loading && <p>{t('manage.processing')}</p>}
+      {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       <div>
-        <label htmlFor="pay-user">User: </label>
+        <label htmlFor="pay-user">{t('payment.user')} </label>
         <input
           id="pay-user"
           value={user}
@@ -45,14 +47,14 @@ export default function Payment() {
         />
       </div>
       <div>
-        <label htmlFor="pay-plan">Plan ID: </label>
+        <label htmlFor="pay-plan">{t('payment.plan_id')} </label>
         <input
           id="pay-plan"
           value={planId}
           onChange={(e) => setPlanId(e.target.value)}
         />
       </div>
-      <button onClick={trigger} disabled={loading}>Process</button>
+      <button onClick={trigger} disabled={loading}>{t('payment.process')}</button>
     </div>
   );
 }
