@@ -5,7 +5,7 @@ import { Subscription__factory } from "typechain/factories/contracts/Subscriptio
 import { env } from "./env";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function parseEthersError(err: unknown): string {
+export function parseEthersError(err: unknown): string {
   const e = err as any;
   const rpc = e?.error ?? e;
   if (rpc && typeof rpc === "object" && "message" in rpc) {
@@ -110,4 +110,19 @@ export async function updatePlan(
 export async function updateMerchant(planId: bigint, merchant: string) {
   const contract = await getContract();
   return handleEthersError(() => contract.updateMerchant(planId, merchant));
+}
+
+export async function subscribe(planId: bigint) {
+  const contract = await getContract();
+  return handleEthersError(() => contract.subscribe(planId));
+}
+
+export async function cancelSubscription(planId: bigint) {
+  const contract = await getContract();
+  return handleEthersError(() => contract.cancelSubscription(planId));
+}
+
+export async function processPayment(user: string, planId: bigint) {
+  const contract = await getContract();
+  return handleEthersError(() => contract.processPayment(user, planId));
 }

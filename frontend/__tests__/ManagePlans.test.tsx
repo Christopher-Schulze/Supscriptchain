@@ -29,4 +29,14 @@ describe('ManagePlans page', () => {
     expect(await screen.findByText('billing > 0')).toBeInTheDocument();
     expect(mockUpdate).not.toHaveBeenCalled();
   });
+
+  test('shows contract error', async () => {
+    mockUsePlans.mockReturnValue({ plans: [{}], reload: jest.fn() });
+    mockUpdate.mockRejectedValue(new Error('boom'));
+    render(<Wrapper />);
+    await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
+    await userEvent.type(screen.getByLabelText('Billing (seconds)'), '1');
+    await userEvent.click(screen.getByText('Update'));
+    expect(await screen.findByText('boom')).toBeInTheDocument();
+  });
 });
