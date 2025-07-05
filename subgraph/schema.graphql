@@ -16,6 +16,7 @@ type Subscription @entity(immutable: false) {
   id: ID!
   user: Bytes!
   planId: BigInt!
+  totalPayments: BigInt!
   nextPaymentDate: BigInt
   cancelled: Boolean
 }

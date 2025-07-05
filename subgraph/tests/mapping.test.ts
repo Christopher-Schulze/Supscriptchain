@@ -156,6 +156,7 @@ test("handleSubscribed creates subscription", () => {
   handleSubscribed(sub)
   assert.entityCount("Subscription", 1)
   assert.fieldEquals("Subscription", "0x0000000000000000000000000000000000000005-2", "nextPaymentDate", "1000")
+  assert.fieldEquals("Subscription", "0x0000000000000000000000000000000000000005-2", "totalPayments", "0")
   clearStore()
 })
 
@@ -169,6 +170,7 @@ test("handlePaymentProcessed stores payment and updates subscription", () => {
   assert.entityCount("Payment", 1)
   assert.fieldEquals("Payment", "0xa16081f360e3847006db660bae1c6d1b2e17ec2a-0", "amount", "50")
   assert.fieldEquals("Subscription", "0x0000000000000000000000000000000000000005-2", "nextPaymentDate", "2000")
+  assert.fieldEquals("Subscription", "0x0000000000000000000000000000000000000005-2", "totalPayments", "1")
   clearStore()
 })
 

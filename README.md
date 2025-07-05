@@ -304,6 +304,13 @@ npx hardhat run scripts/upgrade.ts --network <network>
 ## Subgraph
 
 The `subgraph/` directory contains a minimal [The Graph](https://thegraph.com) setup for indexing events emitted by `Subscription.sol`.
+After changing `schema.graphql` or files in `subgraph/src/`, run
+
+```bash
+npm run build-subgraph
+```
+
+to regenerate the manifest and type definitions used by tests.
 Provide the network name and the deployed contract address via the `NETWORK` and
 `CONTRACT_ADDRESS` variables (or `--network` and `--address` arguments) before
 building. These variables are also used by `npm run prepare-subgraph`:
