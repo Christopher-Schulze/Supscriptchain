@@ -183,6 +183,8 @@ The command sets `REPORT_GAS=true` and prints a table similar to:
 Additional documentation can be found in the [docs](docs/) directory.
 For a step-by-step production deployment guide see
 [docs/production-guide.md](docs/production-guide.md).
+For a reference of CLI commands see
+[docs/cli-guide.md](docs/cli-guide.md).
 
 ## Creating a Plan
 

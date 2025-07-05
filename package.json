@@ -58,6 +58,7 @@
     "coverage-check": "node scripts/check-coverage.js",
     "slither": "slither .",
     "test-subgraph": "graph test",
+    "test:cli": "mocha -r ts-node/register/transpile-only scripts/cli.test.ts",
     "test:e2e": "playwright test",
     "devstack": "node scripts/start-dev.ts"
   },
