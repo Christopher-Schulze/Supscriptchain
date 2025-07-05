@@ -271,6 +271,8 @@ abstract contract BaseSubscription {
 
         // Interactions
         require(token.allowance(_user, address(this)) >= amountToPay, "Insufficient allowance");
+        // Slither warns about arbitrary-from in transferFrom. The allowance check
+        // above and the merchant-only access control ensure this call is safe.
         token.safeTransferFrom(_user, plan.merchant, amountToPay);
 
         emit PaymentProcessed(_user, _planId, amountToPay, userSub.nextPaymentDate);
