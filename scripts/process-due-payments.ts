@@ -2,6 +2,7 @@ import { ethers } from 'hardhat';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
+import pLimit from 'p-limit';
 import { checkEnv } from './check-env';
 
 /**
@@ -73,8 +74,9 @@ async function runOnce(log: (...args: any[]) => void) {
         continue;
       }
 
-      const plans = [...new Set(planArray.map((p: any) => Number(p)))]
-        .filter((p) => !Number.isNaN(p) && p >= 0);
+      const plans = [...new Set(planArray.map((p: any) => Number(p)))].filter(
+        (p) => !Number.isNaN(p) && p >= 0,
+      );
 
       if (plans.length === 0) {
         console.error(`No valid plan IDs for ${user}, skipping entry`);
@@ -86,27 +88,38 @@ async function runOnce(log: (...args: any[]) => void) {
   }
 
   const now = Math.floor(Date.now() / 1000);
+  const concurrency = Math.max(
+    parseInt(process.env.MAX_CONCURRENCY || '1', 10),
+    1,
+  );
+  const limit = pLimit(concurrency);
+  const tasks: Promise<void>[] = [];
 
   for (const { user, plans } of subscribers) {
     for (const plan of plans) {
-      try {
-        const sub = await subscription.userSubscriptions(user, plan);
-        if (sub.isActive && sub.nextPaymentDate.toNumber() <= now) {
-          console.log(`Processing payment for ${user} plan ${plan}`);
-          const tx = await subscription.processPayment(user, plan);
-          await tx.wait();
-          console.log(`Processed payment for ${user} plan ${plan}`);
-        }
-      } catch (err) {
-        const reason = err instanceof Error ? err.message : String(err);
-        failures.push({ user, plan, reason });
-        console.error(
-          `Failed to process payment for user ${user} plan ${plan}:`,
-          reason,
-        );
-      }
+      tasks.push(
+        limit(async () => {
+          try {
+            const sub = await subscription.userSubscriptions(user, plan);
+            if (sub.isActive && sub.nextPaymentDate.toNumber() <= now) {
+              console.log(`Processing payment for ${user} plan ${plan}`);
+              const tx = await subscription.processPayment(user, plan);
+              await tx.wait();
+              console.log(`Processed payment for ${user} plan ${plan}`);
+            }
+          } catch (err) {
+            const reason = err instanceof Error ? err.message : String(err);
+            failures.push({ user, plan, reason });
+            console.error(
+              `Failed to process payment for user ${user} plan ${plan}:`,
+              reason,
+            );
+          }
+        }),
+      );
     }
   }
+  await Promise.all(tasks);
 
   if (failures.length > 0) {
     log('\nFailed payments summary:');
