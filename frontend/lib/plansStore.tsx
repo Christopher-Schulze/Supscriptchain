@@ -3,6 +3,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { getContract } from './contract';
 
 export interface Plan {
+  id: bigint;
   merchant: string;
   token: string;
   tokenDecimals: bigint;
@@ -11,6 +12,7 @@ export interface Plan {
   priceInUsd: boolean;
   usdPrice: bigint;
   priceFeedAddress: string;
+  active: boolean;
 }
 
 interface PlansState {
@@ -30,7 +32,7 @@ export function PlansProvider({ children }: { children: React.ReactNode }) {
       const list: Plan[] = [];
       for (let i = 0n; i < nextId; i++) {
         const p = await contract.plans(i);
-        list.push(p as Plan);
+        list.push({ id: i, ...(p as Plan) });
       }
       setPlans(list);
     } catch (err) {

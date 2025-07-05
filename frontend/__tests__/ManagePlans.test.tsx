@@ -30,8 +30,21 @@ function Wrapper() {
 }
 
 describe('ManagePlans page', () => {
+  const plan = {
+    id: 0n,
+    merchant: '0x',
+    token: 'a',
+    tokenDecimals: 18n,
+    price: 1n,
+    billingCycle: 1n,
+    priceInUsd: false,
+    usdPrice: 0n,
+    priceFeedAddress: '0x',
+    active: true,
+  };
+
   test('validates billing input', async () => {
-    mockUsePlans.mockReturnValue({ plans: [{}], reload: jest.fn() });
+    mockUsePlans.mockReturnValue({ plans: [plan], reload: jest.fn() });
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
     await userEvent.click(screen.getByText('Update'));
@@ -40,7 +53,7 @@ describe('ManagePlans page', () => {
   });
 
   test('shows contract error', async () => {
-    mockUsePlans.mockReturnValue({ plans: [{}], reload: jest.fn() });
+    mockUsePlans.mockReturnValue({ plans: [plan], reload: jest.fn() });
     mockUpdate.mockRejectedValue(new Error('boom'));
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
@@ -50,7 +63,7 @@ describe('ManagePlans page', () => {
   });
 
   test('validates merchant address', async () => {
-    mockUsePlans.mockReturnValue({ plans: [{}], reload: jest.fn() });
+    mockUsePlans.mockReturnValue({ plans: [plan], reload: jest.fn() });
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
     await userEvent.type(screen.getByLabelText('Merchant'), 'foo');
@@ -62,7 +75,7 @@ describe('ManagePlans page', () => {
   });
 
   test('shows update merchant error', async () => {
-    mockUsePlans.mockReturnValue({ plans: [{}], reload: jest.fn() });
+    mockUsePlans.mockReturnValue({ plans: [plan], reload: jest.fn() });
     mockUpdateMerchant.mockRejectedValue(new Error('fail'));
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
@@ -75,7 +88,7 @@ describe('ManagePlans page', () => {
   });
 
   test('disable plan button calls contract', async () => {
-    mockUsePlans.mockReturnValue({ plans: [{}], reload: jest.fn() });
+    mockUsePlans.mockReturnValue({ plans: [plan], reload: jest.fn() });
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
     await userEvent.click(screen.getByText('Plan deaktivieren'));
