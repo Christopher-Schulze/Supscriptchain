@@ -3,6 +3,12 @@ module.exports = {
   testEnvironment: 'jsdom',
   testMatch: ['<rootDir>/__tests__/**/*.test.ts?(x)'],
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  coverage: true,
+  coverageThreshold: {
+    global: {
+      lines: 70,
+    },
+  },
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
   moduleNameMapper: {
     '^(\.{1,2}/.*)\\.js$': '$1',
