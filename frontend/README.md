@@ -42,6 +42,8 @@ Run the development server:
 npm run dev
 ```
 
+This command first validates `.env.local` via `scripts/check-env.js`.
+
 Open [http://localhost:3000](http://localhost:3000) to view the app.
 
 ## Pages

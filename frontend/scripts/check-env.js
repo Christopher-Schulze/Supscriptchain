@@ -22,7 +22,8 @@ function check() {
   }
 }
 
-if (require.main === module) {
+// Validate the environment when called directly or via `npm run dev`
+if (require.main === module || process.env.npm_lifecycle_event === 'dev') {
   try {
     check();
   } catch (err) {
