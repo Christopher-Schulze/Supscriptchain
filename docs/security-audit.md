@@ -24,3 +24,9 @@ Slither flags the call to `safeTransferFrom` inside
 address rather than `msg.sender`. The function requires the merchant to be the
 caller and checks the user's allowance before performing the transfer. This
 pattern is intentional for subscription payments and is considered safe.
+
+### Removed redundant oracle variables
+
+`slither` reported unused variables `roundId`, `startedAt` and `answeredInRound`
+in `BaseSubscription._processPayment`. These were previously assigned only to
+avoid compiler warnings. The latest version ignores these values entirely.
