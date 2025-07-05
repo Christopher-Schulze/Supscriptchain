@@ -357,3 +357,83 @@ describe("recoverERC20", function () {
   });
 });
 
+
+describe("High decimal boundary", function () {
+  async function highDecimalFixture() {
+    const [owner, user] = await ethers.getSigners();
+    const TokenFactory = await ethers.getContractFactory("MockToken", owner);
+    const tokenDecimals = 30;
+    const token = await TokenFactory.deploy("High30", "H30", tokenDecimals);
+    await token.waitForDeployment();
+    await token.mint(user.address, ethers.parseUnits("1000", tokenDecimals));
+
+    const SubFactory = await ethers.getContractFactory("SubscriptionUpgradeable", owner);
+    const proxy = (await upgrades.deployProxy(SubFactory, [owner.address], { initializer: "initialize" })) as SubscriptionUpgradeable;
+    await proxy.waitForDeployment();
+
+    await token.connect(user).approve(await proxy.getAddress(), ethers.parseUnits("5000", tokenDecimals));
+
+    const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
+    const oracleDecimals = 30;
+    const oraclePrice = ethers.toBigInt(2000) * 10n ** 30n;
+    const aggregator = await Agg.deploy(oracleDecimals, oraclePrice);
+    await aggregator.waitForDeployment();
+
+    return { owner, user, token, proxy, aggregator, tokenDecimals, oracleDecimals, oraclePrice };
+  }
+
+  it("subscribe at exponent limit", async function () {
+    const { owner, user, token, proxy, aggregator, tokenDecimals, oracleDecimals, oraclePrice } = await loadFixture(highDecimalFixture);
+    const usdPrice = 10n ** 16n;
+    await proxy.connect(owner).createPlan(owner.address, await token.getAddress(), 0, THIRTY_DAYS_IN_SECS, true, usdPrice, await aggregator.getAddress());
+    const expected = ethers.BigNumber.from(usdPrice)
+      .mul(ethers.BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
+      .div(ethers.BigNumber.from(100).mul(oraclePrice));
+    const before = await token.balanceOf(user.address);
+    await proxy.connect(user).subscribe(PLAN_ID);
+    const after = await token.balanceOf(user.address);
+    expect(before.sub(after)).to.equal(expected);
+  });
+
+  it("subscribe reverts when boundary exceeded", async function () {
+    const { owner, user, token, proxy, aggregator } = await loadFixture(highDecimalFixture);
+    const usdPrice = 10n ** 17n;
+    await proxy.connect(owner).createPlan(owner.address, await token.getAddress(), 0, THIRTY_DAYS_IN_SECS, true, usdPrice, await aggregator.getAddress());
+    await expect(proxy.connect(user).subscribe(PLAN_ID)).to.be.revertedWith("price overflow");
+  });
+
+  async function highDecimalSubscribedFixture() {
+    const base = await highDecimalFixture();
+    const usdPrice = 10n ** 16n;
+    await base.proxy.connect(base.owner).createPlan(base.owner.address, await base.token.getAddress(), 0, THIRTY_DAYS_IN_SECS, true, usdPrice, await base.aggregator.getAddress());
+    await base.proxy.connect(base.user).subscribe(PLAN_ID);
+    await time.increase(THIRTY_DAYS_IN_SECS + 1);
+    return { ...base, usdPrice };
+  }
+
+  it("processPayment at exponent limit", async function () {
+    const { owner, user, token, proxy, oraclePrice, tokenDecimals, oracleDecimals, usdPrice } = await loadFixture(highDecimalSubscribedFixture);
+    const expected = ethers.BigNumber.from(usdPrice)
+      .mul(ethers.BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
+      .div(ethers.BigNumber.from(100).mul(oraclePrice));
+    const before = await token.balanceOf(user.address);
+    await proxy.connect(owner).processPayment(user.address, PLAN_ID);
+    const after = await token.balanceOf(user.address);
+    expect(before.sub(after)).to.equal(expected);
+  });
+
+  async function highDecimalSubscribedOverflowFixture() {
+    const base = await highDecimalFixture();
+    const usdPrice = 10n ** 17n;
+    await base.proxy.connect(base.owner).createPlan(base.owner.address, await base.token.getAddress(), 0, THIRTY_DAYS_IN_SECS, true, usdPrice, await base.aggregator.getAddress());
+    await base.proxy.connect(base.user).subscribe(PLAN_ID);
+    await time.increase(THIRTY_DAYS_IN_SECS + 1);
+    return base;
+  }
+
+  it("processPayment reverts when boundary exceeded", async function () {
+    const { owner, user, proxy } = await loadFixture(highDecimalSubscribedOverflowFixture);
+    await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWith("price overflow");
+  });
+});
+
