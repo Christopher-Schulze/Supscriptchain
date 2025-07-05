@@ -10,10 +10,12 @@ import {
 import { AggregatorV3Interface__factory } from 'typechain/factories/contracts/interfaces/AggregatorV3Interface__factory';
 import useWallet from '../../lib/useWallet';
 import { useStore } from '../../lib/store';
+import useUserSubscriptions from '../../lib/useUserSubscriptions';
 
 export default function Manage() {
   const { account, connect } = useWallet();
   const { setMessage } = useStore();
+  const { subs } = useUserSubscriptions();
   const [planId, setPlanId] = useState('0');
   const [deadline, setDeadline] = useState('');
   const [v, setV] = useState('');
@@ -136,6 +138,16 @@ export default function Manage() {
   return (
     <div>
       <h1>Manage Subscription</h1>
+      {subs.length > 0 && (
+        <ul className="list" data-testid="subs-list">
+          {subs.map((s) => (
+            <li key={s.planId.toString()}>
+              Plan {s.planId.toString()} - next {s.nextPaymentDate.toString()} -{' '}
+              {s.isActive ? 'active' : 'cancelled'}
+            </li>
+          ))}
+        </ul>
+      )}
       {error && <p className="error">{error}</p>}
       {loading && <p>Processing...</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
