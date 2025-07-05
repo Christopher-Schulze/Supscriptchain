@@ -48,7 +48,8 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^1.4.0",
-    "@openzeppelin/contracts": "^4.9.3"
+    "@openzeppelin/contracts": "^4.9.3",
+    "prom-client": "^14.1.0"
   },
   "lint-staged": {
     "*": "prettier --check"
