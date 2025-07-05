@@ -377,7 +377,12 @@ To deploy the entire stack for production use:
    npm run build
    ```
 
+
    Ensure `NEXT_PUBLIC_CONTRACT_ADDRESS`, `NEXT_PUBLIC_RPC_URL` and `NEXT_PUBLIC_SUBGRAPH_URL` are set in `.env.local` before building.
+
+## Security
+
+See [docs/audit-checklist.md](docs/audit-checklist.md) for a checklist of security-relevant functions, roles and edge cases to consider during audits.
 
 ## License
 
