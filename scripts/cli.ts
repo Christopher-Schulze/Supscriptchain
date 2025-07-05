@@ -63,6 +63,26 @@ async function updatePlan(opts: any) {
   await run('update-plan', opts);
 }
 
+async function pauseContract(opts: any) {
+  const { run } = await loadHardhat();
+  await run('pause', opts);
+}
+
+async function unpauseContract(opts: any) {
+  const { run } = await loadHardhat();
+  await run('unpause', opts);
+}
+
+async function disablePlan(opts: any) {
+  const { run } = await loadHardhat();
+  await run('disable-plan', opts);
+}
+
+async function updateMerchant(opts: any) {
+  const { run } = await loadHardhat();
+  await run('update-merchant', opts);
+}
+
 const program = new Command();
 program
   .name('supscript-cli')
@@ -107,6 +127,33 @@ program
     usdPrice: opts.usdPrice,
     priceFeed: opts.priceFeed,
   }));
+
+program
+  .command('pause')
+  .description('Pause the subscription contract')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .action((opts) => pauseContract(opts));
+
+program
+  .command('unpause')
+  .description('Unpause the subscription contract')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .action((opts) => unpauseContract(opts));
+
+program
+  .command('disable')
+  .description('Disable a subscription plan')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .option('-i, --plan-id <id>', 'Plan ID')
+  .action((opts) => disablePlan(opts));
+
+program
+  .command('update-merchant')
+  .description('Update the merchant of a plan')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .option('-i, --plan-id <id>', 'Plan ID')
+  .option('-m, --merchant <address>', 'New merchant address')
+  .action((opts) => updateMerchant(opts));
 
 program.parseAsync().catch((err) => {
   console.error(err);
