@@ -1,5 +1,10 @@
 import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
 import { env } from './env';
+import {
+  ActiveSubscriptionsDocument,
+  PaymentsDocument,
+  PlansDocument,
+} from '../generated/graphql';
 
 const client = new ApolloClient({
   uri: env.NEXT_PUBLIC_SUBGRAPH_URL,
@@ -39,18 +44,24 @@ export const PLANS_QUERY = gql`
 `;
 
 export async function getActiveSubscriptions() {
-  const { data } = await client.query({ query: ACTIVE_SUBSCRIPTIONS_QUERY });
+  const { data } = await client.query({ query: ActiveSubscriptionsDocument });
   return data.subscriptions;
 }
 
 export async function getPayments() {
-  const { data } = await client.query({ query: PAYMENTS_QUERY });
+  const { data } = await client.query({ query: PaymentsDocument });
   return data.payments;
 }
 
 export async function getPlans() {
-  const { data } = await client.query({ query: PLANS_QUERY });
+  const { data } = await client.query({ query: PlansDocument });
   return data.plans;
 }
 
 export default client;
+
+export {
+  ActiveSubscriptionsDocument,
+  PaymentsDocument,
+  PlansDocument,
+};

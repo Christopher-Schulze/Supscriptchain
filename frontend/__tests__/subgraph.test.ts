@@ -18,11 +18,11 @@ describe('subgraph', () => {
   });
 
   test('getActiveSubscriptions returns data', async () => {
-    const { getActiveSubscriptions, ACTIVE_SUBSCRIPTIONS_QUERY } = await import('../lib/subgraph');
+    const { getActiveSubscriptions, ActiveSubscriptionsDocument } = await import('../lib/subgraph');
     queryMock.mockResolvedValue({ data: { subscriptions: [{ id: '1' }] } });
     const res = await getActiveSubscriptions();
     expect(res).toEqual([{ id: '1' }]);
-    expect(queryMock).toHaveBeenCalledWith({ query: ACTIVE_SUBSCRIPTIONS_QUERY });
+    expect(queryMock).toHaveBeenCalledWith({ query: ActiveSubscriptionsDocument });
   });
 
   test('getActiveSubscriptions propagates errors', async () => {
@@ -32,10 +32,10 @@ describe('subgraph', () => {
   });
 
   test('getPlans works', async () => {
-    const { getPlans, PLANS_QUERY } = await import('../lib/subgraph');
+    const { getPlans, PlansDocument } = await import('../lib/subgraph');
     queryMock.mockResolvedValue({ data: { plans: [{ id: '1' }] } });
     const plans = await getPlans();
     expect(plans[0].id).toBe('1');
-    expect(queryMock).toHaveBeenCalledWith({ query: PLANS_QUERY });
+    expect(queryMock).toHaveBeenCalledWith({ query: PlansDocument });
   });
 });

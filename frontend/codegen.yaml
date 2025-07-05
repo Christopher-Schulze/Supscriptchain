@@ -1,0 +1,12 @@
+schema:
+  - ../subgraph/schema.graphql
+  - ./local-schema.graphql
+documents: ./lib/subgraph.ts
+generates:
+  ./generated/graphql.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typed-document-node
+    config:
+      gqlImport: '@apollo/client#gql'
