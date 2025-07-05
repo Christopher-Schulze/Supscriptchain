@@ -13,6 +13,31 @@ const _abi = [
     anonymous: false,
     inputs: [
       {
+        indexed: false,
+        internalType: "uint256",
+        name: "planId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "oldMerchant",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "newMerchant",
+        type: "address",
+      },
+    ],
+    name: "MerchantUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
         indexed: true,
         internalType: "address",
         name: "user",
@@ -99,6 +124,19 @@ const _abi = [
       },
     ],
     name: "PlanCreated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "planId",
+        type: "uint256",
+      },
+    ],
+    name: "PlanDisabled",
     type: "event",
   },
   {
@@ -202,6 +240,75 @@ const _abi = [
     type: "function",
   },
   {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_planId",
+        type: "uint256",
+      },
+    ],
+    name: "cancelSubscription",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_merchantAddress",
+        type: "address",
+      },
+      {
+        internalType: "address",
+        name: "_token",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "_price",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_billingCycle",
+        type: "uint256",
+      },
+      {
+        internalType: "bool",
+        name: "_priceInUsd",
+        type: "bool",
+      },
+      {
+        internalType: "uint256",
+        name: "_usdPrice",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "_priceFeedAddress",
+        type: "address",
+      },
+    ],
+    name: "createPlan",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_planId",
+        type: "uint256",
+      },
+    ],
+    name: "disablePlan",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "nextPlanId",
     outputs: [
@@ -264,8 +371,151 @@ const _abi = [
         name: "priceFeedAddress",
         type: "address",
       },
+      {
+        internalType: "bool",
+        name: "active",
+        type: "bool",
+      },
     ],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "_user",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "_planId",
+        type: "uint256",
+      },
+    ],
+    name: "processPayment",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "token",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "recoverERC20",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_planId",
+        type: "uint256",
+      },
+    ],
+    name: "subscribe",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_planId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_deadline",
+        type: "uint256",
+      },
+      {
+        internalType: "uint8",
+        name: "v",
+        type: "uint8",
+      },
+      {
+        internalType: "bytes32",
+        name: "r",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes32",
+        name: "s",
+        type: "bytes32",
+      },
+    ],
+    name: "subscribeWithPermit",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_planId",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "_newMerchant",
+        type: "address",
+      },
+    ],
+    name: "updateMerchant",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "_planId",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_billingCycle",
+        type: "uint256",
+      },
+      {
+        internalType: "uint256",
+        name: "_price",
+        type: "uint256",
+      },
+      {
+        internalType: "bool",
+        name: "_priceInUsd",
+        type: "bool",
+      },
+      {
+        internalType: "uint256",
+        name: "_usdPrice",
+        type: "uint256",
+      },
+      {
+        internalType: "address",
+        name: "_priceFeedAddress",
+        type: "address",
+      },
+    ],
+    name: "updatePlan",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {

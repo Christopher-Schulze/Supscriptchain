@@ -1,6 +1,7 @@
 import {
   PlanCreated,
   PlanUpdated,
+  PlanDisabled,
   Subscribed,
   PaymentProcessed,
   SubscriptionCancelled
@@ -18,6 +19,7 @@ export function handlePlanCreated(event: PlanCreated): void {
   plan.priceInUsd = event.params.priceInUsd
   plan.usdPrice = event.params.usdPrice
   plan.priceFeedAddress = event.params.priceFeedAddress
+  plan.active = true
   plan.totalPaid = BigInt.zero()
   plan.save()
 }
@@ -30,6 +32,13 @@ export function handlePlanUpdated(event: PlanUpdated): void {
   plan.priceInUsd = event.params.priceInUsd
   plan.usdPrice = event.params.usdPrice
   plan.priceFeedAddress = event.params.priceFeedAddress
+  plan.save()
+}
+
+export function handlePlanDisabled(event: PlanDisabled): void {
+  let plan = Plan.load(event.params.planId.toString())
+  if (!plan) return
+  plan.active = false
   plan.save()
 }
 

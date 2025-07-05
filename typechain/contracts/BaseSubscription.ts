@@ -27,15 +27,26 @@ export interface BaseSubscriptionInterface extends Interface {
   getFunction(
     nameOrSignature:
       | "PAUSER_ROLE"
+      | "cancelSubscription"
+      | "createPlan"
+      | "disablePlan"
       | "nextPlanId"
       | "plans"
+      | "processPayment"
+      | "recoverERC20"
+      | "subscribe"
+      | "subscribeWithPermit"
+      | "updateMerchant"
+      | "updatePlan"
       | "userSubscriptions"
   ): FunctionFragment;
 
   getEvent(
     nameOrSignatureOrTopic:
+      | "MerchantUpdated"
       | "PaymentProcessed"
       | "PlanCreated"
+      | "PlanDisabled"
       | "PlanUpdated"
       | "Subscribed"
       | "SubscriptionCancelled"
@@ -46,10 +57,61 @@ export interface BaseSubscriptionInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "cancelSubscription",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "createPlan",
+    values: [
+      AddressLike,
+      AddressLike,
+      BigNumberish,
+      BigNumberish,
+      boolean,
+      BigNumberish,
+      AddressLike
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "disablePlan",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "nextPlanId",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "plans", values: [BigNumberish]): string;
+  encodeFunctionData(
+    functionFragment: "processPayment",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "recoverERC20",
+    values: [AddressLike, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "subscribe",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "subscribeWithPermit",
+    values: [BigNumberish, BigNumberish, BigNumberish, BytesLike, BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updateMerchant",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "updatePlan",
+    values: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      boolean,
+      BigNumberish,
+      AddressLike
+    ]
+  ): string;
   encodeFunctionData(
     functionFragment: "userSubscriptions",
     values: [AddressLike, BigNumberish]
@@ -59,12 +121,61 @@ export interface BaseSubscriptionInterface extends Interface {
     functionFragment: "PAUSER_ROLE",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "cancelSubscription",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "createPlan", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "disablePlan",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "nextPlanId", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "plans", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "processPayment",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "recoverERC20",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "subscribe", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "subscribeWithPermit",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "updateMerchant",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "updatePlan", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "userSubscriptions",
     data: BytesLike
   ): Result;
+}
+
+export namespace MerchantUpdatedEvent {
+  export type InputTuple = [
+    planId: BigNumberish,
+    oldMerchant: AddressLike,
+    newMerchant: AddressLike
+  ];
+  export type OutputTuple = [
+    planId: bigint,
+    oldMerchant: string,
+    newMerchant: string
+  ];
+  export interface OutputObject {
+    planId: bigint;
+    oldMerchant: string;
+    newMerchant: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace PaymentProcessedEvent {
@@ -125,6 +236,18 @@ export namespace PlanCreatedEvent {
     priceInUsd: boolean;
     usdPrice: bigint;
     priceFeedAddress: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PlanDisabledEvent {
+  export type InputTuple = [planId: BigNumberish];
+  export type OutputTuple = [planId: bigint];
+  export interface OutputObject {
+    planId: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -243,12 +366,48 @@ export interface BaseSubscription extends BaseContract {
 
   PAUSER_ROLE: TypedContractMethod<[], [string], "view">;
 
+  cancelSubscription: TypedContractMethod<
+    [_planId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  createPlan: TypedContractMethod<
+    [
+      _merchantAddress: AddressLike,
+      _token: AddressLike,
+      _price: BigNumberish,
+      _billingCycle: BigNumberish,
+      _priceInUsd: boolean,
+      _usdPrice: BigNumberish,
+      _priceFeedAddress: AddressLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  disablePlan: TypedContractMethod<
+    [_planId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   nextPlanId: TypedContractMethod<[], [bigint], "view">;
 
   plans: TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [string, string, bigint, bigint, bigint, boolean, bigint, string] & {
+      [
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        bigint,
+        string,
+        boolean
+      ] & {
         merchant: string;
         token: string;
         tokenDecimals: bigint;
@@ -257,9 +416,55 @@ export interface BaseSubscription extends BaseContract {
         priceInUsd: boolean;
         usdPrice: bigint;
         priceFeedAddress: string;
+        active: boolean;
       }
     ],
     "view"
+  >;
+
+  processPayment: TypedContractMethod<
+    [_user: AddressLike, _planId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  recoverERC20: TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
+  subscribe: TypedContractMethod<[_planId: BigNumberish], [void], "nonpayable">;
+
+  subscribeWithPermit: TypedContractMethod<
+    [
+      _planId: BigNumberish,
+      _deadline: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+
+  updateMerchant: TypedContractMethod<
+    [_planId: BigNumberish, _newMerchant: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  updatePlan: TypedContractMethod<
+    [
+      _planId: BigNumberish,
+      _billingCycle: BigNumberish,
+      _price: BigNumberish,
+      _priceInUsd: boolean,
+      _usdPrice: BigNumberish,
+      _priceFeedAddress: AddressLike
+    ],
+    [void],
+    "nonpayable"
   >;
 
   userSubscriptions: TypedContractMethod<
@@ -284,6 +489,27 @@ export interface BaseSubscription extends BaseContract {
     nameOrSignature: "PAUSER_ROLE"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "cancelSubscription"
+  ): TypedContractMethod<[_planId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "createPlan"
+  ): TypedContractMethod<
+    [
+      _merchantAddress: AddressLike,
+      _token: AddressLike,
+      _price: BigNumberish,
+      _billingCycle: BigNumberish,
+      _priceInUsd: boolean,
+      _usdPrice: BigNumberish,
+      _priceFeedAddress: AddressLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "disablePlan"
+  ): TypedContractMethod<[_planId: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "nextPlanId"
   ): TypedContractMethod<[], [bigint], "view">;
   getFunction(
@@ -291,7 +517,17 @@ export interface BaseSubscription extends BaseContract {
   ): TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [string, string, bigint, bigint, bigint, boolean, bigint, string] & {
+      [
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        bigint,
+        string,
+        boolean
+      ] & {
         merchant: string;
         token: string;
         tokenDecimals: bigint;
@@ -300,9 +536,61 @@ export interface BaseSubscription extends BaseContract {
         priceInUsd: boolean;
         usdPrice: bigint;
         priceFeedAddress: string;
+        active: boolean;
       }
     ],
     "view"
+  >;
+  getFunction(
+    nameOrSignature: "processPayment"
+  ): TypedContractMethod<
+    [_user: AddressLike, _planId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "recoverERC20"
+  ): TypedContractMethod<
+    [token: AddressLike, amount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "subscribe"
+  ): TypedContractMethod<[_planId: BigNumberish], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "subscribeWithPermit"
+  ): TypedContractMethod<
+    [
+      _planId: BigNumberish,
+      _deadline: BigNumberish,
+      v: BigNumberish,
+      r: BytesLike,
+      s: BytesLike
+    ],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updateMerchant"
+  ): TypedContractMethod<
+    [_planId: BigNumberish, _newMerchant: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
+    nameOrSignature: "updatePlan"
+  ): TypedContractMethod<
+    [
+      _planId: BigNumberish,
+      _billingCycle: BigNumberish,
+      _price: BigNumberish,
+      _priceInUsd: boolean,
+      _usdPrice: BigNumberish,
+      _priceFeedAddress: AddressLike
+    ],
+    [void],
+    "nonpayable"
   >;
   getFunction(
     nameOrSignature: "userSubscriptions"
@@ -321,6 +609,13 @@ export interface BaseSubscription extends BaseContract {
   >;
 
   getEvent(
+    key: "MerchantUpdated"
+  ): TypedContractEvent<
+    MerchantUpdatedEvent.InputTuple,
+    MerchantUpdatedEvent.OutputTuple,
+    MerchantUpdatedEvent.OutputObject
+  >;
+  getEvent(
     key: "PaymentProcessed"
   ): TypedContractEvent<
     PaymentProcessedEvent.InputTuple,
@@ -333,6 +628,13 @@ export interface BaseSubscription extends BaseContract {
     PlanCreatedEvent.InputTuple,
     PlanCreatedEvent.OutputTuple,
     PlanCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "PlanDisabled"
+  ): TypedContractEvent<
+    PlanDisabledEvent.InputTuple,
+    PlanDisabledEvent.OutputTuple,
+    PlanDisabledEvent.OutputObject
   >;
   getEvent(
     key: "PlanUpdated"
@@ -357,6 +659,17 @@ export interface BaseSubscription extends BaseContract {
   >;
 
   filters: {
+    "MerchantUpdated(uint256,address,address)": TypedContractEvent<
+      MerchantUpdatedEvent.InputTuple,
+      MerchantUpdatedEvent.OutputTuple,
+      MerchantUpdatedEvent.OutputObject
+    >;
+    MerchantUpdated: TypedContractEvent<
+      MerchantUpdatedEvent.InputTuple,
+      MerchantUpdatedEvent.OutputTuple,
+      MerchantUpdatedEvent.OutputObject
+    >;
+
     "PaymentProcessed(address,uint256,uint256,uint256)": TypedContractEvent<
       PaymentProcessedEvent.InputTuple,
       PaymentProcessedEvent.OutputTuple,
@@ -377,6 +690,17 @@ export interface BaseSubscription extends BaseContract {
       PlanCreatedEvent.InputTuple,
       PlanCreatedEvent.OutputTuple,
       PlanCreatedEvent.OutputObject
+    >;
+
+    "PlanDisabled(uint256)": TypedContractEvent<
+      PlanDisabledEvent.InputTuple,
+      PlanDisabledEvent.OutputTuple,
+      PlanDisabledEvent.OutputObject
+    >;
+    PlanDisabled: TypedContractEvent<
+      PlanDisabledEvent.InputTuple,
+      PlanDisabledEvent.OutputTuple,
+      PlanDisabledEvent.OutputObject
     >;
 
     "PlanUpdated(uint256,uint256,uint256,bool,uint256,address)": TypedContractEvent<

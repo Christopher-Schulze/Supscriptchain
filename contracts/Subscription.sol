@@ -99,6 +99,10 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
         super.updateMerchant(_planId, _newMerchant);
     }
 
+    function disablePlan(uint256 _planId) public override onlyOwner whenNotPaused {
+        super.disablePlan(_planId);
+    }
+
     /**
      * @notice Calculates the payment amount for a given plan.
      * @dev For USD-based plans, uses Chainlink price feed. Otherwise, uses fixed token price.

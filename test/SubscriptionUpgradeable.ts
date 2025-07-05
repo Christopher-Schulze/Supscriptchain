@@ -291,6 +291,33 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
         .withArgs(user.address);
     });
   });
+
+  describe("disablePlan", function () {
+    async function planFixture() {
+      const { owner, user, token, proxy } = await loadFixture(deployUpgradeableFixture);
+      const price = ethers.parseUnits("10", 18);
+      await proxy.connect(owner).createPlan(owner.address, token.target, price, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress);
+      return { owner, user, proxy };
+    }
+
+    it("owner can disable plan", async function () {
+      const { owner, proxy } = await loadFixture(planFixture);
+      await expect(proxy.connect(owner).disablePlan(PLAN_ID))
+        .to.emit(proxy, "PlanDisabled")
+        .withArgs(PLAN_ID);
+      const plan = await proxy.plans(PLAN_ID);
+      expect(plan.active).to.be.false;
+    });
+
+    it("disabled plan rejects new subscriptions and payments", async function () {
+      const { owner, user, proxy } = await loadFixture(planFixture);
+      await proxy.connect(owner).disablePlan(PLAN_ID);
+      await expect(proxy.connect(user).subscribe(PLAN_ID)).to.be.revertedWith("Plan is disabled");
+      await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWith(
+        "Plan is disabled"
+      );
+    });
+  });
 });
 
 describe("Reentrancy protection", function () {

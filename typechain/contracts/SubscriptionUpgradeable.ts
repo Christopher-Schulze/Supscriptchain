@@ -31,6 +31,7 @@ export interface SubscriptionUpgradeableInterface extends Interface {
       | "acceptOwnership"
       | "cancelSubscription"
       | "createPlan"
+      | "disablePlan"
       | "getRoleAdmin"
       | "grantRole"
       | "hasRole"
@@ -51,6 +52,7 @@ export interface SubscriptionUpgradeableInterface extends Interface {
       | "supportsInterface"
       | "transferOwnership"
       | "unpause"
+      | "updateMerchant"
       | "updatePlan"
       | "userSubscriptions"
   ): FunctionFragment;
@@ -58,11 +60,13 @@ export interface SubscriptionUpgradeableInterface extends Interface {
   getEvent(
     nameOrSignatureOrTopic:
       | "Initialized"
+      | "MerchantUpdated"
       | "OwnershipTransferStarted"
       | "OwnershipTransferred"
       | "Paused"
       | "PaymentProcessed"
       | "PlanCreated"
+      | "PlanDisabled"
       | "PlanUpdated"
       | "RoleAdminChanged"
       | "RoleGranted"
@@ -99,6 +103,10 @@ export interface SubscriptionUpgradeableInterface extends Interface {
       BigNumberish,
       AddressLike
     ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "disablePlan",
+    values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "getRoleAdmin",
@@ -166,6 +174,10 @@ export interface SubscriptionUpgradeableInterface extends Interface {
   ): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "updateMerchant",
+    values: [BigNumberish, AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "updatePlan",
     values: [
       BigNumberish,
@@ -198,6 +210,10 @@ export interface SubscriptionUpgradeableInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "createPlan", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "disablePlan",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "getRoleAdmin",
     data: BytesLike
@@ -245,6 +261,10 @@ export interface SubscriptionUpgradeableInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "updateMerchant",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "updatePlan", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "userSubscriptions",
@@ -257,6 +277,28 @@ export namespace InitializedEvent {
   export type OutputTuple = [version: bigint];
   export interface OutputObject {
     version: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace MerchantUpdatedEvent {
+  export type InputTuple = [
+    planId: BigNumberish,
+    oldMerchant: AddressLike,
+    newMerchant: AddressLike
+  ];
+  export type OutputTuple = [
+    planId: bigint,
+    oldMerchant: string,
+    newMerchant: string
+  ];
+  export interface OutputObject {
+    planId: bigint;
+    oldMerchant: string;
+    newMerchant: string;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -360,6 +402,18 @@ export namespace PlanCreatedEvent {
     priceInUsd: boolean;
     usdPrice: bigint;
     priceFeedAddress: string;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PlanDisabledEvent {
+  export type InputTuple = [planId: BigNumberish];
+  export type OutputTuple = [planId: bigint];
+  export interface OutputObject {
+    planId: bigint;
   }
   export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
   export type Filter = TypedDeferredTopicFilter<Event>;
@@ -572,6 +626,12 @@ export interface SubscriptionUpgradeable extends BaseContract {
     "nonpayable"
   >;
 
+  disablePlan: TypedContractMethod<
+    [_planId: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
+
   getRoleAdmin: TypedContractMethod<[role: BytesLike], [string], "view">;
 
   grantRole: TypedContractMethod<
@@ -605,7 +665,17 @@ export interface SubscriptionUpgradeable extends BaseContract {
   plans: TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [string, string, bigint, bigint, bigint, boolean, bigint, string] & {
+      [
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        bigint,
+        string,
+        boolean
+      ] & {
         merchant: string;
         token: string;
         tokenDecimals: bigint;
@@ -614,6 +684,7 @@ export interface SubscriptionUpgradeable extends BaseContract {
         priceInUsd: boolean;
         usdPrice: bigint;
         priceFeedAddress: string;
+        active: boolean;
       }
     ],
     "view"
@@ -672,6 +743,12 @@ export interface SubscriptionUpgradeable extends BaseContract {
   >;
 
   unpause: TypedContractMethod<[], [void], "nonpayable">;
+
+  updateMerchant: TypedContractMethod<
+    [_planId: BigNumberish, _newMerchant: AddressLike],
+    [void],
+    "nonpayable"
+  >;
 
   updatePlan: TypedContractMethod<
     [
@@ -732,6 +809,9 @@ export interface SubscriptionUpgradeable extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "disablePlan"
+  ): TypedContractMethod<[_planId: BigNumberish], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "getRoleAdmin"
   ): TypedContractMethod<[role: BytesLike], [string], "view">;
   getFunction(
@@ -771,7 +851,17 @@ export interface SubscriptionUpgradeable extends BaseContract {
   ): TypedContractMethod<
     [arg0: BigNumberish],
     [
-      [string, string, bigint, bigint, bigint, boolean, bigint, string] & {
+      [
+        string,
+        string,
+        bigint,
+        bigint,
+        bigint,
+        boolean,
+        bigint,
+        string,
+        boolean
+      ] & {
         merchant: string;
         token: string;
         tokenDecimals: bigint;
@@ -780,6 +870,7 @@ export interface SubscriptionUpgradeable extends BaseContract {
         priceInUsd: boolean;
         usdPrice: bigint;
         priceFeedAddress: string;
+        active: boolean;
       }
     ],
     "view"
@@ -841,6 +932,13 @@ export interface SubscriptionUpgradeable extends BaseContract {
     nameOrSignature: "unpause"
   ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "updateMerchant"
+  ): TypedContractMethod<
+    [_planId: BigNumberish, _newMerchant: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+  getFunction(
     nameOrSignature: "updatePlan"
   ): TypedContractMethod<
     [
@@ -878,6 +976,13 @@ export interface SubscriptionUpgradeable extends BaseContract {
     InitializedEvent.OutputObject
   >;
   getEvent(
+    key: "MerchantUpdated"
+  ): TypedContractEvent<
+    MerchantUpdatedEvent.InputTuple,
+    MerchantUpdatedEvent.OutputTuple,
+    MerchantUpdatedEvent.OutputObject
+  >;
+  getEvent(
     key: "OwnershipTransferStarted"
   ): TypedContractEvent<
     OwnershipTransferStartedEvent.InputTuple,
@@ -911,6 +1016,13 @@ export interface SubscriptionUpgradeable extends BaseContract {
     PlanCreatedEvent.InputTuple,
     PlanCreatedEvent.OutputTuple,
     PlanCreatedEvent.OutputObject
+  >;
+  getEvent(
+    key: "PlanDisabled"
+  ): TypedContractEvent<
+    PlanDisabledEvent.InputTuple,
+    PlanDisabledEvent.OutputTuple,
+    PlanDisabledEvent.OutputObject
   >;
   getEvent(
     key: "PlanUpdated"
@@ -974,6 +1086,17 @@ export interface SubscriptionUpgradeable extends BaseContract {
       InitializedEvent.OutputObject
     >;
 
+    "MerchantUpdated(uint256,address,address)": TypedContractEvent<
+      MerchantUpdatedEvent.InputTuple,
+      MerchantUpdatedEvent.OutputTuple,
+      MerchantUpdatedEvent.OutputObject
+    >;
+    MerchantUpdated: TypedContractEvent<
+      MerchantUpdatedEvent.InputTuple,
+      MerchantUpdatedEvent.OutputTuple,
+      MerchantUpdatedEvent.OutputObject
+    >;
+
     "OwnershipTransferStarted(address,address)": TypedContractEvent<
       OwnershipTransferStartedEvent.InputTuple,
       OwnershipTransferStartedEvent.OutputTuple,
@@ -1027,6 +1150,17 @@ export interface SubscriptionUpgradeable extends BaseContract {
       PlanCreatedEvent.InputTuple,
       PlanCreatedEvent.OutputTuple,
       PlanCreatedEvent.OutputObject
+    >;
+
+    "PlanDisabled(uint256)": TypedContractEvent<
+      PlanDisabledEvent.InputTuple,
+      PlanDisabledEvent.OutputTuple,
+      PlanDisabledEvent.OutputObject
+    >;
+    PlanDisabled: TypedContractEvent<
+      PlanDisabledEvent.InputTuple,
+      PlanDisabledEvent.OutputTuple,
+      PlanDisabledEvent.OutputObject
     >;
 
     "PlanUpdated(uint256,uint256,uint256,bool,uint256,address)": TypedContractEvent<
