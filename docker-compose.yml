@@ -1,0 +1,40 @@
+version: '3.9'
+services:
+  hardhat:
+    image: node:20
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: npx hardhat node
+    ports:
+      - "8545:8545"
+
+  subgraph:
+    image: node:20
+    working_dir: /app
+    volumes:
+      - ./:/app
+    command: npm run subgraph-server
+    env_file:
+      - .env
+    depends_on:
+      - hardhat
+    ports:
+      - "8000:8000"
+      - "8020:8020"
+      - "9091:9091"
+
+  frontend:
+    image: node:20
+    working_dir: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+    command: sh -c "npm run build && npm start"
+    env_file:
+      - .env
+    depends_on:
+      - hardhat
+    ports:
+      - "3000:3000"
