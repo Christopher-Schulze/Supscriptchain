@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useStore } from "./store";
 import WalletConnectProvider from "@walletconnect/web3-provider";
+import CoinbaseWalletSDK from "@coinbase/wallet-sdk";
 import { env } from "./env";
 
 interface EthereumProvider {
@@ -34,8 +35,16 @@ export default function useWallet() {
         await wc.enable();
         eth = wc as unknown as EthereumProvider;
       } catch {
-        setMessage({ text: "Wallet not found", type: 'warning' });
-        return;
+        try {
+          const cb = new CoinbaseWalletSDK({ appName: 'Supscriptchain' });
+          eth = cb.makeWeb3Provider(
+            env.NEXT_PUBLIC_RPC_URL,
+            env.NEXT_PUBLIC_CHAIN_ID,
+          ) as unknown as EthereumProvider;
+        } catch {
+          setMessage({ text: "Wallet not found", type: 'warning' });
+          return;
+        }
       }
     }
     try {

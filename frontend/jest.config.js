@@ -7,7 +7,7 @@ module.exports = {
   moduleNameMapper: {
     '^(\.{1,2}/.*)\\.js$': '$1',
   },
-  transformIgnorePatterns: ["/node_modules/(?!(preact)/)"],
+  transformIgnorePatterns: ["/node_modules/(?!(preact|@coinbase/wallet-sdk)/)"],
   globals: {
     'ts-jest': {
       tsconfig: {
