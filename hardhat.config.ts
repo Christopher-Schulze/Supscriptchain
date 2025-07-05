@@ -4,6 +4,10 @@ import '@nomicfoundation/hardhat-verify';
 import '@openzeppelin/hardhat-upgrades';
 import '@typechain/hardhat';
 import 'hardhat-gas-reporter';
+import './tasks/create-plan';
+import './tasks/update-plan';
+import './tasks/pause';
+import './tasks/disable-plan';
 
 import path from 'path';
 import * as dotenv from 'dotenv';
