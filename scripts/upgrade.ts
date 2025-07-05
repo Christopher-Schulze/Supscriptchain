@@ -1,6 +1,6 @@
 import { ethers, upgrades } from "hardhat";
 
-async function main() {
+export async function upgrade() {
   const proxy = process.env.SUBSCRIPTION_ADDRESS;
   if (!proxy) {
     throw new Error("SUBSCRIPTION_ADDRESS not set");
@@ -14,7 +14,9 @@ async function main() {
   console.log("Upgraded implementation at:", impl);
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  upgrade().catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}
