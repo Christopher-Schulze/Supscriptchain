@@ -7,7 +7,7 @@ contract MockV3Aggregator is AggregatorV3Interface {
     int256 public latestAnswer;
     uint256 public latestTimestamp;
     uint8 public _decimals;
-    uint256 public version;
+    uint256 public immutable version;
 
     constructor(uint8 decimals_, int256 initialAnswer) {
         _decimals = decimals_;
