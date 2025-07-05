@@ -1,0 +1,13 @@
+## Gas Report
+
+Optimization applied in `BaseSubscription` to reduce repeated storage reads. `_getPaymentAmount` now accepts a storage pointer and call sites preload plan data before checks. This slightly lowered gas costs for key functions.
+
+### Before
+- `subscribe` avg: 176,899 gas (Subscription) / 181,844 gas (SubscriptionUpgradeable)
+- `processPayment` avg: 101,162 gas (SubscriptionUpgradeable) / 84,062 gas (SubscriptionUpgradeableV2)
+
+### After
+- `subscribe` avg: 176,652 gas (Subscription) / 181,597 gas (SubscriptionUpgradeable)
+- `processPayment` avg: 101,071 gas (SubscriptionUpgradeable) / 83,971 gas (SubscriptionUpgradeableV2)
+
+See `gas-report-before.txt` and `gas-report-after.txt` for full details.
