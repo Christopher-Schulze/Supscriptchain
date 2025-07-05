@@ -1,9 +1,6 @@
 'use client';
 import { useState } from 'react';
-import {
-  getContract,
-  processPayment as contractProcessPayment,
-} from '../../lib/contract';
+import { processPayment as contractProcessPayment } from '../../lib/contract';
 import useWallet from '../../lib/useWallet';
 import { useStore } from '../../lib/store';
 

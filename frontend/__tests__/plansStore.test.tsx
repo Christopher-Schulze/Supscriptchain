@@ -8,6 +8,7 @@ const mockedGetContract = getContract as jest.Mock;
 
 function makePlan(token: string): Plan {
   return {
+    id: 0n,
     merchant: '0x',
     token,
     tokenDecimals: 18n,
@@ -16,6 +17,7 @@ function makePlan(token: string): Plan {
     priceInUsd: false,
     usdPrice: 0n,
     priceFeedAddress: '0x',
+    active: true,
   };
 }
 
