@@ -159,16 +159,12 @@ abstract contract BaseSubscription {
             require(plan.priceFeedAddress != address(0), "Price feed not set for USD plan");
             AggregatorV3Interface priceFeed = AggregatorV3Interface(plan.priceFeedAddress);
             (
-                uint80 roundId,
+                ,
                 int256 latestPrice,
-                uint256 startedAt,
+                ,
                 uint256 updatedAt,
-                uint80 answeredInRound
+                
             ) = priceFeed.latestRoundData();
-            // Prevent unused-variable compiler warnings
-            roundId;
-            startedAt;
-            answeredInRound;
             require(block.timestamp - updatedAt < MAX_STALE_TIME, "Price feed stale");
 
             uint8 tokenDecimals = plan.tokenDecimals;
