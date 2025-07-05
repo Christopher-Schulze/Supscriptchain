@@ -4,6 +4,7 @@ import {
   ActiveSubscriptionsDocument,
   PaymentsDocument,
   PlansDocument,
+  RevenueDocument,
 } from '../generated/graphql';
 
 const client = new ApolloClient({
@@ -43,6 +44,21 @@ export const PLANS_QUERY = gql`
   }
 `;
 
+export const REVENUE_QUERY = gql`
+  query Revenue($planId: BigInt, $from: BigInt, $to: BigInt) {
+    payments(
+      where: {
+        planId: $planId
+        newNextPaymentDate_gte: $from
+        newNextPaymentDate_lte: $to
+      }
+    ) {
+      planId
+      amount
+    }
+  }
+`;
+
 export async function getActiveSubscriptions() {
   const { data } = await client.query({ query: ActiveSubscriptionsDocument });
   return data.subscriptions;
@@ -58,10 +74,19 @@ export async function getPlans() {
   return data.plans;
 }
 
+export async function getRevenue(planId?: string, from?: number, to?: number) {
+  const { data } = await client.query({
+    query: RevenueDocument,
+    variables: { planId, from, to },
+  });
+  return data.payments;
+}
+
 export default client;
 
 export {
   ActiveSubscriptionsDocument,
   PaymentsDocument,
   PlansDocument,
+  RevenueDocument,
 };

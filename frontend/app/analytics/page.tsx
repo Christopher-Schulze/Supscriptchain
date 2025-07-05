@@ -1,6 +1,22 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { getActiveSubscriptions, getPayments, getPlans } from '../../lib/subgraph';
+import {
+  getActiveSubscriptions,
+  getPayments,
+  getPlans,
+  getRevenue,
+} from '../../lib/subgraph';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
 interface SubscriptionData {
   id: string;
@@ -20,6 +36,12 @@ export default function Analytics() {
   const [subs, setSubs] = useState<SubscriptionData[]>([]);
   const [payments, setPayments] = useState<PaymentData[]>([]);
   const [plans, setPlans] = useState<{ id: string; totalPaid: string }[]>([]);
+  const [revenue, setRevenue] = useState<{ planId: string; amount: string }[]>(
+    [],
+  );
+  const [filterPlan, setFilterPlan] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -65,6 +87,24 @@ export default function Analytics() {
     }
   }
 
+  async function applyFilters() {
+    setError(null);
+    setLoading(true);
+    try {
+      const rev = await getRevenue(
+        filterPlan || undefined,
+        from ? Number(from) : undefined,
+        to ? Number(to) : undefined,
+      );
+      setRevenue(rev);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div>
       <h1>Analytics</h1>
@@ -85,13 +125,56 @@ export default function Analytics() {
       </ul>
       <h2>Plan Totals</h2>
       {plans.length === 0 && <p>No plans</p>}
-      <ul className="list">
-        {plans.map((p) => (
-          <li key={p.id}>
-            Plan {p.id} total paid {p.totalPaid}
-          </li>
-        ))}
-      </ul>
+      {plans.length > 0 && (
+        <Bar
+          data={{
+            labels: plans.map((p) => p.id),
+            datasets: [
+              {
+                label: 'Total Paid',
+                data: plans.map((p) => Number(p.totalPaid)),
+                backgroundColor: 'rgba(75,192,192,0.4)',
+              },
+            ],
+          }}
+        />
+      )}
+      <h2>Revenue</h2>
+      <div>
+        <label htmlFor="filter-plan">Plan ID: </label>
+        <input
+          id="filter-plan"
+          value={filterPlan}
+          onChange={(e) => setFilterPlan(e.target.value)}
+        />
+        <label htmlFor="from-time">From (unix): </label>
+        <input
+          id="from-time"
+          value={from}
+          onChange={(e) => setFrom(e.target.value)}
+        />
+        <label htmlFor="to-time">To (unix): </label>
+        <input
+          id="to-time"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+        />
+        <button onClick={applyFilters}>Apply</button>
+      </div>
+      {revenue.length > 0 && (
+        <Bar
+          data={{
+            labels: revenue.map((_, i) => String(i + 1)),
+            datasets: [
+              {
+                label: 'Amount',
+                data: revenue.map((r) => Number(r.amount)),
+                backgroundColor: 'rgba(153,102,255,0.4)',
+              },
+            ],
+          }}
+        />
+      )}
       <h2>Payments</h2>
       {payments.length === 0 && <p>No payments</p>}
       <ul className="list">
