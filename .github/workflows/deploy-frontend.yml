@@ -6,11 +6,22 @@ on:
     paths:
       - 'frontend/**'
   workflow_dispatch:
+    inputs:
+      skip_approval:
+        description: 'Skip manual approval'
+        required: false
+        default: 'false'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Await approval
+        if: ${{ github.event.inputs.skip_approval != 'true' }}
+        uses: trstringer/manual-approval@v1
+        with:
+          secret: ${{ secrets.GITHUB_TOKEN }}
+          approvers: ${{ github.repository_owner }}
       - uses: actions/checkout@v3
       - name: Setup Node
         uses: actions/setup-node@v3
