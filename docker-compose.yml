@@ -24,6 +24,17 @@ services:
       - "8020:8020"
       - "9091:9091"
 
+  payments:
+    build:
+      context: .
+      dockerfile: Dockerfile.payments
+    env_file:
+      - .env
+    depends_on:
+      - hardhat
+    ports:
+      - "9092:9092"
+
   frontend:
     image: node:20
     working_dir: /app/frontend

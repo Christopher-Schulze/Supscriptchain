@@ -184,3 +184,21 @@ docker compose up --build
 
 Hardhat läuft anschließend auf Port 8545, der Graph Node auf 8000 und das
 Frontend unter <http://localhost:3000>.
+
+## Beispiel `prometheus.yml`
+
+Um Metriken sowohl vom Subgraph-Server als auch vom Zahlungs-Skript zu erfassen,
+kann Prometheus wie folgt konfiguriert werden:
+
+```yaml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'subgraph'
+    static_configs:
+      - targets: ['localhost:9091']
+  - job_name: 'payments'
+    static_configs:
+      - targets: ['localhost:9092']
+```

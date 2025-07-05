@@ -7,4 +7,6 @@ RUN npm ci --legacy-peer-deps
 COPY hardhat.config.ts tsconfig.json ./
 COPY scripts ./scripts
 COPY contracts ./contracts
+ENV METRICS_PORT=9092
+EXPOSE 9092
 CMD ["npx", "ts-node", "scripts/process-due-payments.ts"]
