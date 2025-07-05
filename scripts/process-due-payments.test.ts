@@ -34,6 +34,7 @@ describe('process-due-payments script', function () {
     const { merchant, userSuccess, userFail, subscription } = await loadFixture(deployFixture);
 
     const tmpJson = path.join(__dirname, 'subscribers.test.tmp.json');
+    const failuresJson = path.join(__dirname, 'failures.test.tmp.json');
     const data = [userSuccess.address, { user: userFail.address, plan: 0 }];
     fs.writeFileSync(tmpJson, JSON.stringify(data, null, 2));
 
@@ -45,15 +46,20 @@ describe('process-due-payments script', function () {
         PLAN_ID: '0',
         SUBSCRIBERS_FILE: tmpJson,
         MERCHANT_PRIVATE_KEY: merchant.privateKey,
+        FAILURES_FILE: failuresJson,
       },
       encoding: 'utf8',
     });
 
     fs.unlinkSync(tmpJson);
+    const failures = JSON.parse(fs.readFileSync(failuresJson, 'utf8'));
+    fs.unlinkSync(failuresJson);
 
     expect(res.status).to.equal(1);
     expect(res.stdout).to.match(new RegExp(`Processing payment for ${userSuccess.address}`));
     expect(res.stdout).to.match(/Failed payments summary/);
+    expect(failures).to.have.lengthOf(1);
+    expect(failures[0].user).to.equal(userFail.address);
 
     const sub = await subscription.userSubscriptions(userSuccess.address, 0);
     expect(sub.nextPaymentDate).to.be.gt(BigInt(await time.latest()));

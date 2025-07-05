@@ -1,0 +1,32 @@
+name: Deploy Subgraph
+
+on:
+  push:
+    branches: ['main']
+    paths:
+      - 'subgraph/**'
+      - 'scripts/prepare-subgraph.ts'
+      - '.github/workflows/deploy-subgraph.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Deploy Subgraph
+        env:
+          GRAPH_NODE_URL: ${{ secrets.GRAPH_NODE_URL }}
+          IPFS_URL: ${{ secrets.IPFS_URL }}
+          SUBGRAPH_NAME: ${{ secrets.SUBGRAPH_NAME }}
+          GRAPH_ACCESS_TOKEN: ${{ secrets.GRAPH_ACCESS_TOKEN }}
+          SUBGRAPH_VERSION: ${{ github.sha }}
+        run: npm run deploy-subgraph
