@@ -4,6 +4,7 @@ import Manage from '../app/manage/page';
 import MessageBar from '../lib/MessageBar';
 import { StoreProvider } from '../lib/store';
 import { getContract, subscribe, cancelSubscription } from '../lib/contract';
+import useUserSubscriptions from '../lib/useUserSubscriptions';
 
 jest.mock(
   'typechain/factories/contracts/interfaces/AggregatorV3Interface__factory',
@@ -22,12 +23,15 @@ jest.mock('../lib/contract', () => ({
   cancelSubscription: jest.fn(),
 }));
 
+jest.mock('../lib/useUserSubscriptions');
+
 jest.mock('../lib/useWallet', () => {
   return jest.fn(() => ({ account: '0xabc', connect: jest.fn() }));
 });
 
 const mockedSubscribe = subscribe as jest.Mock;
 const mockedCancel = cancelSubscription as jest.Mock;
+const mockUseSubs = useUserSubscriptions as jest.Mock;
 
 function Wrapper() {
   return (
@@ -74,5 +78,18 @@ test('shows error on invalid r signature', async () => {
   await userEvent.type(inputs[4], '0x' + '2'.repeat(64));
   await userEvent.click(screen.getByText('Subscribe with Permit'));
   expect(await screen.findByText('invalid r')).toBeInTheDocument();
+});
+
+test('lists user subscriptions', () => {
+  mockUseSubs.mockReturnValue({
+    subs: [
+      { planId: 1n, nextPaymentDate: 10n, isActive: true },
+    ],
+    reload: jest.fn(),
+  });
+  render(<Wrapper />);
+  const list = screen.getByTestId('subs-list');
+  expect(list).toBeInTheDocument();
+  expect(screen.getByText(/Plan 1/)).toBeInTheDocument();
 });
 
