@@ -159,8 +159,7 @@ abstract contract BaseSubscription {
         emit PlanDisabled(_planId);
     }
 
-    function _getPaymentAmount(uint256 _planId) internal view returns (uint256 amount) {
-        SubscriptionPlan storage plan = plans[_planId];
+    function _getPaymentAmount(SubscriptionPlan storage plan) internal view returns (uint256 amount) {
         if (plan.priceInUsd) {
             require(plan.priceFeedAddress != address(0), "Price feed not set for USD plan");
             AggregatorV3Interface priceFeed = AggregatorV3Interface(plan.priceFeedAddress);
@@ -204,14 +203,14 @@ abstract contract BaseSubscription {
     }
 
     function _subscribe(uint256 _planId, address _subscriber) internal {
-        require(plans[_planId].merchant != address(0), "Plan does not exist");
-        require(plans[_planId].active, "Plan is disabled");
+        SubscriptionPlan storage plan = plans[_planId];
+        require(plan.merchant != address(0), "Plan does not exist");
+        require(plan.active, "Plan is disabled");
         require(!userSubscriptions[_subscriber][_planId].isActive, "Already actively subscribed to this plan");
 
-        SubscriptionPlan storage plan = plans[_planId];
         IERC20 token = IERC20(plan.token);
 
-        uint256 amountToPay = _getPaymentAmount(_planId);
+        uint256 amountToPay = _getPaymentAmount(plan);
 
         uint256 startTime = block.timestamp;
         uint256 nextPaymentDate = startTime + plan.billingCycle;
@@ -240,12 +239,12 @@ abstract contract BaseSubscription {
         bytes32 s,
         address _subscriber
     ) internal {
-        require(plans[_planId].merchant != address(0), "Plan does not exist");
-        require(plans[_planId].active, "Plan is disabled");
+        SubscriptionPlan storage plan = plans[_planId];
+        require(plan.merchant != address(0), "Plan does not exist");
+        require(plan.active, "Plan is disabled");
         require(!userSubscriptions[_subscriber][_planId].isActive, "Already actively subscribed to this plan");
 
-        SubscriptionPlan storage plan = plans[_planId];
-        uint256 amountToPay = _getPaymentAmount(_planId);
+        uint256 amountToPay = _getPaymentAmount(plan);
 
         uint256 startTime = block.timestamp;
         uint256 nextPaymentDate = startTime + plan.billingCycle;
@@ -281,7 +280,7 @@ abstract contract BaseSubscription {
         require(block.timestamp >= userSub.nextPaymentDate, "Payment not due yet");
 
         IERC20 token = IERC20(plan.token);
-        uint256 amountToPay = _getPaymentAmount(_planId);
+        uint256 amountToPay = _getPaymentAmount(plan);
 
         // Effects
         userSub.nextPaymentDate = userSub.nextPaymentDate + plan.billingCycle;
