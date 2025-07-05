@@ -63,6 +63,7 @@ Subgraph scripts look for these variables:
 - `LOG_LEVEL` – minimum log level (`info`, `warn`, `error`)
 - `FAILURES_FILE` – write a JSON summary of failed payments
 - `METRICS_PORT` – serve Prometheus metrics on this port (optional)
+- `DRY_RUN` – log each payment without sending a transaction
 
 ## Subgraph Server
 

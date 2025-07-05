@@ -202,3 +202,13 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9092']
 ```
+
+## Dry-Run Mode
+
+When testing `scripts/process-due-payments.ts` you may want to see which
+payments would be executed without sending any transactions. Set
+`DRY_RUN=true` (or `1`) to only log each due payment.
+
+```bash
+DRY_RUN=1 npx hardhat run scripts/process-due-payments.ts --network sepolia
+```

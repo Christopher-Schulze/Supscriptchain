@@ -201,4 +201,61 @@ describe('process-due-payments script', function () {
     expect(res.stdout).to.not.match(/Processing payment/);
     expect(res.stderr).to.match(new RegExp(userFail.address));
   });
+
+  it('skips transactions when DRY_RUN=true', async function () {
+    const { merchant, userSuccess, userFail, subscription } = await loadFixture(deployFixture);
+
+    const tmpJson = path.join(__dirname, 'subscribers.dryrun1.tmp.json');
+    fs.writeFileSync(tmpJson, JSON.stringify([userSuccess.address, { user: userFail.address, plan: 0 }], null, 2));
+
+    const before = (await subscription.userSubscriptions(userSuccess.address, 0)).nextPaymentDate;
+
+    const res = spawnSync('node', ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts'], {
+      env: {
+        ...process.env,
+        TS_NODE_TRANSPILE_ONLY: '1',
+        SUBSCRIPTION_ADDRESS: subscription.target,
+        PLAN_ID: '0',
+        SUBSCRIBERS_FILE: tmpJson,
+        MERCHANT_PRIVATE_KEY: merchant.privateKey,
+        DRY_RUN: 'true',
+      },
+      encoding: 'utf8',
+    });
+
+    fs.unlinkSync(tmpJson);
+
+    expect(res.status).to.equal(0);
+    expect(res.stdout).to.match(/DRY_RUN/);
+    const after = (await subscription.userSubscriptions(userSuccess.address, 0)).nextPaymentDate;
+    expect(after).to.equal(before);
+  });
+
+  it('accepts DRY_RUN=1', async function () {
+    const { merchant, userSuccess, subscription } = await loadFixture(deployFixture);
+
+    const tmpJson = path.join(__dirname, 'subscribers.dryrun2.tmp.json');
+    fs.writeFileSync(tmpJson, JSON.stringify([userSuccess.address], null, 2));
+
+    const before = (await subscription.userSubscriptions(userSuccess.address, 0)).nextPaymentDate;
+
+    const res = spawnSync('node', ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts'], {
+      env: {
+        ...process.env,
+        TS_NODE_TRANSPILE_ONLY: '1',
+        SUBSCRIPTION_ADDRESS: subscription.target,
+        PLAN_ID: '0',
+        SUBSCRIBERS_FILE: tmpJson,
+        MERCHANT_PRIVATE_KEY: merchant.privateKey,
+        DRY_RUN: '1',
+      },
+      encoding: 'utf8',
+    });
+
+    fs.unlinkSync(tmpJson);
+
+    expect(res.status).to.equal(0);
+    const after = (await subscription.userSubscriptions(userSuccess.address, 0)).nextPaymentDate;
+    expect(after).to.equal(before);
+  });
 });
