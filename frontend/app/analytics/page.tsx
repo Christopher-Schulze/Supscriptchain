@@ -1,25 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { getActiveSubscriptions, getPayments, getPlans } from '../../lib/subgraph';
+import type { Subscription, Payment, Plan } from '../../generated/graphql';
 
-interface SubscriptionData {
-  id: string;
-  user: string;
-  planId: string;
-  nextPaymentDate: string;
-}
-
-interface PaymentData {
-  id: string;
-  user: string;
-  planId: string;
-  amount: string;
-}
 
 export default function Analytics() {
-  const [subs, setSubs] = useState<SubscriptionData[]>([]);
-  const [payments, setPayments] = useState<PaymentData[]>([]);
-  const [plans, setPlans] = useState<{ id: string; totalPaid: string }[]>([]);
+  const [subs, setSubs] = useState<Subscription[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 

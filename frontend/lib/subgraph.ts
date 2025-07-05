@@ -1,4 +1,12 @@
 import { ApolloClient, InMemoryCache, gql } from '@apollo/client';
+import type {
+  ActiveSubscriptionsQuery,
+  PaymentsQuery,
+  PlansQuery,
+  Subscription,
+  Payment,
+  Plan,
+} from '../generated/graphql';
 import { env } from './env';
 
 const client = new ApolloClient({
@@ -38,18 +46,20 @@ export const PLANS_QUERY = gql`
   }
 `;
 
-export async function getActiveSubscriptions() {
-  const { data } = await client.query({ query: ACTIVE_SUBSCRIPTIONS_QUERY });
+export async function getActiveSubscriptions(): Promise<Subscription[]> {
+  const { data } = await client.query<ActiveSubscriptionsQuery>({
+    query: ACTIVE_SUBSCRIPTIONS_QUERY,
+  });
   return data.subscriptions;
 }
 
-export async function getPayments() {
-  const { data } = await client.query({ query: PAYMENTS_QUERY });
+export async function getPayments(): Promise<Payment[]> {
+  const { data } = await client.query<PaymentsQuery>({ query: PAYMENTS_QUERY });
   return data.payments;
 }
 
-export async function getPlans() {
-  const { data } = await client.query({ query: PLANS_QUERY });
+export async function getPlans(): Promise<Plan[]> {
+  const { data } = await client.query<PlansQuery>({ query: PLANS_QUERY });
   return data.plans;
 }
 

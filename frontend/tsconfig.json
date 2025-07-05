@@ -23,6 +23,6 @@
       "typechain": ["../typechain"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../typechain/**/*.ts"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "../typechain/**/*.ts", "generated/**/*.ts"],
   "exclude": ["node_modules"]
 }
