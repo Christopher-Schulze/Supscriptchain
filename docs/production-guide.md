@@ -92,3 +92,20 @@ scrape_configs:
 ```
 
 Grafana can visualize these metrics using Prometheus as the data source. Alert on `graph_node_health_failures_total` or when `graph_node_health_status` stays `0` for several minutes.
+
+`scripts/process-due-payments.ts` can expose similar metrics. Start the script or container with `METRICS_PORT` set:
+
+```bash
+METRICS_PORT=9092 node scripts/process-due-payments.ts
+```
+
+Add another scrape job:
+
+```yaml
+scrape_configs:
+  - job_name: 'payments'
+    static_configs:
+      - targets: ['localhost:9092']
+```
+
+Grafana dashboards can track `payments_processed_total` and `payment_failures_total` to monitor successful charges and failures.

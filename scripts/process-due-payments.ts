@@ -4,9 +4,19 @@ import path from 'path';
 import util from 'util';
 import pLimit from 'p-limit';
 import pino from 'pino';
+import http from 'http';
+import {
+  Counter,
+  Registry,
+  collectDefaultMetrics,
+} from 'prom-client';
 import { loadEnv } from './env';
 
 const env = loadEnv();
+
+let register: Registry | null = null;
+let paymentsProcessed: Counter | null = null;
+let paymentFailures: Counter | null = null;
 
 /**
  * Parsed subscriber entry from JSON.
@@ -132,6 +142,7 @@ async function runOnce(log: LogFn) {
         const tx = await subscription.processPayment(user, plan);
         await tx.wait();
         log('info', `Processed payment for ${user} plan ${plan}`);
+        paymentsProcessed?.inc();
         return;
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
@@ -149,6 +160,7 @@ async function runOnce(log: LogFn) {
             `Failed to process payment for user ${user} plan ${plan}: ${reason}`,
           );
           await notifyFailure({ user, plan, reason }, log);
+          paymentFailures?.inc();
         }
       }
     }
@@ -166,13 +178,14 @@ async function runOnce(log: LogFn) {
             }
           } catch (err) {
             const reason = err instanceof Error ? err.message : String(err);
-            failures.push({ user, plan, reason });
-            log(
-              'error',
-              `Failed to retrieve subscription for user ${user} plan ${plan}: ${reason}`,
-            );
-          }
-        }),
+          failures.push({ user, plan, reason });
+          log(
+            'error',
+            `Failed to retrieve subscription for user ${user} plan ${plan}: ${reason}`,
+          );
+          paymentFailures?.inc();
+        }
+      }),
       );
     }
   }
@@ -199,6 +212,7 @@ async function main() {
   const logFile = env.LOG_FILE;
   const lokiUrl = env.LOKI_URL;
   const logLevel = (env.LOG_LEVEL as LogLevel) || 'info';
+  const metricsPort = parseInt(env.METRICS_PORT || '0', 10);
   let lokiLogger: pino.Logger | null = null;
   if (lokiUrl) {
     const transport = pino.transport({
@@ -230,6 +244,33 @@ async function main() {
     }
     lokiLogger?.[level](msg);
   };
+
+  if (metricsPort) {
+    register = new Registry();
+    collectDefaultMetrics({ register });
+    paymentsProcessed = new Counter({
+      name: 'payments_processed_total',
+      help: 'Total number of successful payments',
+      registers: [register],
+    });
+    paymentFailures = new Counter({
+      name: 'payment_failures_total',
+      help: 'Total number of failed payments',
+      registers: [register],
+    });
+    const server = http.createServer(async (req, res) => {
+      if (req.url === '/metrics') {
+        res.setHeader('Content-Type', register!.contentType);
+        res.end(await register!.metrics());
+      } else {
+        res.statusCode = 404;
+        res.end('Not Found');
+      }
+    });
+    server.listen(metricsPort, () => {
+      log('info', `Metrics server listening on port ${metricsPort}`);
+    });
+  }
   const interval = parseInt(env.INTERVAL || '0', 10);
   if (interval > 0) {
     while (true) {
