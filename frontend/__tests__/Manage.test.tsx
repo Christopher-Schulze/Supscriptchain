@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import Manage from '../app/manage/page';
 import MessageBar from '../lib/MessageBar';
 import { StoreProvider } from '../lib/store';
-import { getContract } from '../lib/contract';
+import { getContract, subscribe, cancelSubscription } from '../lib/contract';
 
 jest.mock(
   'typechain/factories/contracts/interfaces/AggregatorV3Interface__factory',
@@ -18,13 +18,16 @@ jest.mock(
 jest.mock('../lib/contract', () => ({
   getContract: jest.fn(),
   subscribeWithPermit: jest.fn(),
+  subscribe: jest.fn(),
+  cancelSubscription: jest.fn(),
 }));
 
 jest.mock('../lib/useWallet', () => {
   return jest.fn(() => ({ account: '0xabc', connect: jest.fn() }));
 });
 
-const mockedGetContract = getContract as jest.Mock;
+const mockedSubscribe = subscribe as jest.Mock;
+const mockedCancel = cancelSubscription as jest.Mock;
 
 function Wrapper() {
   return (
@@ -36,9 +39,7 @@ function Wrapper() {
 }
 
 test('shows message when subscribe fails', async () => {
-  const subscribe = jest.fn().mockRejectedValue(new Error('fail'));
-  const cancelSubscription = jest.fn();
-  mockedGetContract.mockResolvedValue({ subscribe, cancelSubscription });
+  mockedSubscribe.mockRejectedValue(new Error('fail'));
   render(<Wrapper />);
   const planInput = screen.getAllByRole('textbox')[0];
   await userEvent.clear(planInput);

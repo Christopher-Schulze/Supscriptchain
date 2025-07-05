@@ -1,7 +1,12 @@
 'use client';
 import { useState } from 'react';
 import { ethers } from 'ethers';
-import { getContract, subscribeWithPermit } from '../../lib/contract';
+import {
+  getContract,
+  subscribeWithPermit,
+  subscribe as contractSubscribe,
+  cancelSubscription as contractCancel,
+} from '../../lib/contract';
 import { AggregatorV3Interface__factory } from 'typechain/factories/contracts/interfaces/AggregatorV3Interface__factory';
 import useWallet from '../../lib/useWallet';
 import { useStore } from '../../lib/store';
@@ -19,16 +24,15 @@ export default function Manage() {
 
   async function subscribe() {
     setLoading(true);
+    setError(null);
     try {
       if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
-      const contract = await getContract();
-      const tx = await contract.subscribe(BigInt(planId));
+      const tx = await contractSubscribe(BigInt(planId));
       await tx.wait();
       setMessage({ text: `Subscribed! Tx: ${tx.hash}`, type: 'success' });
     } catch (err) {
       console.error(err);
-      const message = err instanceof Error ? err.message : String(err);
-      setMessage({ text: message, type: 'error' });
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
@@ -36,16 +40,15 @@ export default function Manage() {
 
   async function cancel() {
     setLoading(true);
+    setError(null);
     try {
       if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
-      const contract = await getContract();
-      const tx = await contract.cancelSubscription(BigInt(planId));
+      const tx = await contractCancel(BigInt(planId));
       await tx.wait();
       setMessage({ text: `Cancelled! Tx: ${tx.hash}`, type: 'success' });
     } catch (err) {
       console.error(err);
-      const message = err instanceof Error ? err.message : String(err);
-      setMessage({ text: message, type: 'error' });
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }

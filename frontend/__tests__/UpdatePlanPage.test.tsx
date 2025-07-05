@@ -26,4 +26,14 @@ describe('UpdatePlan page', () => {
     expect(await screen.findByText('plan id required')).toBeInTheDocument();
     expect(mockUpdate).not.toHaveBeenCalled();
   });
+
+  test('shows contract error', async () => {
+    mockUpdate.mockRejectedValue(new Error('boom'));
+    render(<Wrapper />);
+    await userEvent.type(screen.getByLabelText('Plan ID'), '1');
+    await userEvent.type(screen.getByLabelText('Billing (seconds)'), '1');
+    await userEvent.type(screen.getByLabelText('Token Price'), '1');
+    await userEvent.click(screen.getByText('Update'));
+    expect(await screen.findByText('boom')).toBeInTheDocument();
+  });
 });
