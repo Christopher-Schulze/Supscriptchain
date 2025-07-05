@@ -311,6 +311,15 @@ npm run deploy-subgraph
 That section also lists the required environment variables and explains how to
 configure `NEXT_PUBLIC_SUBGRAPH_URL` for the frontend.
 
+To run a Graph Node locally with automatic restarts, use:
+
+```bash
+./scripts/start-subgraph.sh [path/to/.env]
+```
+
+The script loads the optional `.env` file and then invokes
+`ts-node scripts/subgraph-server.ts`.
+
 ## Frontend
 
 The repository also contains a simple Next.js application under
