@@ -31,4 +31,6 @@ dataSources:
           handler: handlePaymentProcessed
         - event: SubscriptionCancelled(address,uint256)
           handler: handleSubscriptionCancelled
+        - event: PlanDisabled(uint256)
+          handler: handlePlanDisabled
       file: ./src/mapping.ts
