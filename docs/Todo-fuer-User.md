@@ -7,3 +7,4 @@ npm run devstack
 ```
 
 Beende alle Prozesse gemeinsam mit `Ctrl+C`.
+Der Subgraph-Server beendet dabei jetzt auch `graph-node` sauber.

@@ -141,3 +141,13 @@ process.on('unhandledRejection', (err) => {
 
 start();
 setInterval(check, healthInterval);
+
+function shutdown() {
+  try {
+    child?.kill();
+  } catch {}
+  process.exit(0);
+}
+
+process.once('SIGINT', shutdown);
+process.once('SIGTERM', shutdown);
