@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { updatePlan } from '../../../lib/contract';
+import { updatePlan, updateMerchant, disablePlan } from '../../../lib/contract';
+import { validateAddress } from '../../../lib/validation';
 import useWallet from '../../../lib/useWallet';
 import { useStore } from '../../../lib/store';
 import { usePlans } from '../../../lib/plansStore';
@@ -12,6 +13,7 @@ export default function ManagePlans() {
   const [selected, setSelected] = useState<number | null>(null);
   const [billing, setBilling] = useState('');
   const [price, setPrice] = useState('');
+  const [merchant, setMerchant] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -27,10 +29,45 @@ export default function ManagePlans() {
         BigInt(price || '0'),
         false,
         0n,
-        '0x0000000000000000000000000000000000000000'
+        '0x0000000000000000000000000000000000000000',
       );
       await tx.wait();
       setMessage({ text: 'Plan updated', type: 'success' });
+      await reload();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function changeMerchant() {
+    if (selected === null) return;
+    setLoading(true);
+    setError(null);
+    try {
+      validateAddress(merchant, 'Merchant');
+      const tx = await updateMerchant(BigInt(selected), merchant);
+      await tx.wait();
+      setMessage({ text: 'Merchant updated', type: 'success' });
+      await reload();
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function deactivatePlan() {
+    if (selected === null) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const tx = await disablePlan(BigInt(selected));
+      await tx.wait();
+      setMessage({ text: 'Plan disabled', type: 'success' });
       await reload();
     } catch (err) {
       console.error(err);
@@ -70,7 +107,21 @@ export default function ManagePlans() {
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
-          <button disabled={loading} onClick={submit}>Update</button>
+          <label htmlFor="manage-merchant">Merchant</label>
+          <input
+            id="manage-merchant"
+            value={merchant}
+            onChange={(e) => setMerchant(e.target.value)}
+          />
+          <button disabled={loading} onClick={submit}>
+            Update
+          </button>
+          <button disabled={loading} onClick={changeMerchant}>
+            Merchant ändern
+          </button>
+          <button disabled={loading} onClick={deactivatePlan}>
+            Plan deaktivieren
+          </button>
         </>
       )}
     </div>
