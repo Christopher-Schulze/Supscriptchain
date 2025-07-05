@@ -60,7 +60,8 @@
     "@chainlink/contracts": "^1.4.0",
     "@openzeppelin/contracts": "^4.9.3",
     "pino": "^9.7.0",
-    "pino-loki": "^2.6.0"
+    "pino-loki": "^2.6.0",
+    "prom-client": "^14.1.0"
   },
   "lint-staged": {
     "*": "prettier --check"

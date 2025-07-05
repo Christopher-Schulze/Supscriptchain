@@ -59,3 +59,35 @@ For the subgraph, monitor the Graph Node via its `/health` endpoint. The helper 
 Consider setting up additional service-level monitoring for your contract interactions and Docker containers.
 
 - Expose metrics to Prometheus and build Grafana dashboards to visualize contract and service performance.
+
+### Example Prometheus Setup
+
+The helper script exposes metrics on `localhost:9091/metrics` by default.
+Run it with:
+
+```bash
+METRICS_PORT=9091 npm run subgraph-server
+```
+
+Add a scrape configuration in your Prometheus `prometheus.yml`:
+
+```yaml
+scrape_configs:
+  - job_name: 'subgraph'
+    static_configs:
+      - targets: ['localhost:9091']
+```
+
+Example alert rule for Prometheus:
+
+```yaml
+alert: GraphNodeDown
+expr: graph_node_health_status == 0
+for: 5m
+labels:
+  severity: critical
+annotations:
+  summary: Graph node is not responding
+```
+
+Grafana can visualize these metrics using the Prometheus data source. Configure alert rules for high `graph_node_health_failures_total` or when `graph_node_health_status` remains `0` for an extended period. Alerts can send notifications via email, Slack or any supported service.
