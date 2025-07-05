@@ -28,7 +28,7 @@ export default function useWallet() {
       try {
         const wc = new WalletConnectProvider({
           rpc: {
-            1: env.NEXT_PUBLIC_RPC_URL,
+            [env.NEXT_PUBLIC_CHAIN_ID]: env.NEXT_PUBLIC_RPC_URL,
           },
         });
         await wc.enable();

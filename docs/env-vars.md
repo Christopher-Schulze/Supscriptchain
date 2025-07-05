@@ -22,6 +22,7 @@ Copy `.env.example` to `.env` and provide values for:
 The Next.js app reads variables from `frontend/.env.local`:
 
 - `NEXT_PUBLIC_CONTRACT_ADDRESS` – deployed `Subscription` address
+- `NEXT_PUBLIC_CHAIN_ID` – EVM chain id used when no wallet is connected
 - `NEXT_PUBLIC_RPC_URL` – RPC URL used when no wallet is connected
 - `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint for analytics
 
