@@ -60,7 +60,7 @@ describe('Subgraph integration', function () {
         'ethereum=hardhat:http://host.docker.internal:8545',
         '-e',
         'ipfs=host.docker.internal:5001',
-        'graphprotocol/graph-node:latest',
+        'graphprotocol/graph-node:v0.33.0',
       ],
       { stdio: 'inherit' },
     );
