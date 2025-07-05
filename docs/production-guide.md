@@ -66,42 +66,29 @@ docker run --env-file .env payments
 
 Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIVATE_KEY`. The container runs `scripts/process-due-payments.ts` and exits with a non-zero status when any payments fail if `FAIL_ON_FAILURE=true`.
 
-## Monitoring and Healthchecks
+## Health Checks
 
 For the subgraph, monitor the Graph Node via its `/health` endpoint. The helper script `npm run subgraph-server` can automatically restart the node when a healthcheck fails. Configure the interval and URL using the `GRAPH_NODE_HEALTH_*` variables. Logging can be controlled with `LOG_FILE`, `LOG_LEVEL` and `LOKI_URL`.
 
 Consider setting up additional service-level monitoring for your contract interactions and Docker containers.
 
-- Expose metrics to Prometheus and build Grafana dashboards to visualize contract and service performance.
 
-### Example Prometheus Setup
+## Monitoring
 
-The helper script exposes metrics on `localhost:9091/metrics` by default.
-Run it with:
+`scripts/subgraph-server.ts` serves Prometheus metrics on port `9091`.
+Start the server with:
 
 ```bash
 METRICS_PORT=9091 npm run subgraph-server
 ```
 
-Add a scrape configuration in your Prometheus `prometheus.yml`:
+Add a scrape config in your `prometheus.yml`:
 
 ```yaml
 scrape_configs:
-  - job_name: 'subgraph'
+  - job_name: 'subgraph-server'
     static_configs:
       - targets: ['localhost:9091']
 ```
 
-Example alert rule for Prometheus:
-
-```yaml
-alert: GraphNodeDown
-expr: graph_node_health_status == 0
-for: 5m
-labels:
-  severity: critical
-annotations:
-  summary: Graph node is not responding
-```
-
-Grafana can visualize these metrics using the Prometheus data source. Configure alert rules for high `graph_node_health_failures_total` or when `graph_node_health_status` remains `0` for an extended period. Alerts can send notifications via email, Slack or any supported service.
+Grafana can visualize these metrics using Prometheus as the data source. Alert on `graph_node_health_failures_total` or when `graph_node_health_status` stays `0` for several minutes.
