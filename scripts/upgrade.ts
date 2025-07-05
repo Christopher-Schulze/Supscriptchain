@@ -14,6 +14,15 @@ export async function upgrade() {
 
   const impl = await upgrades.erc1967.getImplementationAddress(proxy);
   console.log("Upgraded implementation at:", impl);
+
+  const code = await ethers.provider.getCode(impl);
+  console.log("Implementation code size:", code.length);
+
+  const version = await (upgraded as any).version();
+  if (version !== "v2") {
+    throw new Error(`Unexpected version: ${version}`);
+  }
+  console.log("Contract version:", version);
 }
 
 if (require.main === module) {
