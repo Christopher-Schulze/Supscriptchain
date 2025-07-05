@@ -4,6 +4,8 @@ import "./globals.css";
 import { StoreProvider } from "../lib/store";
 import MessageBar from "../lib/MessageBar";
 import { PlansProvider } from "../lib/plansStore";
+import I18nProvider from "../lib/I18nProvider";
+import LanguageSwitcher from "../lib/LanguageSwitcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,12 +30,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <StoreProvider>
-          <PlansProvider>
-            <MessageBar />
-            {children}
-          </PlansProvider>
-        </StoreProvider>
+        <I18nProvider>
+          <StoreProvider>
+            <PlansProvider>
+              <LanguageSwitcher />
+              <MessageBar />
+              {children}
+            </PlansProvider>
+          </StoreProvider>
+        </I18nProvider>
       </body>
     </html>
   );

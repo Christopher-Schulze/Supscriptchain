@@ -4,6 +4,7 @@ import { updatePlan } from '../../../lib/contract';
 import { validateAddress, validatePositiveInt } from '../../../lib/validation';
 import useWallet from '../../../lib/useWallet';
 import { useStore } from '../../../lib/store';
+import { useTranslation } from 'react-i18next';
 
 export default function UpdatePlan() {
   const { account, connect } = useWallet();
@@ -16,6 +17,7 @@ export default function UpdatePlan() {
   const [error, setError] = useState<string|null>(null);
   const [loading, setLoading] = useState(false);
   const { setMessage } = useStore();
+  const { t } = useTranslation();
 
   async function submit() {
     setLoading(true);
@@ -50,17 +52,17 @@ export default function UpdatePlan() {
 
   return (
     <div className="form">
-      <h1>Update Plan</h1>
+      <h1>{t('update_plan.title')}</h1>
       {error && <p className="error">{error}</p>}
-      {!account && <button onClick={connect}>Connect Wallet</button>}
-      <label htmlFor="update-plan-id">Plan ID</label>
+      {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
+      <label htmlFor="update-plan-id">{t('update_plan.plan_id')}</label>
       <input
         id="update-plan-id"
         value={planId}
         onChange={(e) => setPlanId(e.target.value)}
         required
       />
-      <label htmlFor="update-billing">Billing (seconds)</label>
+      <label htmlFor="update-billing">{t('update_plan.billing')}</label>
       <input
         id="update-billing"
         value={billing}
@@ -68,19 +70,19 @@ export default function UpdatePlan() {
         required
       />
       <label>
-        Price in USD
+        {t('update_plan.price_in_usd')}
         <input type="checkbox" checked={priceInUsd} onChange={e=>setPriceInUsd(e.target.checked)} />
       </label>
       {priceInUsd ? (
         <>
-          <label htmlFor="update-usd-price">USD Price (cents)</label>
+          <label htmlFor="update-usd-price">{t('update_plan.usd_price')}</label>
           <input
             id="update-usd-price"
             value={usdPrice}
             onChange={(e) => setUsdPrice(e.target.value)}
             required
           />
-          <label htmlFor="update-price-feed">Price Feed</label>
+          <label htmlFor="update-price-feed">{t('update_plan.price_feed')}</label>
           <input
             id="update-price-feed"
             value={feed}
@@ -90,7 +92,7 @@ export default function UpdatePlan() {
         </>
       ) : (
         <>
-          <label htmlFor="update-token-price">Token Price</label>
+          <label htmlFor="update-token-price">{t('update_plan.token_price')}</label>
           <input
             id="update-token-price"
             value={price}
@@ -99,7 +101,7 @@ export default function UpdatePlan() {
           />
         </>
       )}
-      <button disabled={loading} onClick={submit}>Update</button>
+      <button disabled={loading} onClick={submit}>{t('update_plan.submit')}</button>
     </div>
   );
 }

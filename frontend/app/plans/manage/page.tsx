@@ -5,6 +5,7 @@ import { validateAddress } from '../../../lib/validation';
 import useWallet from '../../../lib/useWallet';
 import { useStore } from '../../../lib/store';
 import { usePlans } from '../../../lib/plansStore';
+import { useTranslation } from 'react-i18next';
 
 export default function ManagePlans() {
   const { account, connect } = useWallet();
@@ -77,12 +78,13 @@ export default function ManagePlans() {
     }
   }
 
+  const { t } = useTranslation();
   return (
     <div className="form">
-      <h1>Manage Plans</h1>
-      {!account && <button onClick={connect}>Connect Wallet</button>}
+      <h1>{t('manage_plans.title')}</h1>
+      {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       {error && <p className="error">{error}</p>}
-      <label htmlFor="plan-select">Select Plan</label>
+      <label htmlFor="plan-select">{t('manage_plans.select_plan')}</label>
       <select
         id="plan-select"
         value={selected ?? ''}
@@ -95,32 +97,32 @@ export default function ManagePlans() {
       </select>
       {selected !== null && (
         <>
-          <label htmlFor="manage-billing">Billing (seconds)</label>
+          <label htmlFor="manage-billing">{t('manage_plans.billing')}</label>
           <input
             id="manage-billing"
             value={billing}
             onChange={(e) => setBilling(e.target.value)}
           />
-          <label htmlFor="manage-price">Token Price</label>
+          <label htmlFor="manage-price">{t('manage_plans.price')}</label>
           <input
             id="manage-price"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
-          <label htmlFor="manage-merchant">Merchant</label>
+          <label htmlFor="manage-merchant">{t('manage_plans.merchant')}</label>
           <input
             id="manage-merchant"
             value={merchant}
             onChange={(e) => setMerchant(e.target.value)}
           />
           <button disabled={loading} onClick={submit}>
-            Update
+            {t('manage_plans.update')}
           </button>
           <button disabled={loading} onClick={changeMerchant}>
-            Merchant ändern
+            {t('manage_plans.update_merchant')}
           </button>
           <button disabled={loading} onClick={deactivatePlan}>
-            Plan deaktivieren
+            {t('manage_plans.disable')}
           </button>
         </>
       )}

@@ -11,6 +11,7 @@ import { AggregatorV3Interface__factory } from 'typechain/factories/contracts/in
 import useWallet from '../../lib/useWallet';
 import { useStore } from '../../lib/store';
 import useUserSubscriptions from '../../lib/useUserSubscriptions';
+import { useTranslation } from 'react-i18next';
 
 export default function Manage() {
   const { account, connect } = useWallet();
@@ -23,6 +24,7 @@ export default function Manage() {
   const [s, setS] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   async function subscribe() {
     setLoading(true);
@@ -57,7 +59,7 @@ export default function Manage() {
   }
 
   async function requestPermit() {
-    if (!account) return setMessage({ text: 'Connect Wallet first', type: 'warning' });
+    if (!account) return setMessage({ text: t('generic.connect_wallet'), type: 'warning' });
     setLoading(true);
     setError(null);
     try {
@@ -137,22 +139,21 @@ export default function Manage() {
 
   return (
     <div>
-      <h1>Manage Subscription</h1>
+      <h1>{t('manage.title')}</h1>
       {subs.length > 0 && (
         <ul className="list" data-testid="subs-list">
           {subs.map((s) => (
             <li key={s.planId.toString()}>
-              Plan {s.planId.toString()} - next {s.nextPaymentDate.toString()} -{' '}
-              {s.isActive ? 'active' : 'cancelled'}
+              {`Plan ${s.planId.toString()} - next ${s.nextPaymentDate.toString()} - ${s.isActive ? t('manage.status_active') : t('manage.status_cancelled')}`}
             </li>
           ))}
         </ul>
       )}
       {error && <p className="error">{error}</p>}
-      {loading && <p>Processing...</p>}
-      {!account && <button onClick={connect}>Connect Wallet</button>}
+      {loading && <p>{t('manage.processing')}</p>}
+      {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       <div>
-        <label htmlFor="plan-id">Plan ID: </label>
+        <label htmlFor="plan-id">{t('manage.plan_id')} </label>
         <input
           id="plan-id"
           value={planId}
@@ -160,7 +161,7 @@ export default function Manage() {
         />
       </div>
       <div>
-        <label htmlFor="deadline">Deadline (unix secs): </label>
+        <label htmlFor="deadline">{t('manage.deadline')} </label>
         <input
           id="deadline"
           value={deadline}
@@ -168,21 +169,21 @@ export default function Manage() {
         />
       </div>
       <div>
-        <label htmlFor="sig-v">v: </label>
+        <label htmlFor="sig-v">{t('manage.v')} </label>
         <input id="sig-v" value={v} onChange={(e) => setV(e.target.value)} />
       </div>
       <div>
-        <label htmlFor="sig-r">r: </label>
+        <label htmlFor="sig-r">{t('manage.r')} </label>
         <input id="sig-r" value={r} onChange={(e) => setR(e.target.value)} />
       </div>
       <div>
-        <label htmlFor="sig-s">s: </label>
+        <label htmlFor="sig-s">{t('manage.s')} </label>
         <input id="sig-s" value={s} onChange={(e) => setS(e.target.value)} />
       </div>
-      <button onClick={requestPermit} disabled={loading || !account}>Get Permit Signature</button>
-      <button onClick={subscribePermit} disabled={loading}>Subscribe with Permit</button>
-      <button onClick={subscribe} disabled={loading}>Subscribe</button>
-      <button onClick={cancel} disabled={loading}>Cancel</button>
+      <button onClick={requestPermit} disabled={loading || !account}>{t('manage.get_permit')}</button>
+      <button onClick={subscribePermit} disabled={loading}>{t('manage.subscribe_permit')}</button>
+      <button onClick={subscribe} disabled={loading}>{t('manage.subscribe')}</button>
+      <button onClick={cancel} disabled={loading}>{t('manage.cancel')}</button>
     </div>
   );
 }

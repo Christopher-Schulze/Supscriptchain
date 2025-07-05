@@ -4,6 +4,7 @@ import { updateMerchant } from '../../../lib/contract';
 import { validateAddress, validatePositiveInt } from '../../../lib/validation';
 import useWallet from '../../../lib/useWallet';
 import { useStore } from '../../../lib/store';
+import { useTranslation } from 'react-i18next';
 
 export default function UpdateMerchant() {
   const { account, connect } = useWallet();
@@ -12,6 +13,7 @@ export default function UpdateMerchant() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { setMessage } = useStore();
+  const { t } = useTranslation();
 
   async function submit() {
     setLoading(true);
@@ -32,22 +34,22 @@ export default function UpdateMerchant() {
 
   return (
     <div className="form">
-      <h1>Update Merchant</h1>
+      <h1>{t('update_merchant.title')}</h1>
       {error && <p className="error">{error}</p>}
-      {!account && <button onClick={connect}>Connect Wallet</button>}
-      <label htmlFor="merchant-plan-id">Plan ID</label>
+      {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
+      <label htmlFor="merchant-plan-id">{t('update_merchant.plan_id')}</label>
       <input
         id="merchant-plan-id"
         value={planId}
         onChange={(e) => setPlanId(e.target.value)}
       />
-      <label htmlFor="new-merchant">New Merchant</label>
+      <label htmlFor="new-merchant">{t('update_merchant.new_merchant')}</label>
       <input
         id="new-merchant"
         value={merchant}
         onChange={(e) => setMerchant(e.target.value)}
       />
-      <button disabled={loading} onClick={submit}>Update</button>
+      <button disabled={loading} onClick={submit}>{t('update_merchant.submit')}</button>
     </div>
   );
 }

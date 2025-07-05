@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { getActiveSubscriptions, getPayments, getPlans } from '../../lib/subgraph';
+import { useTranslation } from 'react-i18next';
 
 interface SubscriptionData {
   id: string;
@@ -22,6 +23,7 @@ export default function Analytics() {
   const [plans, setPlans] = useState<{ id: string; totalPaid: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     async function load() {
@@ -67,15 +69,15 @@ export default function Analytics() {
 
   return (
     <div>
-      <h1>Analytics</h1>
+      <h1>{t('analytics.title')}</h1>
       {error && (
         <p className="error">
-          {error} <button onClick={reload}>Retry</button>
+          {error} <button onClick={reload}>{t('analytics.retry')}</button>
         </p>
       )}
-      {loading && <p>Loading...</p>}
-      <h2>Active Subscriptions</h2>
-      {subs.length === 0 && <p>No active subscriptions</p>}
+      {loading && <p>{t('generic.loading')}</p>}
+      <h2>{t('analytics.active_subs')}</h2>
+      {subs.length === 0 && <p>{t('analytics.no_active')}</p>}
       <ul className="list">
         {subs.map((s) => (
           <li key={s.id}>
@@ -83,8 +85,8 @@ export default function Analytics() {
           </li>
         ))}
       </ul>
-      <h2>Plan Totals</h2>
-      {plans.length === 0 && <p>No plans</p>}
+      <h2>{t('analytics.plan_totals')}</h2>
+      {plans.length === 0 && <p>{t('analytics.no_plans')}</p>}
       <ul className="list">
         {plans.map((p) => (
           <li key={p.id}>
@@ -92,8 +94,8 @@ export default function Analytics() {
           </li>
         ))}
       </ul>
-      <h2>Payments</h2>
-      {payments.length === 0 && <p>No payments</p>}
+      <h2>{t('analytics.payments')}</h2>
+      {payments.length === 0 && <p>{t('analytics.no_payments')}</p>}
       <ul className="list">
         {payments.map((p) => (
           <li key={p.id}>
