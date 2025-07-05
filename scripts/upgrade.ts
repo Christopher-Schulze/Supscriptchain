@@ -1,7 +1,9 @@
 import { ethers, upgrades } from "hardhat";
+import { loadEnv } from "./env";
 
 export async function upgrade() {
-  const proxy = process.env.SUBSCRIPTION_ADDRESS;
+  const env = loadEnv();
+  const proxy = env.SUBSCRIPTION_ADDRESS;
   if (!proxy) {
     throw new Error("SUBSCRIPTION_ADDRESS not set");
   }

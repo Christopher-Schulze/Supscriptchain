@@ -4,7 +4,9 @@ import path from 'path';
 import util from 'util';
 import pLimit from 'p-limit';
 import pino from 'pino';
-import { checkEnv } from './check-env';
+import { loadEnv } from './env';
+
+const env = loadEnv();
 
 /**
  * Parsed subscriber entry from JSON.
@@ -28,7 +30,7 @@ type LogLevel = 'info' | 'error' | 'warn';
 type LogFn = (level: LogLevel, ...args: any[]) => void;
 
 async function notifyFailure(failure: FailedPayment, log: LogFn) {
-  const url = process.env.NOTIFY_WEBHOOK;
+  const url = env.NOTIFY_WEBHOOK;
   if (!url) return;
   try {
     await fetch(url, {
@@ -47,19 +49,19 @@ async function notifyFailure(failure: FailedPayment, log: LogFn) {
 
 async function runOnce(log: LogFn) {
   const failOnFailure =
-    process.env.FAIL_ON_FAILURE === 'true' ||
-    process.env.FAIL_ON_FAILURE === '1';
+    env.FAIL_ON_FAILURE === 'true' ||
+    env.FAIL_ON_FAILURE === '1';
   const failures: FailedPayment[] = [];
-  const contractAddress = process.env.SUBSCRIPTION_ADDRESS;
+  const contractAddress = env.SUBSCRIPTION_ADDRESS;
   if (!contractAddress) {
     throw new Error('SUBSCRIPTION_ADDRESS not set');
   }
-  const defaultPlanId = parseInt(process.env.PLAN_ID || '0', 10);
+  const defaultPlanId = parseInt(env.PLAN_ID || '0', 10);
   const listPath =
-    process.env.SUBSCRIBERS_FILE || path.join(__dirname, 'subscribers.json');
+    env.SUBSCRIBERS_FILE || path.join(__dirname, 'subscribers.json');
 
   const provider = ethers.provider;
-  const merchantPk = process.env.MERCHANT_PRIVATE_KEY;
+  const merchantPk = env.MERCHANT_PRIVATE_KEY;
   const signer = merchantPk
     ? new ethers.Wallet(merchantPk, provider)
     : (await ethers.getSigners())[0];
@@ -112,16 +114,16 @@ async function runOnce(log: LogFn) {
 
   const now = Math.floor(Date.now() / 1000);
   const concurrency = Math.max(
-    parseInt(process.env.MAX_CONCURRENCY || '1', 10),
+    parseInt(env.MAX_CONCURRENCY || '1', 10),
     1,
   );
   const limit = pLimit(concurrency);
-  const maxRetries = Math.max(parseInt(process.env.MAX_RETRIES || '1', 10), 1);
+  const maxRetries = Math.max(parseInt(env.MAX_RETRIES || '1', 10), 1);
   const baseDelay = Math.max(
-    parseInt(process.env.RETRY_BASE_DELAY_MS || '500', 10),
+    parseInt(env.RETRY_BASE_DELAY_MS || '500', 10),
     0,
   );
-  const failuresFile = process.env.FAILURES_FILE;
+  const failuresFile = env.FAILURES_FILE;
 
   async function processWithRetry(user: string, plan: number) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -194,10 +196,9 @@ async function runOnce(log: LogFn) {
 }
 
 async function main() {
-  checkEnv();
-  const logFile = process.env.LOG_FILE;
-  const lokiUrl = process.env.LOKI_URL;
-  const logLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
+  const logFile = env.LOG_FILE;
+  const lokiUrl = env.LOKI_URL;
+  const logLevel = (env.LOG_LEVEL as LogLevel) || 'info';
   let lokiLogger: pino.Logger | null = null;
   if (lokiUrl) {
     const transport = pino.transport({
@@ -229,7 +230,7 @@ async function main() {
     }
     lokiLogger?.[level](msg);
   };
-  const interval = parseInt(process.env.INTERVAL || '0', 10);
+  const interval = parseInt(env.INTERVAL || '0', 10);
   if (interval > 0) {
     while (true) {
       await runOnce(log);

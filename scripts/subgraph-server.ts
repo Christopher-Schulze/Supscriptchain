@@ -3,6 +3,7 @@ import fs from 'fs';
 import http from 'http';
 import util from 'util';
 import pino from 'pino';
+import { loadEnv } from './env';
 import {
   Counter,
   Gauge,
@@ -13,25 +14,27 @@ import {
 type LogLevel = 'info' | 'error' | 'warn';
 type LogFn = (level: LogLevel, ...args: any[]) => void;
 
-const cmd = process.env.GRAPH_NODE_CMD || 'graph-node';
-const args = process.env.GRAPH_NODE_ARGS
-  ? process.env.GRAPH_NODE_ARGS.split(' ')
+const env = loadEnv();
+
+const cmd = env.GRAPH_NODE_CMD || 'graph-node';
+const args = env.GRAPH_NODE_ARGS
+  ? env.GRAPH_NODE_ARGS.split(' ')
   : [];
 const healthUrl =
-  process.env.GRAPH_NODE_HEALTH || 'http://localhost:8000/health';
+  env.GRAPH_NODE_HEALTH || 'http://localhost:8000/health';
 const healthInterval = parseInt(
-  process.env.GRAPH_NODE_HEALTH_INTERVAL || '60000',
+  env.GRAPH_NODE_HEALTH_INTERVAL || '60000',
   10,
 );
 const restartDelay = parseInt(
-  process.env.GRAPH_NODE_RESTART_DELAY || '5000',
+  env.GRAPH_NODE_RESTART_DELAY || '5000',
   10,
 );
-const maxFails = parseInt(process.env.GRAPH_NODE_MAX_FAILS || '3', 10);
-const logFile = process.env.LOG_FILE || process.env.GRAPH_NODE_LOG || 'graph-node.log';
-const lokiUrl = process.env.LOKI_URL;
-const logLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
-const metricsPort = parseInt(process.env.METRICS_PORT || '9091', 10);
+const maxFails = parseInt(env.GRAPH_NODE_MAX_FAILS || '3', 10);
+const logFile = env.LOG_FILE || env.GRAPH_NODE_LOG || 'graph-node.log';
+const lokiUrl = env.LOKI_URL;
+const logLevel = (env.LOG_LEVEL as LogLevel) || 'info';
+const metricsPort = parseInt(env.METRICS_PORT || '9091', 10);
 
 let lokiLogger: pino.Logger | null = null;
 if (lokiUrl) {

@@ -1,15 +1,15 @@
 import { ethers, upgrades } from 'hardhat';
-import { checkEnv } from './check-env';
+import { loadEnv } from './env';
 
 async function main() {
-  checkEnv();
-  const merchant = process.env.MERCHANT_ADDRESS || ethers.constants.AddressZero;
-  const token = process.env.TOKEN_ADDRESS || ethers.constants.AddressZero;
-  const priceFeed = process.env.PRICE_FEED || ethers.constants.AddressZero;
-  const billingCycle = parseInt(process.env.BILLING_CYCLE || '2592000', 10);
-  const priceInUsd = process.env.PRICE_IN_USD === 'true';
-  const fixedPrice = process.env.FIXED_PRICE || '0';
-  const usdPrice = parseInt(process.env.USD_PRICE || '0', 10);
+  const env = loadEnv();
+  const merchant = env.MERCHANT_ADDRESS || ethers.constants.AddressZero;
+  const token = env.TOKEN_ADDRESS || ethers.constants.AddressZero;
+  const priceFeed = env.PRICE_FEED || ethers.constants.AddressZero;
+  const billingCycle = parseInt(env.BILLING_CYCLE || '2592000', 10);
+  const priceInUsd = env.PRICE_IN_USD === 'true';
+  const fixedPrice = env.FIXED_PRICE || '0';
+  const usdPrice = parseInt(env.USD_PRICE || '0', 10);
 
   const [deployer] = await ethers.getSigners();
   const SubscriptionFactory = await ethers.getContractFactory(
