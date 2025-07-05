@@ -8,6 +8,8 @@ type Plan @entity(immutable: false) {
   priceInUsd: Boolean!
   usdPrice: BigInt!
   priceFeedAddress: Bytes!
+  createdAt: BigInt!
+  active: Boolean!
   totalPaid: BigInt!
 }
 

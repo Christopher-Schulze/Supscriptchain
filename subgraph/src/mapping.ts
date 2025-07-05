@@ -3,7 +3,8 @@ import {
   PlanUpdated,
   Subscribed,
   PaymentProcessed,
-  SubscriptionCancelled
+  SubscriptionCancelled,
+  PlanDisabled
 } from "../generated/Subscription/Subscription"
 import { Plan, Subscription, Payment } from "../generated/schema"
 import { BigInt } from "@graphprotocol/graph-ts"
@@ -18,6 +19,8 @@ export function handlePlanCreated(event: PlanCreated): void {
   plan.priceInUsd = event.params.priceInUsd
   plan.usdPrice = event.params.usdPrice
   plan.priceFeedAddress = event.params.priceFeedAddress
+  plan.createdAt = event.block.timestamp
+  plan.active = true
   plan.totalPaid = BigInt.zero()
   plan.save()
 }
@@ -75,5 +78,13 @@ export function handleSubscriptionCancelled(event: SubscriptionCancelled): void 
   if (sub) {
     sub.cancelled = true
     sub.save()
+  }
+}
+
+export function handlePlanDisabled(event: PlanDisabled): void {
+  let plan = Plan.load(event.params.planId.toString())
+  if (plan) {
+    plan.active = false
+    plan.save()
   }
 }

@@ -1,7 +1,7 @@
 import { test, assert, clearStore, newMockEvent } from "matchstick-as/assembly/index"
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts"
-import { handlePlanCreated, handlePlanUpdated, handleSubscribed, handlePaymentProcessed, handleSubscriptionCancelled } from "../src/mapping"
-import { PlanCreated, PlanUpdated, Subscribed, PaymentProcessed, SubscriptionCancelled } from "../../generated/Subscription/Subscription"
+import { handlePlanCreated, handlePlanUpdated, handleSubscribed, handlePaymentProcessed, handleSubscriptionCancelled, handlePlanDisabled } from "../src/mapping"
+import { PlanCreated, PlanUpdated, Subscribed, PaymentProcessed, SubscriptionCancelled, PlanDisabled } from "../../generated/Subscription/Subscription"
 
 function createPlanCreatedEvent(planId: BigInt, merchant: Address, token: Address, tokenDecimals: i32, price: BigInt, billingCycle: BigInt, priceInUsd: boolean, usdPrice: BigInt, priceFeed: Address): PlanCreated {
   let event = changetype<PlanCreated>(newMockEvent())
@@ -57,6 +57,13 @@ function createSubscriptionCancelledEvent(user: Address, planId: BigInt): Subscr
   return event
 }
 
+function createPlanDisabledEvent(planId: BigInt): PlanDisabled {
+  let event = changetype<PlanDisabled>(newMockEvent())
+  event.parameters = []
+  event.parameters.push(new ethereum.EventParam("planId", ethereum.Value.fromUnsignedBigInt(planId)))
+  return event
+}
+
 // PlanCreated
 
 test("handlePlanCreated creates entity", () => {
@@ -66,6 +73,8 @@ test("handlePlanCreated creates entity", () => {
   assert.fieldEquals("Plan", "1", "merchant", "0x0000000000000000000000000000000000000001")
   assert.fieldEquals("Plan", "1", "token", "0x0000000000000000000000000000000000000002")
   assert.fieldEquals("Plan", "1", "price", "100")
+  assert.fieldEquals("Plan", "1", "createdAt", "0")
+  assert.fieldEquals("Plan", "1", "active", "true")
   clearStore()
 })
 
@@ -79,6 +88,15 @@ test("handlePlanUpdated updates entity", () => {
   assert.fieldEquals("Plan", "1", "billingCycle", "60")
   assert.fieldEquals("Plan", "1", "price", "200")
   assert.fieldEquals("Plan", "1", "priceInUsd", "true")
+  clearStore()
+})
+
+test("handlePlanDisabled sets active false", () => {
+  let create = createPlanCreatedEvent(BigInt.fromI32(1), Address.fromString("0x0000000000000000000000000000000000000001"), Address.fromString("0x0000000000000000000000000000000000000002"), 18, BigInt.fromI32(100), BigInt.fromI32(30), false, BigInt.fromI32(0), Address.fromString("0x0000000000000000000000000000000000000003"))
+  handlePlanCreated(create)
+  let disable = createPlanDisabledEvent(BigInt.fromI32(1))
+  handlePlanDisabled(disable)
+  assert.fieldEquals("Plan", "1", "active", "false")
   clearStore()
 })
 
