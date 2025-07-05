@@ -170,3 +170,17 @@ npx hardhat test subgraph/tests/integration.test.ts
 
 This compiles the contracts, deploys both `SubscriptionUpgradeable` versions
 through a proxy and verifies indexed events by querying the running Graph Node.
+
+## Lokaler Komplettbetrieb
+
+Eine `docker-compose.yml` im Projektroot startet Hardhat, den Subgraph-Server und das Frontend.
+Legen Sie eine `.env`-Datei an, um Variablen für `subgraph` und `frontend` bereitzustellen.
+
+Starten der gesamten Umgebung:
+
+```bash
+docker compose up --build
+```
+
+Hardhat läuft anschließend auf Port 8545, der Graph Node auf 8000 und das
+Frontend unter <http://localhost:3000>.
