@@ -2,6 +2,7 @@ import {
   PlanCreated,
   PlanUpdated,
   PlanDisabled,
+  MerchantUpdated,
   Subscribed,
   PaymentProcessed,
   SubscriptionCancelled
@@ -39,6 +40,13 @@ export function handlePlanDisabled(event: PlanDisabled): void {
   let plan = Plan.load(event.params.planId.toString())
   if (!plan) return
   plan.active = false
+  plan.save()
+}
+
+export function handleMerchantUpdated(event: MerchantUpdated): void {
+  let plan = Plan.load(event.params.planId.toString())
+  if (!plan) return
+  plan.merchant = event.params.newMerchant
   plan.save()
 }
 

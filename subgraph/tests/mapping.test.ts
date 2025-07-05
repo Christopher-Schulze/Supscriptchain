@@ -1,7 +1,7 @@
 import { test, assert, clearStore, newMockEvent } from "matchstick-as/assembly/index"
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts"
-import { handlePlanCreated, handlePlanUpdated, handlePlanDisabled, handleSubscribed, handlePaymentProcessed, handleSubscriptionCancelled } from "../src/mapping"
-import { PlanCreated, PlanUpdated, PlanDisabled, Subscribed, PaymentProcessed, SubscriptionCancelled } from "../../generated/Subscription/Subscription"
+import { handlePlanCreated, handlePlanUpdated, handlePlanDisabled, handleMerchantUpdated, handleSubscribed, handlePaymentProcessed, handleSubscriptionCancelled } from "../src/mapping"
+import { PlanCreated, PlanUpdated, PlanDisabled, MerchantUpdated, Subscribed, PaymentProcessed, SubscriptionCancelled } from "../../generated/Subscription/Subscription"
 
 function createPlanCreatedEvent(planId: BigInt, merchant: Address, token: Address, tokenDecimals: i32, price: BigInt, billingCycle: BigInt, priceInUsd: boolean, usdPrice: BigInt, priceFeed: Address): PlanCreated {
   let event = changetype<PlanCreated>(newMockEvent())
@@ -34,6 +34,15 @@ function createPlanDisabledEvent(planId: BigInt): PlanDisabled {
   let event = changetype<PlanDisabled>(newMockEvent())
   event.parameters = []
   event.parameters.push(new ethereum.EventParam("planId", ethereum.Value.fromUnsignedBigInt(planId)))
+  return event
+}
+
+function createMerchantUpdatedEvent(planId: BigInt, oldMerchant: Address, newMerchant: Address): MerchantUpdated {
+  let event = changetype<MerchantUpdated>(newMockEvent())
+  event.parameters = []
+  event.parameters.push(new ethereum.EventParam("planId", ethereum.Value.fromUnsignedBigInt(planId)))
+  event.parameters.push(new ethereum.EventParam("oldMerchant", ethereum.Value.fromAddress(oldMerchant)))
+  event.parameters.push(new ethereum.EventParam("newMerchant", ethereum.Value.fromAddress(newMerchant)))
   return event
 }
 
@@ -107,6 +116,36 @@ test("handlePlanDisabled sets plan inactive", () => {
   let disable = createPlanDisabledEvent(BigInt.fromI32(1))
   handlePlanDisabled(disable)
   assert.fieldEquals("Plan", "1", "active", "false")
+  clearStore()
+})
+
+// MerchantUpdated
+
+test("handleMerchantUpdated updates merchant", () => {
+  let create = createPlanCreatedEvent(
+    BigInt.fromI32(1),
+    Address.fromString("0x0000000000000000000000000000000000000001"),
+    Address.fromString("0x0000000000000000000000000000000000000002"),
+    18,
+    BigInt.fromI32(100),
+    BigInt.fromI32(30),
+    false,
+    BigInt.fromI32(0),
+    Address.fromString("0x0000000000000000000000000000000000000003")
+  )
+  handlePlanCreated(create)
+  let update = createMerchantUpdatedEvent(
+    BigInt.fromI32(1),
+    Address.fromString("0x0000000000000000000000000000000000000001"),
+    Address.fromString("0x0000000000000000000000000000000000000010")
+  )
+  handleMerchantUpdated(update)
+  assert.fieldEquals(
+    "Plan",
+    "1",
+    "merchant",
+    "0x0000000000000000000000000000000000000010"
+  )
   clearStore()
 })
 

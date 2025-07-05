@@ -211,7 +211,8 @@ describe('Subgraph integration', function () {
     await adminContract.upgrade(await proxyDeploy.getAddress(), await impl2.getAddress());
     subscription = new ethers.Contract(await proxyDeploy.getAddress(), subV2Json.abi, ownerSigner);
 
-    await subscription.connect(ownerSigner).processPayment(user, 0);
+    await subscription.connect(ownerSigner).updateMerchant(0, user);
+    await subscription.connect(userSigner).processPayment(user, 0);
 
     process.env.NETWORK = 'hardhat';
     process.env.CONTRACT_ADDRESS = await subscription.getAddress();
@@ -242,7 +243,7 @@ describe('Subgraph integration', function () {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query:
-            '{ plans { id totalPaid } subscriptions { id } payments { id planId amount } }',
+            '{ plans { id totalPaid merchant } subscriptions { id } payments { id planId amount } }',
         }),
       },
     );
@@ -252,5 +253,6 @@ describe('Subgraph integration', function () {
     expect(json.data.plans[0].totalPaid).to.equal(
       ethers.parseUnits('1', 18).toString(),
     );
+    expect(json.data.plans[0].merchant).to.equal(user.toLowerCase());
   });
 });
