@@ -227,7 +227,8 @@ The script `scripts/process-due-payments.ts` reads a list of subscribers from a
 JSON file and executes `processPayment` for those whose `nextPaymentDate` has
 passed. Failures are collected and printed in a summary after all users have
 been processed. Set the environment variable `FAIL_ON_FAILURE` to `true` to exit
-with a non-zero status when any payments fail.
+with a non-zero status when any payments fail. The optional `MAX_CONCURRENCY`
+variable controls how many `processPayment` calls run in parallel.
 
 The file can either contain a simple array of Ethereum addresses or an array of
 objects where each entry defines the user and their plan(s). When using the
