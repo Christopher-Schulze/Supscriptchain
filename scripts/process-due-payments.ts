@@ -114,6 +114,7 @@ async function runOnce(log: LogFn) {
   const failOnFailure =
     env.FAIL_ON_FAILURE === 'true' ||
     env.FAIL_ON_FAILURE === '1';
+  const dryRun = env.DRY_RUN === 'true' || env.DRY_RUN === '1';
   const failures: FailedPayment[] = [];
   const contractAddress = env.SUBSCRIPTION_ADDRESS;
   if (!contractAddress) {
@@ -189,6 +190,10 @@ async function runOnce(log: LogFn) {
   const failuresFile = env.FAILURES_FILE;
 
   async function processWithRetry(user: string, plan: number) {
+    if (dryRun) {
+      log('info', `[DRY_RUN] would process payment for ${user} plan ${plan}`);
+      return;
+    }
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         log('info', `Processing payment for ${user} plan ${plan} (attempt ${attempt})`);
