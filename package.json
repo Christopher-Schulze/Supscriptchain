@@ -53,6 +53,7 @@
     "prepare": "husky install",
     "subgraph-server": "ts-node scripts/subgraph-server.ts",
     "coverage": "hardhat coverage",
+    "coverage-check": "node scripts/check-coverage.js",
     "slither": "slither .",
     "test-subgraph": "graph test",
     "test:e2e": "playwright test"
