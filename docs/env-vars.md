@@ -62,6 +62,7 @@ Subgraph scripts look for these variables:
 - `LOKI_URL` – stream logs to a Loki instance
 - `LOG_LEVEL` – minimum log level (`info`, `warn`, `error`)
 - `FAILURES_FILE` – write a JSON summary of failed payments
+- `METRICS_PORT` – serve Prometheus metrics on this port (optional)
 
 ## Subgraph Server
 

@@ -2,11 +2,48 @@ import { ethers } from 'hardhat';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
+import http from 'http';
 import pLimit from 'p-limit';
 import pino from 'pino';
 import { loadEnv } from './env';
+import {
+  Counter,
+  Registry,
+  collectDefaultMetrics,
+} from 'prom-client';
 
 const env = loadEnv();
+
+const metricsPort = env.METRICS_PORT ? parseInt(env.METRICS_PORT, 10) : 0;
+let register: Registry | null = null;
+let successCounter: Counter | null = null;
+let failureCounter: Counter | null = null;
+if (metricsPort) {
+  register = new Registry();
+  collectDefaultMetrics({ register });
+  successCounter = new Counter({
+    name: 'payment_success_total',
+    help: 'Total number of successful payments',
+    registers: [register],
+  });
+  failureCounter = new Counter({
+    name: 'payment_failure_total',
+    help: 'Total number of failed payments',
+    registers: [register],
+  });
+  const server = http.createServer(async (req, res) => {
+    if (req.url === '/metrics') {
+      res.setHeader('Content-Type', register!.contentType);
+      res.end(await register!.metrics());
+    } else {
+      res.statusCode = 404;
+      res.end('Not Found');
+    }
+  });
+  server.listen(metricsPort, () => {
+    console.log(`Metrics server listening on port ${metricsPort}`);
+  });
+}
 
 /**
  * Parsed subscriber entry from JSON.
@@ -132,6 +169,7 @@ async function runOnce(log: LogFn) {
         const tx = await subscription.processPayment(user, plan);
         await tx.wait();
         log('info', `Processed payment for ${user} plan ${plan}`);
+        successCounter?.inc();
         return;
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
@@ -148,6 +186,7 @@ async function runOnce(log: LogFn) {
             'error',
             `Failed to process payment for user ${user} plan ${plan}: ${reason}`,
           );
+          failureCounter?.inc();
           await notifyFailure({ user, plan, reason }, log);
         }
       }
@@ -171,6 +210,7 @@ async function runOnce(log: LogFn) {
               'error',
               `Failed to retrieve subscription for user ${user} plan ${plan}: ${reason}`,
             );
+            failureCounter?.inc();
           }
         }),
       );
