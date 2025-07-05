@@ -1,0 +1,42 @@
+scalar BigInt
+scalar Bytes
+
+enum OrderDirection {
+  asc
+  desc
+}
+
+enum Payment_OrderBy {
+  id
+}
+
+input SubscriptionWhereInput {
+  cancelled: Boolean
+}
+
+type Plan {
+  id: ID!
+  totalPaid: BigInt!
+}
+
+type Subscription {
+  id: ID!
+  user: Bytes!
+  planId: BigInt!
+  nextPaymentDate: BigInt
+  cancelled: Boolean
+}
+
+type Payment {
+  id: ID!
+  user: Bytes!
+  planId: BigInt!
+  amount: BigInt!
+  newNextPaymentDate: BigInt!
+}
+
+type Query {
+  subscriptions(where: SubscriptionWhereInput): [Subscription!]!
+  payments(orderBy: Payment_OrderBy, orderDirection: OrderDirection): [Payment!]!
+  plans: [Plan!]!
+}
