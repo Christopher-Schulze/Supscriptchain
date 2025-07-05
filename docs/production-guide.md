@@ -20,6 +20,20 @@ Create a `.env` file based on `.env.example` and provide the required values:
 
 Avoid committing this file to version control. Use different files per environment and keep them in a secure location.
 
+### Secrets Übersicht
+
+Die folgenden Variablen enthalten vertrauliche Informationen und sollten nicht im Repository gespeichert werden.
+
+| Variable | Verwendung | Empfohlener Speicherort |
+| -------- | ---------- | ---------------------- |
+| `SEPOLIA_RPC_URL` | RPC Endpoint für das Sepolia-Testnet | GitHub Secret oder Eintrag in HashiCorp Vault |
+| `SEPOLIA_PRIVATE_KEY` | privater Schlüssel für Testnet-Deployments | GitHub Secret oder Eintrag in HashiCorp Vault |
+| `MAINNET_RPC_URL` | RPC Endpoint für das Ethereum-Mainnet | GitHub Secret oder Eintrag in HashiCorp Vault |
+| `MAINNET_PRIVATE_KEY` | privater Schlüssel für Mainnet-Deployments | GitHub Secret oder Eintrag in HashiCorp Vault |
+| `MERCHANT_PRIVATE_KEY` | Schlüssel für `process-due-payments` | GitHub Secret oder Eintrag in HashiCorp Vault |
+
+Bewahren Sie diese Werte nicht im Quellcode auf. GitHub Actions können sie direkt aus Repository-Secrets laden. Für eigene Server bieten sich zentrale Secret-Stores wie HashiCorp Vault oder AWS Secrets Manager an.
+
 ## Secure Key Management
 
 Production deployments should inject secrets via your hosting provider's secret store or environment variables rather than storing them in plain text. Limit access to the `.env` file and do not reuse private keys across environments. When using Docker, mount secrets as read-only files or pass them via the `--env-file` option.
