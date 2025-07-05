@@ -121,6 +121,7 @@ async function runOnce(log: LogFn) {
     parseInt(process.env.RETRY_BASE_DELAY_MS || '500', 10),
     0,
   );
+  const failuresFile = process.env.FAILURES_FILE;
 
   async function processWithRetry(user: string, plan: number) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -180,6 +181,10 @@ async function runOnce(log: LogFn) {
     for (const f of failures) {
       log('info', `- ${f.user} plan ${f.plan}: ${f.reason}`);
     }
+    if (failuresFile) {
+      fs.writeFileSync(failuresFile, JSON.stringify(failures, null, 2));
+      log('info', `Wrote failures to ${failuresFile}`);
+    }
     if (failOnFailure) {
       process.exit(1);
     } else {
@@ -192,6 +197,7 @@ async function main() {
   checkEnv();
   const logFile = process.env.LOG_FILE;
   const lokiUrl = process.env.LOKI_URL;
+  const logLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
   let lokiLogger: pino.Logger | null = null;
   if (lokiUrl) {
     const transport = pino.transport({
@@ -206,7 +212,10 @@ async function main() {
     lokiLogger = pino(transport);
   }
 
+  const levels: LogLevel[] = ['error', 'warn', 'info'];
+  const levelIdx = levels.indexOf(logLevel);
   const log: LogFn = (level, ...args) => {
+    if (levels.indexOf(level) > levelIdx) return;
     const msg = util.format(...args);
     if (level === 'error') {
       console.error(msg);

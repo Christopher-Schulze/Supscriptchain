@@ -115,15 +115,14 @@ synced.
 
 ## Deploying to a Hosted Graph Node
 
-If you run a Graph Node on a remote server, point `graph deploy` to that node
-and set the frontend URL accordingly:
+If you run a Graph Node on a remote server, set `GRAPH_NODE_URL` and `IPFS_URL`
+(and optionally `GRAPH_ACCESS_TOKEN` and `SUBGRAPH_VERSION`) and run:
 
 ```bash
-graph deploy \
-  --node https://your-node.example.com:8020/ \
-  --ipfs https://your-node.example.com:5001/ \
-  subscription-subgraph subgraph/subgraph.local.yaml
+npm run deploy-subgraph
 ```
+
+Point the frontend to the hosted endpoint:
 
 Configure the frontend with the hosted endpoint:
 
@@ -142,6 +141,10 @@ restarts `graph-node` on failure and logs health check errors.
 - `GRAPH_NODE_HEALTH_INTERVAL` – interval between health checks in ms
 - `GRAPH_NODE_MAX_FAILS` – number of failed checks before a restart
 - `GRAPH_NODE_RESTART_DELAY` – delay before restarting in ms
+- `METRICS_PORT` – port for Prometheus metrics (default `9091`)
+- `LOG_FILE` – append log output to this file
+- `LOKI_URL` – stream logs to a Loki instance
+- `LOG_LEVEL` – minimum log level (`info`, `warn`, `error`)
 
 Example systemd service using these variables:
 

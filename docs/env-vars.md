@@ -37,3 +37,43 @@ Subgraph scripts look for these variables:
 - `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint consumed by the frontend
 
 `npm run prepare-subgraph` and `npm run build-subgraph` use these variables.
+
+`npm run deploy-subgraph` additionally expects:
+
+- `GRAPH_NODE_URL` – Graph Node deployment endpoint (e.g. `https://your-node.example.com:8020/`)
+- `IPFS_URL` – IPFS endpoint used by the node
+- `SUBGRAPH_NAME` – name of the subgraph (default `subscription-subgraph`)
+- `GRAPH_ACCESS_TOKEN` – access token for authenticated Graph Node (optional)
+- `SUBGRAPH_VERSION` – version label passed to `graph deploy` (optional)
+
+## Payment Script
+
+`scripts/process-due-payments.ts` honours several variables:
+
+- `SUBSCRIPTION_ADDRESS` – contract address to bill
+- `PLAN_ID` – default plan id when the input file omits one
+- `MAX_CONCURRENCY` – number of concurrent `processPayment` calls
+- `MAX_RETRIES` – retries per failed payment
+- `RETRY_BASE_DELAY_MS` – initial delay before a retry
+- `FAIL_ON_FAILURE` – exit with status 1 when any payment fails
+- `INTERVAL` – run continuously with this interval (in seconds)
+- `NOTIFY_WEBHOOK` – POST each failure to this URL
+- `LOG_FILE` – append console output to this file
+- `LOKI_URL` – stream logs to a Loki instance
+- `LOG_LEVEL` – minimum log level (`info`, `warn`, `error`)
+- `FAILURES_FILE` – write a JSON summary of failed payments
+
+## Subgraph Server
+
+`scripts/subgraph-server.ts` uses these variables:
+
+- `GRAPH_NODE_CMD` – path to the `graph-node` binary (default `graph-node`)
+- `GRAPH_NODE_ARGS` – additional arguments passed to the process
+- `GRAPH_NODE_HEALTH` – healthcheck URL (default `http://localhost:8000/health`)
+- `GRAPH_NODE_HEALTH_INTERVAL` – interval between health checks in ms
+- `GRAPH_NODE_MAX_FAILS` – number of failed checks before a restart
+- `GRAPH_NODE_RESTART_DELAY` – delay before restarting in ms
+- `METRICS_PORT` – port for Prometheus metrics (default `9091`)
+- `LOG_FILE` – append log output to this file
+- `LOKI_URL` – stream logs to a Loki instance
+- `LOG_LEVEL` – minimum log level (`info`, `warn`, `error`)

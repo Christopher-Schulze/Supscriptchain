@@ -68,7 +68,7 @@ Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIV
 
 ## Monitoring and Healthchecks
 
-For the subgraph, monitor the Graph Node via its `/health` endpoint. The helper script `npm run subgraph-server` can automatically restart the node when a healthcheck fails. Configure the interval and URL using the `GRAPH_NODE_HEALTH_*` environment variables.
+For the subgraph, monitor the Graph Node via its `/health` endpoint. The helper script `npm run subgraph-server` can automatically restart the node when a healthcheck fails. Configure the interval and URL using the `GRAPH_NODE_HEALTH_*` variables. Logging can be controlled with `LOG_FILE`, `LOG_LEVEL` and `LOKI_URL`.
 
 Consider setting up additional service-level monitoring for your contract interactions and Docker containers.
 

@@ -49,6 +49,7 @@
     "codegen": "graph codegen subgraph/subgraph.yaml",
     "prepare-subgraph": "npx --yes ts-node scripts/prepare-subgraph.ts",
     "build-subgraph": "npm run prepare-subgraph && npm run codegen && graph build subgraph/subgraph.local.yaml",
+    "deploy-subgraph": "ts-node scripts/deploy-subgraph.ts",
     "prepare": "husky install",
     "subgraph-server": "ts-node scripts/subgraph-server.ts",
     "coverage": "hardhat coverage",

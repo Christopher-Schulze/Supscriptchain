@@ -1,12 +1,17 @@
-import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import { spawn, ChildProcess } from 'child_process';
 import fs from 'fs';
 import http from 'http';
+import util from 'util';
+import pino from 'pino';
 import {
   Counter,
   Gauge,
   Registry,
   collectDefaultMetrics,
 } from 'prom-client';
+
+type LogLevel = 'info' | 'error' | 'warn';
+type LogFn = (level: LogLevel, ...args: any[]) => void;
 
 const cmd = process.env.GRAPH_NODE_CMD || 'graph-node';
 const args = process.env.GRAPH_NODE_ARGS
@@ -23,8 +28,44 @@ const restartDelay = parseInt(
   10,
 );
 const maxFails = parseInt(process.env.GRAPH_NODE_MAX_FAILS || '3', 10);
-const logPath = process.env.GRAPH_NODE_LOG || 'graph-node.log';
+const logFile = process.env.LOG_FILE || process.env.GRAPH_NODE_LOG || 'graph-node.log';
+const lokiUrl = process.env.LOKI_URL;
+const logLevel = (process.env.LOG_LEVEL as LogLevel) || 'info';
 const metricsPort = parseInt(process.env.METRICS_PORT || '9091', 10);
+
+let lokiLogger: pino.Logger | null = null;
+if (lokiUrl) {
+  const transport = pino.transport({
+    targets: [
+      {
+        target: 'pino-loki',
+        options: { host: lokiUrl },
+        level: 'info',
+      },
+    ],
+  });
+  lokiLogger = pino(transport);
+}
+
+const levels: LogLevel[] = ['error', 'warn', 'info'];
+const levelIdx = levels.indexOf(logLevel);
+
+const log: LogFn = (level, ...args) => {
+  if (levels.indexOf(level) > levelIdx) return;
+  const msg = util.format(...args);
+  if (level === 'error') {
+    console.error(msg);
+  } else if (level === 'warn') {
+    console.warn(msg);
+  } else {
+    console.log(msg);
+  }
+  const line = `[${new Date().toISOString()}] ${msg}\n`;
+  if (logFile) {
+    fs.appendFileSync(logFile, line);
+  }
+  lokiLogger?.[level](msg);
+};
 const register = new Registry();
 collectDefaultMetrics({ register });
 const restartCounter = new Counter({
@@ -52,35 +93,31 @@ const metricsServer = http.createServer(async (req, res) => {
   }
 });
 metricsServer.listen(metricsPort, () => {
-  log(`Metrics server listening on port ${metricsPort}`);
+  log('info', `Metrics server listening on port ${metricsPort}`);
 });
-let child: ChildProcessWithoutNullStreams;
+let child: ChildProcess;
 let fails = 0;
 
-function log(message: string) {
-  const line = `[${new Date().toISOString()}] ${message}\n`;
-  fs.appendFileSync(logPath, line);
-}
 
 function start() {
   try {
     child = spawn(cmd, args, { stdio: 'inherit' });
   } catch (err) {
     console.error('Failed to spawn graph-node:', err);
-    log(`Spawn error: ${(err as Error).message}`);
+    log('error', `Spawn error: ${(err as Error).message}`);
     process.exit(1);
   }
   fails = 0;
-  log(`Started graph-node with PID ${child.pid}`);
+  log('info', `Started graph-node with PID ${child.pid}`);
   child.on('error', (err) => {
     console.error('Failed to start graph-node:', err);
-    log(`Start error: ${err.message}`);
+    log('error', `Start error: ${err.message}`);
     process.exitCode = 1;
   });
   child.on('exit', (code, signal) => {
     const msg = `graph-node exited with code ${code} signal ${signal}, restarting in ${restartDelay}ms`;
     console.error(msg);
-    log(msg);
+    log('warn', msg);
     restartCounter.inc();
     setTimeout(start, restartDelay);
   });
@@ -90,7 +127,7 @@ function restart() {
   try {
     child.kill();
   } catch {}
-  log('Restarting graph-node');
+  log('warn', 'Restarting graph-node');
   restartCounter.inc();
   setTimeout(start, restartDelay);
 }
@@ -105,7 +142,7 @@ function check() {
         if (++fails >= maxFails) {
           const msg = 'Max health check failures reached, restarting...';
           console.error(msg);
-          log(msg);
+          log('warn', msg);
           fails = 0;
           restart();
         }
@@ -121,7 +158,7 @@ function check() {
       if (++fails >= maxFails) {
         const msg = 'Max health check errors reached, restarting...';
         console.error(msg);
-        log(msg);
+        log('warn', msg);
         fails = 0;
         restart();
       }
@@ -130,7 +167,7 @@ function check() {
 
 process.on('unhandledRejection', (err) => {
   console.error('Unhandled rejection:', err);
-  log(`Unhandled rejection: ${String(err)}`);
+  log('error', `Unhandled rejection: ${String(err)}`);
 });
 
 start();

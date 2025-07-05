@@ -226,9 +226,14 @@ address. A `PlanUpdated` event is emitted when a plan is changed.
 The script `scripts/process-due-payments.ts` reads a list of subscribers from a
 JSON file and executes `processPayment` for those whose `nextPaymentDate` has
 passed. Failures are collected and printed in a summary after all users have
-been processed. Set the environment variable `FAIL_ON_FAILURE` to `true` to exit
-with a non-zero status when any payments fail. The optional `MAX_CONCURRENCY`
-variable controls how many `processPayment` calls run in parallel.
+been processed. Set `FAIL_ON_FAILURE=true` to exit with a non-zero status when
+any payments fail. Use `MAX_CONCURRENCY` to limit parallel calls and
+`MAX_RETRIES` with `RETRY_BASE_DELAY_MS` for exponential backoff. Configure
+`LOG_LEVEL` (`info`, `warn`, `error`) and `LOG_FILE` to control logging. When
+`FAILURES_FILE` is set, failed payments are written to that path as JSON.
+Optional `NOTIFY_WEBHOOK` triggers a POST request for each failure and `LOKI_URL`
+streams logs to Loki. Run the script continuously by defining an `INTERVAL`
+in seconds.
 
 The file can either contain a simple array of Ethereum addresses or an array of
 objects where each entry defines the user and their plan(s). When using the
@@ -297,6 +302,12 @@ produces `subgraph/subgraph.local.yaml`.
 
 See [docs/usage-examples.md#running-the-subgraph-locally](docs/usage-examples.md#running-the-subgraph-locally)
 for a step-by-step guide on `npm run prepare-subgraph` and `npm run build-subgraph`.
+To deploy the compiled subgraph, set `GRAPH_NODE_URL` and `IPFS_URL` (plus
+optionally `GRAPH_ACCESS_TOKEN` and `SUBGRAPH_VERSION`) and run:
+
+```bash
+npm run deploy-subgraph
+```
 That section also lists the required environment variables and explains how to
 configure `NEXT_PUBLIC_SUBGRAPH_URL` for the frontend.
 
