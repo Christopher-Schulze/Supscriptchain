@@ -83,6 +83,9 @@ abstract contract BaseSubscription {
         require(_billingCycle > 0, "Billing cycle must be > 0");
         if (_priceInUsd) {
             require(_priceFeedAddress != address(0), "Price feed address required for USD pricing");
+            require(_usdPrice > 0, "USD price must be > 0");
+        } else {
+            require(_price > 0, "Token price must be > 0");
         }
         require(_token != address(0), "Token address cannot be zero");
 
@@ -121,6 +124,9 @@ abstract contract BaseSubscription {
 
         if (_priceInUsd) {
             require(_priceFeedAddress != address(0), "Price feed address required for USD pricing");
+            require(_usdPrice > 0, "USD price must be > 0");
+        } else {
+            require(_price > 0, "Token price must be > 0");
         }
 
         plan.billingCycle = _billingCycle;

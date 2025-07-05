@@ -160,6 +160,36 @@ describe("Subscription Contract", function () {
                 ethers.constants.AddressZero
             )).to.be.revertedWith("Billing cycle must be > 0");
         });
+
+        it("Should revert if USD plan has zero usdPrice", async function () {
+            const { subscriptionContract, mockToken, owner, mockAggregator } = await loadFixture(deploySubscriptionFixture);
+            await expect(
+                subscriptionContract.connect(owner).createPlan(
+                    owner.address,
+                    mockToken.target,
+                    0,
+                    THIRTY_DAYS_IN_SECS,
+                    true,
+                    0,
+                    mockAggregator.target
+                )
+            ).to.be.revertedWith("USD price must be > 0");
+        });
+
+        it("Should revert if token priced plan has zero price", async function () {
+            const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
+            await expect(
+                subscriptionContract.connect(owner).createPlan(
+                    owner.address,
+                    mockToken.target,
+                    0,
+                    THIRTY_DAYS_IN_SECS,
+                    false,
+                    0,
+                    ethers.ZeroAddress
+                )
+            ).to.be.revertedWith("Token price must be > 0");
+        });
     });
 
     describe("updatePlan", function () {
@@ -237,6 +267,20 @@ describe("Subscription Contract", function () {
             await expect(
                 subscriptionContract.connect(owner).updatePlan(0, 0, 0, false, 0, ethers.constants.AddressZero)
             ).to.be.revertedWith("Billing cycle must be > 0");
+        });
+
+        it("Reverts when USD plan updated with zero usdPrice", async function () {
+            const { subscriptionContract, owner, mockAggregator } = await loadFixture(fixtureWithExistingPlan);
+            await expect(
+                subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, true, 0, mockAggregator.target)
+            ).to.be.revertedWith("USD price must be > 0");
+        });
+
+        it("Reverts when token plan updated with zero price", async function () {
+            const { subscriptionContract, owner } = await loadFixture(fixtureWithExistingPlan);
+            await expect(
+                subscriptionContract.connect(owner).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, false, 0, ethers.ZeroAddress)
+            ).to.be.revertedWith("Token price must be > 0");
         });
 
         async function fixtureWithExistingUsdPlan() {
