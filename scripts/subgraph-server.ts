@@ -1,9 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
-import fs from 'fs';
 import http from 'http';
-import util from 'util';
-import pino from 'pino';
 import { loadEnv } from './env';
+import { createLogger, LogFn, LogLevel } from './log';
 import {
   Counter,
   Gauge,
@@ -36,39 +34,7 @@ const lokiUrl = env.LOKI_URL;
 const logLevel = (env.LOG_LEVEL as LogLevel) || 'info';
 const metricsPort = parseInt(env.METRICS_PORT || '9091', 10);
 
-let lokiLogger: pino.Logger | null = null;
-if (lokiUrl) {
-  const transport = pino.transport({
-    targets: [
-      {
-        target: 'pino-loki',
-        options: { host: lokiUrl },
-        level: 'info',
-      },
-    ],
-  });
-  lokiLogger = pino(transport);
-}
-
-const levels: LogLevel[] = ['error', 'warn', 'info'];
-const levelIdx = levels.indexOf(logLevel);
-
-const log: LogFn = (level, ...args) => {
-  if (levels.indexOf(level) > levelIdx) return;
-  const msg = util.format(...args);
-  if (level === 'error') {
-    console.error(msg);
-  } else if (level === 'warn') {
-    console.warn(msg);
-  } else {
-    console.log(msg);
-  }
-  const line = `[${new Date().toISOString()}] ${msg}\n`;
-  if (logFile) {
-    fs.appendFileSync(logFile, line);
-  }
-  lokiLogger?.[level](msg);
-};
+const log = createLogger({ logFile, lokiUrl, logLevel });
 const register = new Registry();
 collectDefaultMetrics({ register });
 const restartCounter = new Counter({
