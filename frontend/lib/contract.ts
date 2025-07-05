@@ -4,6 +4,7 @@ import type { Subscription } from "typechain/contracts/Subscription.sol/Subscrip
 import { Subscription__factory } from "typechain/factories/contracts/Subscription.sol/Subscription__factory";
 import { env } from "./env";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function parseEthersError(err: unknown): string {
   const e = err as any;
   const rpc = e?.error ?? e;
@@ -26,6 +27,7 @@ function parseEthersError(err: unknown): string {
     (err instanceof Error ? err.message : String(err))
   );
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 async function handleEthersError<T>(fn: () => Promise<T>): Promise<T> {
   try {

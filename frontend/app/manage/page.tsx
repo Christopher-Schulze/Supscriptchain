@@ -137,24 +137,32 @@ export default function Manage() {
       {loading && <p>Processing...</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <div>
-        <label>Plan ID: </label>
-        <input value={planId} onChange={e => setPlanId(e.target.value)} />
+        <label htmlFor="plan-id">Plan ID: </label>
+        <input
+          id="plan-id"
+          value={planId}
+          onChange={(e) => setPlanId(e.target.value)}
+        />
       </div>
       <div>
-        <label>Deadline (unix secs): </label>
-        <input value={deadline} onChange={e => setDeadline(e.target.value)} />
+        <label htmlFor="deadline">Deadline (unix secs): </label>
+        <input
+          id="deadline"
+          value={deadline}
+          onChange={(e) => setDeadline(e.target.value)}
+        />
       </div>
       <div>
-        <label>v: </label>
-        <input value={v} onChange={e => setV(e.target.value)} />
+        <label htmlFor="sig-v">v: </label>
+        <input id="sig-v" value={v} onChange={(e) => setV(e.target.value)} />
       </div>
       <div>
-        <label>r: </label>
-        <input value={r} onChange={e => setR(e.target.value)} />
+        <label htmlFor="sig-r">r: </label>
+        <input id="sig-r" value={r} onChange={(e) => setR(e.target.value)} />
       </div>
       <div>
-        <label>s: </label>
-        <input value={s} onChange={e => setS(e.target.value)} />
+        <label htmlFor="sig-s">s: </label>
+        <input id="sig-s" value={s} onChange={(e) => setS(e.target.value)} />
       </div>
       <button onClick={requestPermit} disabled={loading || !account}>Get Permit Signature</button>
       <button onClick={subscribePermit} disabled={loading}>Subscribe with Permit</button>

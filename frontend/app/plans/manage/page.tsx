@@ -45,25 +45,31 @@ export default function ManagePlans() {
       <h1>Manage Plans</h1>
       {!account && <button onClick={connect}>Connect Wallet</button>}
       {error && <p className="error">{error}</p>}
-      <label>
-        Select Plan
-        <select value={selected ?? ''} onChange={e => setSelected(Number(e.target.value))}>
-          <option value="">-</option>
-          {plans.map((_, idx) => (
-            <option key={idx} value={idx}>{`Plan ${idx}`}</option>
-          ))}
-        </select>
-      </label>
+      <label htmlFor="plan-select">Select Plan</label>
+      <select
+        id="plan-select"
+        value={selected ?? ''}
+        onChange={(e) => setSelected(Number(e.target.value))}
+      >
+        <option value="">-</option>
+        {plans.map((_, idx) => (
+          <option key={idx} value={idx}>{`Plan ${idx}`}</option>
+        ))}
+      </select>
       {selected !== null && (
         <>
-          <label>
-            Billing (seconds)
-            <input value={billing} onChange={e => setBilling(e.target.value)} />
-          </label>
-          <label>
-            Token Price
-            <input value={price} onChange={e => setPrice(e.target.value)} />
-          </label>
+          <label htmlFor="manage-billing">Billing (seconds)</label>
+          <input
+            id="manage-billing"
+            value={billing}
+            onChange={(e) => setBilling(e.target.value)}
+          />
+          <label htmlFor="manage-price">Token Price</label>
+          <input
+            id="manage-price"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
           <button disabled={loading} onClick={submit}>Update</button>
         </>
       )}

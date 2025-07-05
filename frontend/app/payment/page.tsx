@@ -8,7 +8,6 @@ export default function Payment() {
   const { account, connect } = useWallet();
   const [planId, setPlanId] = useState('0');
   const [user, setUser] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const { setMessage } = useStore();
 
@@ -34,16 +33,23 @@ export default function Payment() {
   return (
     <div>
       <h1>Process Payment</h1>
-      {error && <p className="error">{error}</p>}
       {loading && <p>Processing...</p>}
       {!account && <button onClick={connect}>Connect Wallet</button>}
       <div>
-        <label>User: </label>
-        <input value={user} onChange={e => setUser(e.target.value)} />
+        <label htmlFor="pay-user">User: </label>
+        <input
+          id="pay-user"
+          value={user}
+          onChange={(e) => setUser(e.target.value)}
+        />
       </div>
       <div>
-        <label>Plan ID: </label>
-        <input value={planId} onChange={e => setPlanId(e.target.value)} />
+        <label htmlFor="pay-plan">Plan ID: </label>
+        <input
+          id="pay-plan"
+          value={planId}
+          onChange={(e) => setPlanId(e.target.value)}
+        />
       </div>
       <button onClick={trigger} disabled={loading}>Process</button>
     </div>
