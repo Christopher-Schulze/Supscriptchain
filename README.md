@@ -349,7 +349,7 @@ Automated workflows under `.github/workflows` handle contract and frontend deplo
 - **deploy-testnet.yml** deploys to Sepolia on pushes to `main` or via "Run workflow".
 - **deploy-mainnet.yml** deploys to mainnet when a version tag `v*.*.*` is pushed.
 - **deploy-frontend.yml** builds the Next.js app and deploys it to Vercel.
-- **release.yml** packages contracts, subgraph and frontend builds into a GitHub release.
+- **release.yml** builds artifacts, generates a changelog with commit and pull request titles and attaches `CHANGELOG.md` to the GitHub release.
 
 Example environment variables are listed in `deploy.env.example`. See `vercel.json.example` for a basic rewrite setup.
 

@@ -56,9 +56,16 @@ jobs:
           tar czf frontend.tar.gz -C frontend .next
       - name: Generate changelog
         id: changelog
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           LAST_TAG=$(git describe --tags --abbrev=0 HEAD^)
           git log ${LAST_TAG}..HEAD --pretty=format:'- %s (%an)' > CHANGELOG.md
+          LAST_TAG_DATE=$(git log -1 --format=%cI $LAST_TAG)
+          gh pr list --state merged --search "merged:>=$LAST_TAG_DATE" \
+            --json title,number \
+            --jq '.[] | "- " + .title + " (#" + (.number|tostring) + ")"' \
+            >> CHANGELOG.md
       - name: Create release
         uses: softprops/action-gh-release@v1
         with:
@@ -68,6 +75,7 @@ jobs:
             contracts.tar.gz
             subgraph.tar.gz
             frontend.tar.gz
+            CHANGELOG.md
 
   deploy-mainnet:
     needs: build
