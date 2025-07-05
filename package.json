@@ -36,7 +36,8 @@
     "ts-node": "^10.9.2",
     "typechain": "^8.3.2",
     "typescript": "^5.4.5",
-    "zod": "^3.25.73"
+    "zod": "^3.25.73",
+    "concurrently": "^9.2.0"
   },
   "scripts": {
     "compile": "hardhat compile",
@@ -56,7 +57,8 @@
     "coverage-check": "node scripts/check-coverage.js",
     "slither": "slither .",
     "test-subgraph": "graph test",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "devstack": "node scripts/start-dev.ts"
   },
   "dependencies": {
     "@chainlink/contracts": "^1.4.0",
