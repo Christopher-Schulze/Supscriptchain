@@ -16,3 +16,11 @@ npm run slither
 _No high severity issues were found._ The tool reported informational messages
 about naming conventions and optimizer settings. Review the full report for
 details and address any warnings relevant to your deployment.
+
+### Arbitrary-from in `_processPayment`
+
+Slither flags the call to `safeTransferFrom` inside
+`BaseSubscription._processPayment` because tokens are transferred from a user
+address rather than `msg.sender`. The function requires the merchant to be the
+caller and checks the user's allowance before performing the transfer. This
+pattern is intentional for subscription payments and is considered safe.
