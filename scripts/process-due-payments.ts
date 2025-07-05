@@ -1,11 +1,10 @@
 import { ethers } from 'hardhat';
 import fs from 'fs';
 import path from 'path';
-import util from 'util';
 import http from 'http';
 import pLimit from 'p-limit';
-import pino from 'pino';
 import { loadEnv } from './env';
+import { createLogger, LogFn, LogLevel } from './log';
 import {
   Counter,
   Registry,
@@ -61,10 +60,6 @@ interface FailedPayment {
   plan: number;
   reason: string;
 }
-
-type LogLevel = 'info' | 'error' | 'warn';
-
-type LogFn = (level: LogLevel, ...args: any[]) => void;
 
 async function notifyFailure(failure: FailedPayment, log: LogFn) {
   const url = env.NOTIFY_WEBHOOK;
@@ -239,37 +234,7 @@ async function main() {
   const logFile = env.LOG_FILE;
   const lokiUrl = env.LOKI_URL;
   const logLevel = (env.LOG_LEVEL as LogLevel) || 'info';
-  let lokiLogger: pino.Logger | null = null;
-  if (lokiUrl) {
-    const transport = pino.transport({
-      targets: [
-        {
-          target: 'pino-loki',
-          options: { host: lokiUrl },
-          level: 'info',
-        },
-      ],
-    });
-    lokiLogger = pino(transport);
-  }
-
-  const levels: LogLevel[] = ['error', 'warn', 'info'];
-  const levelIdx = levels.indexOf(logLevel);
-  const log: LogFn = (level, ...args) => {
-    if (levels.indexOf(level) > levelIdx) return;
-    const msg = util.format(...args);
-    if (level === 'error') {
-      console.error(msg);
-    } else if (level === 'warn') {
-      console.warn(msg);
-    } else {
-      console.log(msg);
-    }
-    if (logFile) {
-      fs.appendFileSync(logFile, msg + '\n');
-    }
-    lokiLogger?.[level](msg);
-  };
+  const log = createLogger({ logFile, lokiUrl, logLevel });
   const interval = parseInt(env.INTERVAL || '0', 10);
   if (interval > 0) {
     while (true) {
