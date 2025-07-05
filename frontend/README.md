@@ -51,8 +51,8 @@ Open [http://localhost:3000](http://localhost:3000) to view the app.
 - `/payment` – merchant page to trigger a payment for a subscriber.
 - `/analytics` – shows active subscriptions and past payments from the Subgraph.
 
-Wallet connectivity uses the injected provider (MetaMask or Wallet‑Connect
-compatible). If no wallet is available the app falls back to the RPC URL for
+Wallet connectivity supports MetaMask (injected provider), WalletConnect and
+Coinbase Wallet. If no wallet is available the app falls back to the RPC URL for
 read‑only operations.
 
 ## Using the Subgraph
