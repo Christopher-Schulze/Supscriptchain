@@ -297,4 +297,53 @@ describe('process-due-payments script', function () {
     const after = (await subscription.userSubscriptions(userSuccess.address, 0)).nextPaymentDate;
     expect(after).to.equal(before);
   });
+
+  it('caches subscribers when CACHE_SUBSCRIBERS=true', function (done) {
+    loadFixture(deployFixture).then(({ merchant, userSuccess, subscription }) => {
+      const tmpJson = path.join(__dirname, 'subscribers.cache.tmp.json');
+      fs.writeFileSync(tmpJson, JSON.stringify([userSuccess.address], null, 2));
+
+      const child = spawn(
+        'node',
+        ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts'],
+        {
+          env: {
+            ...process.env,
+            TS_NODE_TRANSPILE_ONLY: '1',
+            SUBSCRIPTION_ADDRESS: subscription.target,
+            PLAN_ID: '0',
+            SUBSCRIBERS_FILE: tmpJson,
+            MERCHANT_PRIVATE_KEY: merchant.privateKey,
+            INTERVAL: '1',
+            CACHE_SUBSCRIBERS: 'true',
+          },
+        },
+      );
+
+      let output = '';
+      child.stdout.on('data', (d) => {
+        output += d.toString();
+      });
+
+      setTimeout(() => {
+        fs.unlinkSync(tmpJson);
+      }, 1200);
+
+      setTimeout(() => {
+        child.kill('SIGTERM');
+      }, 2500);
+
+      child.on('exit', (_code, signal) => {
+        try {
+          const re = new RegExp(`Processing payment for ${userSuccess.address}`, 'g');
+          const matches = output.match(re) || [];
+          expect(signal).to.equal('SIGTERM');
+          expect(matches.length).to.be.greaterThan(1);
+          done();
+        } catch (err) {
+          done(err as Error);
+        }
+      });
+    }, done);
+  });
 });

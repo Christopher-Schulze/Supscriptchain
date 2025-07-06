@@ -53,14 +53,17 @@ let failureCounter: Counter | null = null;
 if (metricsPort) {
   register = new Registry();
   collectDefaultMetrics({ register });
+  // Expose per-plan success and failure counters for Prometheus
   successCounter = new Counter({
     name: 'payment_success_total',
-    help: 'Total number of successful payments',
+    help: 'Total number of successful payments per plan',
+    labelNames: ['plan_id'],
     registers: [register],
   });
   failureCounter = new Counter({
     name: 'payment_failure_total',
-    help: 'Total number of failed payments',
+    help: 'Total number of failed payments per plan',
+    labelNames: ['plan_id'],
     registers: [register],
   });
   const server = http.createServer(async (req, res) => {
@@ -87,6 +90,10 @@ interface SubscriberEntry {
   user: string;
   plans: number[];
 }
+
+// Cache subscribers between runs when CACHE_SUBSCRIBERS=true.
+// This avoids repeatedly reading the JSON file during INTERVAL mode.
+let subscriberCache: SubscriberEntry[] | null = null;
 
 interface FailedPayment {
   user: string;
@@ -137,44 +144,55 @@ async function runOnce(log: LogFn) {
     signer,
   );
 
-  const raw = JSON.parse(fs.readFileSync(listPath, 'utf8'));
-  const subscribers: SubscriberEntry[] = [];
+  let subscribers: SubscriberEntry[];
+  if (env.CACHE_SUBSCRIBERS === 'true' && subscriberCache) {
+    // Reuse previously parsed subscribers when caching is enabled
+    subscribers = subscriberCache;
+  } else {
+    const raw = JSON.parse(fs.readFileSync(listPath, 'utf8'));
+    const parsed: SubscriberEntry[] = [];
 
-  if (Array.isArray(raw)) {
-    for (const entry of raw) {
-      let user: string;
-      let planField: any;
+    if (Array.isArray(raw)) {
+      for (const entry of raw) {
+        let user: string;
+        let planField: any;
 
-      if (typeof entry === 'string') {
-        user = entry;
-        planField = [defaultPlanId];
-      } else {
-        user = entry.user;
-        planField = entry.plans ?? entry.plan ?? defaultPlanId;
+        if (typeof entry === 'string') {
+          user = entry;
+          planField = [defaultPlanId];
+        } else {
+          user = entry.user;
+          planField = entry.plans ?? entry.plan ?? defaultPlanId;
+        }
+
+        const planArray = Array.isArray(planField)
+          ? planField
+          : String(planField)
+              .split(',')
+              .map((p: string) => p.trim())
+              .filter((p: string) => p !== '');
+
+        if (!/^0x[a-fA-F0-9]{40}$/.test(user)) {
+          log('error', `Invalid address ${user}, skipping entry`);
+          continue;
+        }
+
+        const plans = [...new Set(planArray.map((p: any) => Number(p)))].filter(
+          (p) => !Number.isNaN(p) && p >= 0,
+        );
+
+        if (plans.length === 0) {
+          log('error', `No valid plan IDs for ${user}, skipping entry`);
+          continue;
+        }
+
+        parsed.push({ user, plans });
       }
+    }
 
-      const planArray = Array.isArray(planField)
-        ? planField
-        : String(planField)
-            .split(',')
-            .map((p: string) => p.trim())
-            .filter((p: string) => p !== '');
-
-      if (!/^0x[a-fA-F0-9]{40}$/.test(user)) {
-        log('error', `Invalid address ${user}, skipping entry`);
-        continue;
-      }
-
-      const plans = [...new Set(planArray.map((p: any) => Number(p)))].filter(
-        (p) => !Number.isNaN(p) && p >= 0,
-      );
-
-      if (plans.length === 0) {
-        log('error', `No valid plan IDs for ${user}, skipping entry`);
-        continue;
-      }
-
-      subscribers.push({ user, plans });
+    subscribers = parsed;
+    if (env.CACHE_SUBSCRIBERS === 'true') {
+      subscriberCache = subscribers;
     }
   }
 
@@ -202,7 +220,7 @@ async function runOnce(log: LogFn) {
         const tx = await subscription.processPayment(user, plan);
         await tx.wait();
         log('info', `Processed payment for ${user} plan ${plan}`);
-        successCounter?.inc();
+        successCounter?.inc({ plan_id: String(plan) });
         return;
       } catch (err) {
         const reason = err instanceof Error ? err.message : String(err);
@@ -219,7 +237,7 @@ async function runOnce(log: LogFn) {
             'error',
             `Failed to process payment for user ${user} plan ${plan}: ${reason}`,
           );
-          failureCounter?.inc();
+          failureCounter?.inc({ plan_id: String(plan) });
           await notifyFailure({ user, plan, reason }, log);
         }
       }
@@ -243,7 +261,7 @@ async function runOnce(log: LogFn) {
               'error',
               `Failed to retrieve subscription for user ${user} plan ${plan}: ${reason}`,
             );
-            failureCounter?.inc();
+            failureCounter?.inc({ plan_id: String(plan) });
           }
         }),
       );
