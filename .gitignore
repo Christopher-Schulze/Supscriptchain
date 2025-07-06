@@ -39,3 +39,4 @@ frontend/.env.local
 # Generated subgraph files
 subgraph/subgraph.local.yaml
 subgraph/generated/
+subgraph/graph.config.json

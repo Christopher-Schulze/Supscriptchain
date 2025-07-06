@@ -97,11 +97,16 @@ curl -X POST http://localhost:8000/subgraphs/name/subscription-subgraph/graphql 
 ### Environment Variables
 
 `npm run prepare-subgraph` and `npm run build-subgraph` read the following
-variables:
+variables. Missing values can also be provided in `subgraph/graph.config.json`:
 
 - `NETWORK` – network name used when preparing the manifest
 - `CONTRACT_ADDRESS` – address of the deployed contract
 - `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint consumed by the frontend
+
+Create `subgraph/graph.config.json` from `graph.config.example.json` and set
+`GRAPH_NODE_URL`, `IPFS_URL` and `SUBGRAPH_NAME` to avoid exporting these
+variables each time. Both `prepare-subgraph` and `deploy-subgraph` load this
+file automatically when present.
 
 Export them in your shell or provide `--network` and `--address` on the command
 line. To connect the frontend create `frontend/.env.local` with:
@@ -115,8 +120,9 @@ synced.
 
 ## Deploying to a Hosted Graph Node
 
-If you run a Graph Node on a remote server, set `GRAPH_NODE_URL` and `IPFS_URL`
-(and optionally `GRAPH_ACCESS_TOKEN` and `SUBGRAPH_VERSION`) and run:
+If you run a Graph Node on a remote server, set `GRAPH_NODE_URL` and
+`IPFS_URL` (or define them in `subgraph/graph.config.json`). Optionally set
+`GRAPH_ACCESS_TOKEN` and `SUBGRAPH_VERSION` and run:
 
 ```bash
 npm run deploy-subgraph

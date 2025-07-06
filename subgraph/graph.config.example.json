@@ -1,0 +1,5 @@
+{
+  "GRAPH_NODE_URL": "http://localhost:8020",
+  "IPFS_URL": "http://localhost:5001",
+  "SUBGRAPH_NAME": "subscription-subgraph"
+}
