@@ -46,6 +46,7 @@
     "gas": "HARDHAT_DISABLE_DOWNLOAD_COMPILERS=true REPORT_GAS=true hardhat test",
     "lint": "ESLINT_USE_FLAT_CONFIG=false eslint --ext .ts .",
     "format": "prettier --write .",
+    "clean": "rm -rf coverage generated subgraph/generated frontend/generated artifacts cache typechain",
     "solhint": "solhint 'contracts/**/*.sol'",
     "typechain": "typechain --target ethers-v6 --out-dir typechain ./artifacts/**/*.json",
     "codegen": "graph codegen subgraph/subgraph.yaml",
