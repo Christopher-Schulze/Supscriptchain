@@ -7,7 +7,8 @@ export async function upgrade() {
   const env = loadEnv();
   const proxy = env.SUBSCRIPTION_ADDRESS;
   if (!proxy) {
-    throw new Error("SUBSCRIPTION_ADDRESS not set");
+    console.error('SUBSCRIPTION_ADDRESS not set');
+    process.exit(1);
   }
 
   const SubV2 = await ethers.getContractFactory("SubscriptionUpgradeableV2");
