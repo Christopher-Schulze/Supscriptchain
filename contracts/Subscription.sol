@@ -48,22 +48,22 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @param _priceFeedAddress Chainlink price feed for token/USD (if _priceInUsd is true).
      */
     function createPlan(
-        address _merchantAddress,
-        address _token,
-        uint256 _price,
-        uint256 _billingCycle,
-        bool _priceInUsd,
-        uint256 _usdPrice,
-        address _priceFeedAddress
+        address merchantAddress,
+        address tokenAddress,
+        uint256 price,
+        uint256 billingCycle,
+        bool priceInUsd,
+        uint256 usdPrice,
+        address priceFeedAddress
     ) public override onlyOwner whenNotPaused {
         super.createPlan(
-            _merchantAddress,
-            _token,
-            _price,
-            _billingCycle,
-            _priceInUsd,
-            _usdPrice,
-            _priceFeedAddress
+            merchantAddress,
+            tokenAddress,
+            price,
+            billingCycle,
+            priceInUsd,
+            usdPrice,
+            priceFeedAddress
         );
     }
 
@@ -78,29 +78,29 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @param _priceFeedAddress Chainlink price feed address for USD pricing.
      */
     function updatePlan(
-        uint256 _planId,
-        uint256 _billingCycle,
-        uint256 _price,
-        bool _priceInUsd,
-        uint256 _usdPrice,
-        address _priceFeedAddress
+        uint256 planId,
+        uint256 billingCycle,
+        uint256 price,
+        bool priceInUsd,
+        uint256 usdPrice,
+        address priceFeedAddress
     ) public override onlyOwner whenNotPaused {
         super.updatePlan(
-            _planId,
-            _billingCycle,
-            _price,
-            _priceInUsd,
-            _usdPrice,
-            _priceFeedAddress
+            planId,
+            billingCycle,
+            price,
+            priceInUsd,
+            usdPrice,
+            priceFeedAddress
         );
     }
 
-    function updateMerchant(uint256 _planId, address _newMerchant) public override onlyOwner whenNotPaused {
-        super.updateMerchant(_planId, _newMerchant);
+    function updateMerchant(uint256 planId, address newMerchant) public override onlyOwner whenNotPaused {
+        super.updateMerchant(planId, newMerchant);
     }
 
-    function disablePlan(uint256 _planId) public override onlyOwner whenNotPaused {
-        super.disablePlan(_planId);
+    function disablePlan(uint256 planId) public override onlyOwner whenNotPaused {
+        super.disablePlan(planId);
     }
 
     /**
@@ -115,8 +115,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @dev Transfers initial payment from user to merchant. User must approve contract for token spending.
      * @param _planId The ID of the plan to subscribe to.
      */
-    function subscribe(uint256 _planId) public override whenNotPaused nonReentrant {
-        super.subscribe(_planId);
+    function subscribe(uint256 planId) public override whenNotPaused nonReentrant {
+        super.subscribe(planId);
     }
 
     /**
@@ -129,13 +129,13 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @param s Signature s value.
      */
     function subscribeWithPermit(
-        uint256 _planId,
-        uint256 _deadline,
+        uint256 planId,
+        uint256 deadline,
         uint8 v,
         bytes32 r,
         bytes32 s
     ) public override whenNotPaused nonReentrant {
-        super.subscribeWithPermit(_planId, _deadline, v, r, s);
+        super.subscribeWithPermit(planId, deadline, v, r, s);
     }
 
     /**
@@ -145,8 +145,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @param _user The address of the subscriber whose payment is being processed.
      * @param _planId The ID of the plan for which payment is processed.
      */
-    function processPayment(address _user, uint256 _planId) public override whenNotPaused nonReentrant {
-        super.processPayment(_user, _planId);
+    function processPayment(address user, uint256 planId) public override whenNotPaused nonReentrant {
+        super.processPayment(user, planId);
     }
 
     /**
@@ -154,8 +154,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @dev Sets the subscription to inactive. No refunds for the current billing cycle.
      * @param _planId The ID of the plan to cancel.
      */
-    function cancelSubscription(uint256 _planId) public override whenNotPaused nonReentrant {
-        super.cancelSubscription(_planId);
+    function cancelSubscription(uint256 planId) public override whenNotPaused nonReentrant {
+        super.cancelSubscription(planId);
     }
 
     /**
