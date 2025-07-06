@@ -23,7 +23,7 @@ export default function UpdateMerchant() {
       validateAddress(merchant, 'Merchant');
       const tx = await updateMerchant(BigInt(planId), merchant);
       await tx.wait();
-      setMessage({ text: `Merchant updated: ${tx.hash}`, type: 'success' });
+      setMessage({ text: t('messages.merchant_updated_hash', { hash: tx.hash }), type: 'success' });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
@@ -33,8 +33,9 @@ export default function UpdateMerchant() {
   }
 
   return (
-    <div className="form">
+    <div className="form" aria-busy={loading}>
       <h1>{t('update_merchant.title')}</h1>
+      {loading && <p aria-live="polite">{t('manage.processing')}</p>}
       {error && <p className="error">{error}</p>}
       {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       <label htmlFor="merchant-plan-id">{t('update_merchant.plan_id')}</label>
