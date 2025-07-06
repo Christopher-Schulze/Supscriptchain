@@ -8,3 +8,8 @@ npm run devstack
 
 Beende alle Prozesse gemeinsam mit `Ctrl+C`.
 Der Subgraph-Server beendet dabei jetzt auch `graph-node` sauber.
+
+Um Build- und generierte Dateien zu entfernen, hilft
+```bash
+npm run clean
+```
