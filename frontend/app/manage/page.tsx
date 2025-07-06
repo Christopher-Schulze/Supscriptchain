@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import * as Form from '@radix-ui/react-form';
 import { ethers } from 'ethers';
 import {
   getContract,
@@ -11,6 +12,7 @@ import { AggregatorV3Interface__factory } from 'typechain/factories/contracts/in
 import useWallet from '../../lib/useWallet';
 import { useStore } from '../../lib/store';
 import useUserSubscriptions from '../../lib/useUserSubscriptions';
+import InputField from '../../lib/InputField';
 import { useTranslation } from 'react-i18next';
 
 export default function Manage() {
@@ -152,38 +154,25 @@ export default function Manage() {
       {error && <p className="error">{error}</p>}
       {loading && <p aria-live="polite">{t('manage.processing')}</p>}
       {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
-      <div>
-        <label htmlFor="plan-id">{t('manage.plan_id')} </label>
-        <input
-          id="plan-id"
-          value={planId}
-          onChange={(e) => setPlanId(e.target.value)}
-        />
-      </div>
-      <div>
-        <label htmlFor="deadline">{t('manage.deadline')} </label>
-        <input
-          id="deadline"
-          value={deadline}
-          onChange={(e) => setDeadline(e.target.value)}
-        />
-      </div>
-      <div>
-        <label htmlFor="sig-v">{t('manage.v')} </label>
-        <input id="sig-v" value={v} onChange={(e) => setV(e.target.value)} />
-      </div>
-      <div>
-        <label htmlFor="sig-r">{t('manage.r')} </label>
-        <input id="sig-r" value={r} onChange={(e) => setR(e.target.value)} />
-      </div>
-      <div>
-        <label htmlFor="sig-s">{t('manage.s')} </label>
-        <input id="sig-s" value={s} onChange={(e) => setS(e.target.value)} />
-      </div>
-      <button onClick={requestPermit} disabled={loading || !account}>{t('manage.get_permit')}</button>
-      <button onClick={subscribePermit} disabled={loading}>{t('manage.subscribe_permit')}</button>
-      <button onClick={subscribe} disabled={loading}>{t('manage.subscribe')}</button>
-      <button onClick={cancel} disabled={loading}>{t('manage.cancel')}</button>
+      <Form.Root className="form" onSubmit={(e) => { e.preventDefault(); subscribe(); }}>
+        <InputField name="plan-id" label={t('manage.plan_id')} value={planId} onChange={setPlanId} />
+        <InputField name="deadline" label={t('manage.deadline')} value={deadline} onChange={setDeadline} />
+        <InputField name="sig-v" label={t('manage.v')} value={v} onChange={setV} />
+        <InputField name="sig-r" label={t('manage.r')} value={r} onChange={setR} />
+        <InputField name="sig-s" label={t('manage.s')} value={s} onChange={setS} />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button type="button" onClick={requestPermit} disabled={loading || !account}>
+            {t('manage.get_permit')}
+          </button>
+          <button type="button" onClick={subscribePermit} disabled={loading}>
+            {t('manage.subscribe_permit')}
+          </button>
+          <Form.Submit disabled={loading}>{t('manage.subscribe')}</Form.Submit>
+          <button type="button" onClick={cancel} disabled={loading}>
+            {t('manage.cancel')}
+          </button>
+        </div>
+      </Form.Root>
     </div>
   );
 }

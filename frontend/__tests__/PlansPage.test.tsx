@@ -35,9 +35,9 @@ describe('Plans page', () => {
       reload: jest.fn(),
     });
     render(<Wrapper />);
-    const btn = screen.getByText(
-      'Plan 0: 0.000000000000000001 a alle 1s (active)',
-    );
+    const btn = screen.getByRole('button', {
+      name: /Plan 0: 0\.000000000000000001 a alle 1s \(active\)/,
+    });
     expect(btn).toBeInTheDocument();
     await userEvent.click(btn);
     expect(await screen.findByTestId('plan-details')).toBeInTheDocument();

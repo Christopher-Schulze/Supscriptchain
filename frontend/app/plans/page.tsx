@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import * as Form from '@radix-ui/react-form';
 import { usePlans } from '../../lib/plansStore';
 import useWallet from '../../lib/useWallet';
 import { useTranslation } from 'react-i18next';
@@ -35,29 +36,40 @@ export default function Plans() {
         <a href="/plans/create">{t('nav.create_plan')}</a> |{' '}
         <a href="/plans/manage">{t('nav.manage_plans')}</a>
       </div>
-      <label htmlFor="filter">{t('plans.filter')}</label>
-      <select
-        id="filter"
-        value={filter}
-        onChange={(e) =>
-          setFilter(e.target.value as 'all' | 'active' | 'inactive')
-        }
-        style={{ marginLeft: 4, marginRight: 10 }}
+      <Form.Root
+        onSubmit={(e) => e.preventDefault()}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}
       >
-        <option value="all">{t('plans.filter_all')}</option>
-        <option value="active">{t('plans.filter_active')}</option>
-        <option value="inactive">{t('plans.filter_inactive')}</option>
-      </select>
-      <label htmlFor="sort">{t('plans.sort')}</label>
-      <select
-        id="sort"
-        value={sort}
-        onChange={(e) => setSort(e.target.value as 'asc' | 'desc')}
-        style={{ marginLeft: 4 }}
-      >
-        <option value="asc">{t('plans.sort_asc')}</option>
-        <option value="desc">{t('plans.sort_desc')}</option>
-      </select>
+        <Form.Field name="filter" className="field">
+          <Form.Label htmlFor="filter">{t('plans.filter')}</Form.Label>
+          <Form.Control asChild>
+            <select
+              id="filter"
+              value={filter}
+              onChange={(e) =>
+                setFilter(e.target.value as 'all' | 'active' | 'inactive')
+              }
+            >
+              <option value="all">{t('plans.filter_all')}</option>
+              <option value="active">{t('plans.filter_active')}</option>
+              <option value="inactive">{t('plans.filter_inactive')}</option>
+            </select>
+          </Form.Control>
+        </Form.Field>
+        <Form.Field name="sort" className="field">
+          <Form.Label htmlFor="sort">{t('plans.sort')}</Form.Label>
+          <Form.Control asChild>
+            <select
+              id="sort"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as 'asc' | 'desc')}
+            >
+              <option value="asc">{t('plans.sort_asc')}</option>
+              <option value="desc">{t('plans.sort_desc')}</option>
+            </select>
+          </Form.Control>
+        </Form.Field>
+      </Form.Root>
       <ul className="list">
         {sorted.map((p) => (
           <li key={p.id.toString()}>

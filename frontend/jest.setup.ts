@@ -6,6 +6,11 @@ import { TextEncoder, TextDecoder } from 'util';
 jest.mock('@coinbase/wallet-sdk', () => {
   return jest.fn().mockImplementation(() => ({ makeWeb3Provider: jest.fn() }));
 });
+// Provide simple i18n mock
+import en from './public/locales/en/common.json';
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (key: string) => (en as any)[key] || key }),
+}));
 process.env.NEXT_PUBLIC_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000';
 process.env.NEXT_PUBLIC_CHAIN_ID = '1';
 process.env.NEXT_PUBLIC_RPC_URL = 'http://localhost:8545';
