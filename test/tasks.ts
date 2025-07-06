@@ -85,4 +85,39 @@ describe('Hardhat tasks', function () {
     const plan = await proxy.plans(0);
     expect(plan.merchant).to.equal(newMerchant.address);
   });
+
+  it('runs list-subs task', async function () {
+    const { owner, token, proxy } = await loadFixture(deployFixture);
+    const [, user] = await ethers.getSigners();
+    const addr = await proxy.getAddress();
+
+    await run('create-plan', {
+      subscription: addr,
+      merchant: owner.address,
+      token: token.target,
+      price: '100',
+      billingCycle: '60',
+      priceInUsd: false,
+      usdPrice: '0',
+      priceFeed: ethers.ZeroAddress,
+    });
+
+    await token.mint(user.address, 1000n);
+    await token.connect(user).approve(addr, 1000n);
+    await proxy.connect(user).subscribe(0);
+
+    const logs: string[] = [];
+    const orig = console.log;
+    console.log = (...args: any[]) => {
+      logs.push(args.join(' '));
+    };
+    await run('list-subs', { subscription: addr, user: user.address });
+    console.log = orig;
+
+    const out = JSON.parse(logs.join('')) as Array<any>;
+    expect(out.length).to.equal(1);
+    expect(out[0].planId).to.equal('0');
+    expect(out[0].subscriber).to.equal(user.address);
+    expect(out[0].isActive).to.equal(true);
+  });
 });

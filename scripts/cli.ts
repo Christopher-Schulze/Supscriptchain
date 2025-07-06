@@ -88,6 +88,11 @@ async function updateMerchant(opts: any) {
   await run('update-merchant', opts);
 }
 
+async function listSubs(opts: any) {
+  const { run } = await loadHardhat();
+  await run('list-subs', opts);
+}
+
 const program = new Command();
 program
   .name('supscript-cli')
@@ -157,6 +162,13 @@ program
   .option('-s, --subscription <address>', 'Subscription contract address')
   .option('-i, --plan-id <id>', 'Plan ID')
   .action((opts) => disablePlan(opts));
+
+program
+  .command('list-subs')
+  .description('List subscriptions for a user')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .option('-u, --user <address>', 'User address')
+  .action((opts) => listSubs(opts));
 
 program
   .command('update-merchant')
