@@ -115,6 +115,71 @@ test.afterAll(() => {
   stopGraphServer();
 });
 
+test('upgrade script keeps frontend working', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.ethereum = {
+      request: async ({ method, params }: { method: string; params?: unknown[] }) => {
+        const res = await fetch('http://127.0.0.1:8545', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method, params }),
+        });
+        const json = await res.json();
+        if (json.error) throw new Error(json.error.message);
+        return json.result;
+      },
+    } as any;
+  });
+
+  spawnSync(
+    'npx',
+    ['hardhat', 'run', 'scripts/upgrade.ts', '--network', 'localhost'],
+    {
+      cwd: path.join(__dirname, '..'),
+      env: {
+        ...process.env,
+        MERCHANT_ADDRESS: owner,
+        TOKEN_ADDRESS: await token.getAddress(),
+        PRICE_FEED: ethers.ZeroAddress,
+        BILLING_CYCLE: '2592000',
+        PRICE_IN_USD: 'false',
+        FIXED_PRICE: '10',
+        USD_PRICE: '0',
+        SUBSCRIPTION_ADDRESS: await proxy.getAddress(),
+        PLAN_ID: '0',
+      },
+      stdio: 'inherit',
+    },
+  );
+
+  const ownerSigner = provider.getSigner(owner);
+  const subV2Json = JSON.parse(
+    fs.readFileSync(
+      path.join('artifacts', 'contracts', 'SubscriptionUpgradeableV2.sol', 'SubscriptionUpgradeableV2.json'),
+      'utf8',
+    ),
+  );
+  const upgraded = new ethers.Contract(await proxy.getAddress(), subV2Json.abi, ownerSigner);
+  expect(await upgraded.version()).toBe('v2');
+
+  await page.goto('/plans/create');
+  await page.click('text=Connect Wallet');
+  await page.fill('#token', await token.getAddress());
+  await page.fill('#billing', '60');
+  await page.fill('#token-price', '15');
+  await page.click('text=Create');
+
+  await expect.poll(async () => (await upgraded.nextPlanId()).toString()).toBe('2');
+
+  await page.goto('/manage');
+  await page.click('text=Connect Wallet');
+  await page.fill('input', '1');
+  await page.click('text=Subscribe');
+
+  await expect.poll(async () => (await upgraded.userSubscriptions(user, 1)).isActive).toBe(true);
+  expect(await upgraded.version()).toBe('v2');
+});
+
 test('upgrade flow', async ({ page }) => {
   await page.addInitScript(() => {
     window.ethereum = {
