@@ -27,18 +27,18 @@ export default function Plans() {
 
   const { t } = useTranslation();
   return (
-    <div aria-busy={loading}>
+    <div className="container" aria-busy={loading}>
       <h1>{t('plans.title')}</h1>
       {error && <p className="error">{error}</p>}
       {loading && <p aria-live="polite">{t('generic.loading')}</p>}
       {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
-      <div style={{ marginBottom: 10 }}>
+      <div className="top-links">
         <a href="/plans/create">{t('nav.create_plan')}</a> |{' '}
         <a href="/plans/manage">{t('nav.manage_plans')}</a>
       </div>
       <Form.Root
         onSubmit={(e) => e.preventDefault()}
-        style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}
+        className="filter-form"
       >
         <Form.Field name="filter" className="field">
           <Form.Label htmlFor="filter">{t('plans.filter')}</Form.Label>

@@ -140,7 +140,7 @@ export default function Manage() {
   }
 
   return (
-    <div aria-busy={loading}>
+    <div className="container" aria-busy={loading}>
       <h1>{t('manage.title')}</h1>
       {subs.length > 0 && (
         <ul className="list" data-testid="subs-list">
@@ -160,7 +160,7 @@ export default function Manage() {
         <InputField name="sig-v" label={t('manage.v')} value={v} onChange={setV} />
         <InputField name="sig-r" label={t('manage.r')} value={r} onChange={setR} />
         <InputField name="sig-s" label={t('manage.s')} value={s} onChange={setS} />
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="actions">
           <button type="button" onClick={requestPermit} disabled={loading || !account}>
             {t('manage.get_permit')}
           </button>

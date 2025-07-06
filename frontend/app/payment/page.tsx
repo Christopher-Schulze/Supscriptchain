@@ -35,7 +35,7 @@ export default function Payment() {
   }
 
   return (
-    <div>
+    <div className="container">
       <h1>{t('payment.title')}</h1>
       {error && <p className="error">{error}</p>}
       {loading && <p>{t('manage.processing')}</p>}

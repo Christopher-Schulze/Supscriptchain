@@ -68,7 +68,7 @@ export default function Analytics() {
   }
 
   return (
-    <div>
+    <div className="container">
       <h1>{t('analytics.title')}</h1>
       {error && (
         <p className="error">

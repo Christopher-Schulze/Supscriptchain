@@ -43,7 +43,7 @@ export default function NetworkStatus() {
   if (!name || block === null) return null;
 
   return (
-    <span className="network-status" style={{ float: 'right', marginLeft: 10 }}>
+    <span className="network-status">
       {name} #{block}
     </span>
   );
