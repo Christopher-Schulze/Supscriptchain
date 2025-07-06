@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "../lib/store";
 import MessageBar from "../lib/MessageBar";
+import NetworkStatus from "../lib/NetworkStatus";
 import { PlansProvider } from "../lib/plansStore";
 import I18nProvider from "../lib/I18nProvider";
 import LanguageSwitcher from "../lib/LanguageSwitcher";
@@ -34,6 +35,7 @@ export default function RootLayout({
           <StoreProvider>
             <PlansProvider>
               <LanguageSwitcher />
+              <NetworkStatus />
               <MessageBar />
               {children}
             </PlansProvider>
