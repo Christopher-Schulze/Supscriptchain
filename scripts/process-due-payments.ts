@@ -46,6 +46,16 @@ if (configPath) {
 
 const env = loadEnv();
 
+/**
+ * When `METRICS_PORT` is set, the script exposes Prometheus metrics under
+ * `/metrics`.  In addition to the default Node metrics provided by
+ * `prom-client`, two counters are exported:
+ *
+ * - `payment_success_total{plan_id}` – incremented for each successful
+ *   `processPayment` call.
+ * - `payment_failure_total{plan_id}` – incremented when a payment attempt
+ *   fails after all retries.
+ */
 const metricsPort = env.METRICS_PORT ? parseInt(env.METRICS_PORT, 10) : 0;
 let register: Registry | null = null;
 let successCounter: Counter | null = null;

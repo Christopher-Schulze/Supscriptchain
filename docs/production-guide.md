@@ -79,19 +79,32 @@ Consider setting up additional service-level monitoring for your contract intera
 ## Monitoring
 
 `scripts/subgraph-server.ts` serves Prometheus metrics on port `9091`.
-Start the server with:
+`scripts/process-due-payments.ts` can expose metrics on port `9092` when
+`METRICS_PORT` is set.
+Start the servers with:
 
 ```bash
+# Graph Node monitoring
 METRICS_PORT=9091 npm run subgraph-server
+
+# Payment metrics
+METRICS_PORT=9092 ts-node scripts/process-due-payments.ts --daemon
 ```
 
-Add a scrape config in your `prometheus.yml`:
+Add scrape configs in your `prometheus.yml`:
 
 ```yaml
 scrape_configs:
   - job_name: 'subgraph-server'
     static_configs:
       - targets: ['localhost:9091']
+  - job_name: 'due-payments'
+    static_configs:
+      - targets: ['localhost:9092']
 ```
 
-Grafana can visualize these metrics using Prometheus as the data source. Alert on `graph_node_health_failures_total` or when `graph_node_health_status` stays `0` for several minutes.
+Grafana visualizes these metrics using Prometheus as the data source.
+Useful alerts include `graph_node_health_failures_total` rising or
+`graph_node_health_status` staying `0` for several minutes. For the
+payment script you may monitor `payment_failure_total` per `plan_id` and
+alert when failures spike.

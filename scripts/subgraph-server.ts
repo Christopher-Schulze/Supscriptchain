@@ -37,6 +37,14 @@ const metricsPort = parseInt(env.METRICS_PORT || '9091', 10);
 const log = createLogger({ logFile, lokiUrl, logLevel });
 const register = new Registry();
 collectDefaultMetrics({ register });
+/**
+ * Prometheus metrics exported on `/metrics` when `METRICS_PORT` is set:
+ *
+ * - `graph_node_restarts_total` – number of graph-node restarts.
+ * - `graph_node_health_failures_total` – failed health checks.
+ * - `graph_node_health_status` – gauge set to 1 when the last health
+ *   check succeeded, otherwise 0.
+ */
 const restartCounter = new Counter({
   name: 'graph_node_restarts_total',
   help: 'Total number of graph-node restarts',

@@ -1,5 +1,6 @@
 # Example Prometheus configuration
-# Scrapes metrics from the subgraph server on port 9091.
+# Scrapes metrics from the subgraph server on port 9091 and the
+# payment processing script on port 9092.
 
 global:
   scrape_interval: 15s
@@ -8,3 +9,6 @@ scrape_configs:
   - job_name: 'subgraph-server'
     static_configs:
       - targets: ['localhost:9091']
+  - job_name: 'due-payments'
+    static_configs:
+      - targets: ['localhost:9092']
