@@ -7,6 +7,8 @@ export function checkEnv(): void {
   const envPath = path.resolve(__dirname, '..', '.env');
   config({ path: envPath, quiet: true });
 
+  const optionalKeys = new Set(['METRICS_PORT', 'LOKI_URL']);
+
   const envExamplePath = path.resolve(__dirname, '..', '.env.example');
   const lines = fs.readFileSync(envExamplePath, 'utf-8').split(/\r?\n/);
   const keys = lines
@@ -14,7 +16,9 @@ export function checkEnv(): void {
     .filter((line) => line && !line.startsWith('#'))
     .map((line) => line.split('=')[0]);
 
-  const missing = keys.filter((key) => !process.env[key]);
+  const missing = keys.filter(
+    (key) => !process.env[key] && !optionalKeys.has(key),
+  );
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}`,
@@ -35,6 +39,8 @@ export function checkEnv(): void {
     FIXED_PRICE: numberString,
     USD_PRICE: numberString,
     PLAN_ID: numberString,
+    METRICS_PORT: numberString.optional(),
+    LOKI_URL: z.string().optional(),
   });
 
   const result = schema.safeParse(process.env);
