@@ -24,13 +24,13 @@ Avoid committing this file to version control. Use different files per environme
 
 Die folgenden Variablen enthalten vertrauliche Informationen und sollten nicht im Repository gespeichert werden.
 
-| Variable | Verwendung | Empfohlener Speicherort |
-| -------- | ---------- | ---------------------- |
-| `SEPOLIA_RPC_URL` | RPC Endpoint für das Sepolia-Testnet | GitHub Secret oder Eintrag in HashiCorp Vault |
-| `SEPOLIA_PRIVATE_KEY` | privater Schlüssel für Testnet-Deployments | GitHub Secret oder Eintrag in HashiCorp Vault |
-| `MAINNET_RPC_URL` | RPC Endpoint für das Ethereum-Mainnet | GitHub Secret oder Eintrag in HashiCorp Vault |
-| `MAINNET_PRIVATE_KEY` | privater Schlüssel für Mainnet-Deployments | GitHub Secret oder Eintrag in HashiCorp Vault |
-| `MERCHANT_PRIVATE_KEY` | Schlüssel für `process-due-payments` | GitHub Secret oder Eintrag in HashiCorp Vault |
+| Variable               | Verwendung                                 | Empfohlener Speicherort                       |
+| ---------------------- | ------------------------------------------ | --------------------------------------------- |
+| `SEPOLIA_RPC_URL`      | RPC Endpoint für das Sepolia-Testnet       | GitHub Secret oder Eintrag in HashiCorp Vault |
+| `SEPOLIA_PRIVATE_KEY`  | privater Schlüssel für Testnet-Deployments | GitHub Secret oder Eintrag in HashiCorp Vault |
+| `MAINNET_RPC_URL`      | RPC Endpoint für das Ethereum-Mainnet      | GitHub Secret oder Eintrag in HashiCorp Vault |
+| `MAINNET_PRIVATE_KEY`  | privater Schlüssel für Mainnet-Deployments | GitHub Secret oder Eintrag in HashiCorp Vault |
+| `MERCHANT_PRIVATE_KEY` | Schlüssel für `process-due-payments`       | GitHub Secret oder Eintrag in HashiCorp Vault |
 
 Bewahren Sie diese Werte nicht im Quellcode auf. GitHub Actions können sie direkt aus Repository-Secrets laden. Für eigene Server bieten sich zentrale Secret-Stores wie HashiCorp Vault oder AWS Secrets Manager an.
 
@@ -75,23 +75,31 @@ For the subgraph, monitor the Graph Node via its `/health` endpoint. The helper 
 
 Consider setting up additional service-level monitoring for your contract interactions and Docker containers.
 
-
 ## Monitoring
 
 `scripts/subgraph-server.ts` serves Prometheus metrics on port `9091`.
-Start the server with:
+`scripts/process-due-payments.ts` can expose metrics on port `9092` when
+`METRICS_PORT` is set. Start the servers with:
 
 ```bash
 METRICS_PORT=9091 npm run subgraph-server
+METRICS_PORT=9092 npm run process-due-payments -- --daemon
 ```
 
-Add a scrape config in your `prometheus.yml`:
+Add scrape configs in your `prometheus.yml`:
 
 ```yaml
 scrape_configs:
   - job_name: 'subgraph-server'
     static_configs:
       - targets: ['localhost:9091']
+  - job_name: 'payment-processor'
+    static_configs:
+      - targets: ['localhost:9092']
 ```
 
-Grafana can visualize these metrics using Prometheus as the data source. Alert on `graph_node_health_failures_total` or when `graph_node_health_status` stays `0` for several minutes.
+Run Prometheus with this configuration (see `docs/examples/prometheus.yml`).
+Point Grafana to the Prometheus server as a data source and import a dashboard
+showing the `payment_*` and `graph_node_*` metrics. Alert on
+`graph_node_health_failures_total` or when `graph_node_health_status` stays `0`
+for several minutes.

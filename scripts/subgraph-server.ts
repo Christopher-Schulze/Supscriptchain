@@ -2,12 +2,7 @@ import { spawn, ChildProcess } from 'child_process';
 import http from 'http';
 import { loadEnv } from './env';
 import { createLogger, LogFn, LogLevel } from './log';
-import {
-  Counter,
-  Gauge,
-  Registry,
-  collectDefaultMetrics,
-} from 'prom-client';
+import { Counter, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
 
 type LogLevel = 'info' | 'error' | 'warn';
 type LogFn = (level: LogLevel, ...args: any[]) => void;
@@ -15,19 +10,10 @@ type LogFn = (level: LogLevel, ...args: any[]) => void;
 const env = loadEnv();
 
 const cmd = env.GRAPH_NODE_CMD || 'graph-node';
-const args = env.GRAPH_NODE_ARGS
-  ? env.GRAPH_NODE_ARGS.split(' ')
-  : [];
-const healthUrl =
-  env.GRAPH_NODE_HEALTH || 'http://localhost:8000/health';
-const healthInterval = parseInt(
-  env.GRAPH_NODE_HEALTH_INTERVAL || '60000',
-  10,
-);
-const restartDelay = parseInt(
-  env.GRAPH_NODE_RESTART_DELAY || '5000',
-  10,
-);
+const args = env.GRAPH_NODE_ARGS ? env.GRAPH_NODE_ARGS.split(' ') : [];
+const healthUrl = env.GRAPH_NODE_HEALTH || 'http://localhost:8000/health';
+const healthInterval = parseInt(env.GRAPH_NODE_HEALTH_INTERVAL || '60000', 10);
+const restartDelay = parseInt(env.GRAPH_NODE_RESTART_DELAY || '5000', 10);
 const maxFails = parseInt(env.GRAPH_NODE_MAX_FAILS || '3', 10);
 const logFile = env.LOG_FILE || env.GRAPH_NODE_LOG || 'graph-node.log';
 const lokiUrl = env.LOKI_URL;
@@ -37,6 +23,12 @@ const metricsPort = parseInt(env.METRICS_PORT || '9091', 10);
 const log = createLogger({ logFile, lokiUrl, logLevel });
 const register = new Registry();
 collectDefaultMetrics({ register });
+
+// Prometheus metrics exported on `/metrics` when `METRICS_PORT` is set.
+// - `graph_node_restarts_total`: counts process restarts
+// - `graph_node_health_failures_total`: failed health checks
+// - `graph_node_health_status`: gauge set to 1 when the last health check
+//   succeeded and 0 otherwise
 const restartCounter = new Counter({
   name: 'graph_node_restarts_total',
   help: 'Total number of graph-node restarts',
@@ -66,7 +58,6 @@ metricsServer.listen(metricsPort, () => {
 });
 let child: ChildProcess;
 let fails = 0;
-
 
 function start() {
   try {
