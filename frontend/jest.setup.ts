@@ -9,7 +9,17 @@ jest.mock('@coinbase/wallet-sdk', () => {
 // Provide simple i18n mock
 import en from './public/locales/en/common.json';
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => (en as any)[key] || key }),
+  useTranslation: () => ({
+    t: (key: string, opts?: Record<string, string>) => {
+      let str = (en as any)[key] || key;
+      if (opts) {
+        for (const k of Object.keys(opts)) {
+          str = str.replace(`{{${k}}}`, String(opts[k]));
+        }
+      }
+      return str;
+    },
+  }),
 }));
 process.env.NEXT_PUBLIC_CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000';
 process.env.NEXT_PUBLIC_CHAIN_ID = '1';

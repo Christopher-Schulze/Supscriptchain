@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useStore } from "./store";
+import { useTranslation } from 'react-i18next';
 import WalletConnectProvider from "@walletconnect/web3-provider";
 import CoinbaseWalletSDK from "@coinbase/wallet-sdk";
 import { env } from "./env";
@@ -11,6 +12,7 @@ interface EthereumProvider {
 export default function useWallet() {
   const [account, setAccount] = useState<string | null>(null);
   const { setMessage } = useStore();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -42,17 +44,19 @@ export default function useWallet() {
             env.NEXT_PUBLIC_CHAIN_ID,
           ) as unknown as EthereumProvider;
         } catch {
-          setMessage({ text: "Wallet not found", type: 'warning' });
+          setMessage({ text: t('messages.wallet_not_found'), type: 'warning' });
           return;
         }
       }
     }
     try {
       const accounts = (await eth.request({ method: "eth_requestAccounts" })) as string[];
-      setAccount(accounts[0]);
+      const acc = accounts[0];
+      setAccount(acc);
+      setMessage({ text: t('messages.wallet_connected', { account: acc }), type: 'success' });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to connect";
-      setMessage({ text: msg, type: 'error' });
+      const msg = err instanceof Error ? err.message : t('messages.failed_connect');
+      setMessage({ text: t('messages.transaction_failed', { error: msg }), type: 'error' });
     }
   }
 

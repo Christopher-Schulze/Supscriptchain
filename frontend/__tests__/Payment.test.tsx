@@ -25,12 +25,12 @@ function Wrapper() {
 }
 
 test('shows message when payment fails', async () => {
-  mockedProcess.mockRejectedValue(new Error('boom'));
+  mockedProcess.mockRejectedValue(new Error('Transaction failed: boom'));
   render(<Wrapper />);
   const inputs = screen.getAllByRole('textbox');
   await userEvent.type(inputs[0], '0x0000000000000000000000000000000000000001');
   await userEvent.clear(inputs[1]);
   await userEvent.type(inputs[1], '1');
   await userEvent.click(screen.getByText('Process'));
-  expect(await screen.findByText('boom')).toBeInTheDocument();
+  expect(await screen.findByText('Transaction failed: boom')).toBeInTheDocument();
 });

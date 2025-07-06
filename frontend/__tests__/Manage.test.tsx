@@ -47,13 +47,13 @@ beforeEach(() => {
 });
 
 test('shows message when subscribe fails', async () => {
-  mockedSubscribe.mockRejectedValue(new Error('fail'));
+  mockedSubscribe.mockRejectedValue(new Error('Transaction failed: fail'));
   render(<Wrapper />);
   const planInput = screen.getAllByRole('textbox')[0];
   await userEvent.clear(planInput);
   await userEvent.type(planInput, '1');
   await userEvent.click(screen.getByText('Subscribe'));
-  expect(await screen.findByText('fail')).toBeInTheDocument();
+  expect(await screen.findByText('Transaction failed: fail')).toBeInTheDocument();
 });
 
 test('shows error on invalid v signature', async () => {
