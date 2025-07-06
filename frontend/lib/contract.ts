@@ -3,6 +3,7 @@ import type { ExternalProvider } from 'ethers';
 import type { Subscription } from 'typechain/contracts/Subscription';
 import { Subscription__factory } from 'typechain/factories/contracts/Subscription__factory';
 import { env } from './env';
+import i18n from './i18n';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export function parseEthersError(err: unknown): string {
@@ -17,14 +18,17 @@ export function parseEthersError(err: unknown): string {
       const d = (rpc as any).data;
       msg += `: ${typeof d === 'string' ? d : JSON.stringify(d)}`;
     }
-    return msg;
+    return i18n.t('messages.transaction_failed', { error: msg });
   }
   return (
-    e?.shortMessage ||
-    e?.reason ||
-    e?.error?.message ||
-    e?.data?.message ||
-    (err instanceof Error ? err.message : String(err))
+    i18n.t('messages.transaction_failed', {
+      error:
+        e?.shortMessage ||
+        e?.reason ||
+        e?.error?.message ||
+        e?.data?.message ||
+        (err instanceof Error ? err.message : String(err)),
+    })
   );
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */

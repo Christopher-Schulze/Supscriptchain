@@ -28,12 +28,12 @@ describe('UpdatePlan page', () => {
   });
 
   test('shows contract error', async () => {
-    mockUpdate.mockRejectedValue(new Error('boom'));
+    mockUpdate.mockRejectedValue(new Error('Transaction failed: boom'));
     render(<Wrapper />);
     await userEvent.type(screen.getByLabelText('Plan ID'), '1');
     await userEvent.type(screen.getByLabelText('Billing (seconds)'), '1');
     await userEvent.type(screen.getByLabelText('Token Price'), '1');
     await userEvent.click(screen.getByText('Update'));
-    expect(await screen.findByText('boom')).toBeInTheDocument();
+    expect(await screen.findByText('Transaction failed: boom')).toBeInTheDocument();
   });
 });

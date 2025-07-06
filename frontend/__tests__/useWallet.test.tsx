@@ -1,6 +1,6 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import useWallet from '../lib/useWallet';
-import { StoreProvider } from '../lib/store';
+import { StoreProvider, useStore } from '../lib/store';
 
 jest.mock('@walletconnect/web3-provider', () => {
   return jest.fn().mockImplementation(() => ({ enable: jest.fn() }));
@@ -54,4 +54,22 @@ test('connect falls back to Coinbase Wallet when WalletConnect fails', async () 
     Number(process.env.NEXT_PUBLIC_CHAIN_ID),
   );
   expect(result.current.account).toBe('0xaaa');
+});
+
+test('shows error message when connection fails', async () => {
+  const request = jest.fn((args: { method: string }) => {
+    if (args.method === 'eth_accounts') return Promise.resolve([]);
+    return Promise.reject(new Error('oops'));
+  });
+  (window as any).ethereum = { request };
+  const { result } = renderHook(
+    () => ({ wallet: useWallet(), store: useStore() }),
+    { wrapper: StoreProvider },
+  );
+  await act(async () => {
+    await result.current.wallet.connect().catch(() => {});
+  });
+  await waitFor(() =>
+    expect(result.current.store.message?.text).toBe('Transaction failed: oops'),
+  );
 });

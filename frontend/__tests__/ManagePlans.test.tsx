@@ -54,12 +54,12 @@ describe('ManagePlans page', () => {
 
   test('shows contract error', async () => {
     mockUsePlans.mockReturnValue({ plans: [plan], reload: jest.fn() });
-    mockUpdate.mockRejectedValue(new Error('boom'));
+    mockUpdate.mockRejectedValue(new Error('Transaction failed: boom'));
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
     await userEvent.type(screen.getByLabelText('Billing (seconds)'), '1');
     await userEvent.click(screen.getByText('Update'));
-    expect(await screen.findByText('boom')).toBeInTheDocument();
+    expect(await screen.findByText('Transaction failed: boom')).toBeInTheDocument();
   });
 
   test('validates merchant address', async () => {
@@ -67,7 +67,7 @@ describe('ManagePlans page', () => {
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
     await userEvent.type(screen.getByLabelText('Merchant'), 'foo');
-    await userEvent.click(screen.getByText('Merchant ändern'));
+    await userEvent.click(screen.getByText('Update Merchant'));
     expect(
       await screen.findByText(/Merchant address invalid/),
     ).toBeInTheDocument();
@@ -76,22 +76,22 @@ describe('ManagePlans page', () => {
 
   test('shows update merchant error', async () => {
     mockUsePlans.mockReturnValue({ plans: [plan], reload: jest.fn() });
-    mockUpdateMerchant.mockRejectedValue(new Error('fail'));
+    mockUpdateMerchant.mockRejectedValue(new Error('Transaction failed: fail'));
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
     await userEvent.type(
       screen.getByLabelText('Merchant'),
       '0x' + '1'.repeat(40),
     );
-    await userEvent.click(screen.getByText('Merchant ändern'));
-    expect(await screen.findByText('fail')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Update Merchant'));
+    expect(await screen.findByText('Transaction failed: fail')).toBeInTheDocument();
   });
 
   test('disable plan button calls contract', async () => {
     mockUsePlans.mockReturnValue({ plans: [plan], reload: jest.fn() });
     render(<Wrapper />);
     await userEvent.selectOptions(screen.getByRole('combobox'), ['0']);
-    await userEvent.click(screen.getByText('Plan deaktivieren'));
+    await userEvent.click(screen.getByText('Disable Plan'));
     expect(mockDisablePlan).toHaveBeenCalled();
   });
 });

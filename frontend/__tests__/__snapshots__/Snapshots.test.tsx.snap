@@ -1,0 +1,261 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`manage page snapshot 1`] = `
+<DocumentFragment>
+  <div
+    aria-busy="false"
+  >
+    <h1>
+      Manage Subscription
+    </h1>
+    <form
+      class="form"
+    >
+      <div
+        class="field"
+      >
+        <label
+          for="plan-id"
+        >
+          Plan ID:
+        </label>
+        <input
+          id="plan-id"
+          name="plan-id"
+          title=""
+          type="text"
+          value="0"
+        />
+      </div>
+      <div
+        class="field"
+      >
+        <label
+          for="deadline"
+        >
+          Deadline (unix secs):
+        </label>
+        <input
+          id="deadline"
+          name="deadline"
+          title=""
+          type="text"
+          value=""
+        />
+      </div>
+      <div
+        class="field"
+      >
+        <label
+          for="sig-v"
+        >
+          v:
+        </label>
+        <input
+          id="sig-v"
+          name="sig-v"
+          title=""
+          type="text"
+          value=""
+        />
+      </div>
+      <div
+        class="field"
+      >
+        <label
+          for="sig-r"
+        >
+          r:
+        </label>
+        <input
+          id="sig-r"
+          name="sig-r"
+          title=""
+          type="text"
+          value=""
+        />
+      </div>
+      <div
+        class="field"
+      >
+        <label
+          for="sig-s"
+        >
+          s:
+        </label>
+        <input
+          id="sig-s"
+          name="sig-s"
+          title=""
+          type="text"
+          value=""
+        />
+      </div>
+      <div
+        style="display: flex; gap: 8px; flex-wrap: wrap;"
+      >
+        <button
+          type="button"
+        >
+          Get Permit Signature
+        </button>
+        <button
+          type="button"
+        >
+          Subscribe with Permit
+        </button>
+        <button
+          type="submit"
+        >
+          Subscribe
+        </button>
+        <button
+          type="button"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`payment page snapshot 1`] = `
+<DocumentFragment>
+  <div>
+    <h1>
+      Process Payment
+    </h1>
+    <form
+      class="form"
+    >
+      <div
+        class="field"
+      >
+        <label
+          for="pay-user"
+        >
+          User:
+        </label>
+        <input
+          id="pay-user"
+          name="pay-user"
+          title=""
+          type="text"
+          value=""
+        />
+      </div>
+      <div
+        class="field"
+      >
+        <label
+          for="pay-plan"
+        >
+          Plan ID:
+        </label>
+        <input
+          id="pay-plan"
+          name="pay-plan"
+          title=""
+          type="text"
+          value="0"
+        />
+      </div>
+      <button
+        type="submit"
+      >
+        Process
+      </button>
+    </form>
+  </div>
+</DocumentFragment>
+`;
+
+exports[`plans page snapshot 1`] = `
+<DocumentFragment>
+  <div
+    aria-busy="false"
+  >
+    <h1>
+      Available Plans
+    </h1>
+    <div
+      style="margin-bottom: 10px;"
+    >
+      <a
+        href="/plans/create"
+      >
+        Create Plan
+      </a>
+       | 
+      <a
+        href="/plans/manage"
+      >
+        Manage Plans
+      </a>
+    </div>
+    <form
+      style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;"
+    >
+      <div
+        class="field"
+      >
+        <label
+          for="filter"
+        >
+          Filter
+        </label>
+        <select
+          id="filter"
+          name="filter"
+          title=""
+        >
+          <option
+            value="all"
+          >
+            All
+          </option>
+          <option
+            value="active"
+          >
+            Active
+          </option>
+          <option
+            value="inactive"
+          >
+            Inactive
+          </option>
+        </select>
+      </div>
+      <div
+        class="field"
+      >
+        <label
+          for="sort"
+        >
+          Sort
+        </label>
+        <select
+          id="sort"
+          name="sort"
+          title=""
+        >
+          <option
+            value="asc"
+          >
+            Price ascending
+          </option>
+          <option
+            value="desc"
+          >
+            Price descending
+          </option>
+        </select>
+      </div>
+    </form>
+    <ul
+      class="list"
+    />
+  </div>
+</DocumentFragment>
+`;

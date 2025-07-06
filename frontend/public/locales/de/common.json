@@ -90,5 +90,8 @@
   "messages.cancelled": "Gekündigt! Tx: {{hash}}",
   "messages.payment_processed": "Zahlung durchgeführt! Tx: {{hash}}",
   "messages.wallet_not_found": "Wallet nicht gefunden",
-  "messages.failed_connect": "Verbindung fehlgeschlagen"
+  "messages.failed_connect": "Verbindung fehlgeschlagen",
+  "messages.wallet_connected": "Wallet verbunden: {{account}}",
+  "messages.transaction_failed": "Transaktion fehlgeschlagen: {{error}}",
+  "messages.dismiss": "Nachricht schließen"
 }
