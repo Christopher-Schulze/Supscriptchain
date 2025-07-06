@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getContract } from './contract';
 import useWallet from './useWallet';
+import { env } from './env';
 
 export interface UserSubscription {
   planId: bigint;
@@ -40,6 +41,8 @@ export default function useUserSubscriptions() {
 
   useEffect(() => {
     load();
+    const id = setInterval(load, env.NEXT_PUBLIC_REFRESH_INTERVAL * 1000);
+    return () => clearInterval(id);
   }, [account]);
 
   return { subs, reload: load };

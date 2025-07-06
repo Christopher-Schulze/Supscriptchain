@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { getContract } from './contract';
+import { env } from './env';
 
 export interface Plan {
   id: bigint;
@@ -42,6 +43,8 @@ export function PlansProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     load();
+    const id = setInterval(load, env.NEXT_PUBLIC_REFRESH_INTERVAL * 1000);
+    return () => clearInterval(id);
   }, []);
 
   return (

@@ -58,4 +58,24 @@ describe('plansStore', () => {
     await waitFor(() => expect(result.current.plans).toHaveLength(0));
     expect(result.current.plans).toHaveLength(0);
   });
+
+  test('reloads periodically and cleans up', async () => {
+    jest.useFakeTimers();
+    const contract = {
+      nextPlanId: jest.fn().mockResolvedValue(1n),
+      plans: jest.fn().mockResolvedValue(makePlan('t1')),
+    };
+    mockedGetContract.mockResolvedValue(contract);
+    const { result, unmount } = renderHook(() => usePlans(), {
+      wrapper: PlansProvider,
+    });
+    await waitFor(() => expect(result.current.plans).toHaveLength(1));
+    contract.plans.mockResolvedValue(makePlan('t2'));
+    jest.advanceTimersByTime(30000);
+    await waitFor(() => expect(result.current.plans[0].token).toBe('t2'));
+    unmount();
+    jest.advanceTimersByTime(30000);
+    expect(contract.nextPlanId).toHaveBeenCalledTimes(2);
+    jest.useRealTimers();
+  });
 });
