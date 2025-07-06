@@ -7,7 +7,7 @@ export default function LanguageSwitcher() {
     i18n.changeLanguage(i18n.language === 'en' ? 'de' : 'en');
   };
   return (
-    <button onClick={toggle} style={{ float: 'right' }}>
+    <button onClick={toggle} className="language-switcher">
       {i18n.language === 'en' ? 'DE' : 'EN'}
     </button>
   );

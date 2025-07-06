@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 export default function Home() {
   const { t } = useTranslation();
   return (
-    <div style={{ padding: 20 }}>
+    <div className="container">
       <h1>{t('home.title')}</h1>
-      <ul>
+      <ul className="nav">
         <li>
           <Link href="/plans">{t('nav.plans')}</Link>
         </li>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "../styles/theme.css";
 import { StoreProvider } from "../lib/store";
 import MessageBar from "../lib/MessageBar";
 import NetworkStatus from "../lib/NetworkStatus";
@@ -34,8 +35,10 @@ export default function RootLayout({
         <I18nProvider>
           <StoreProvider>
             <PlansProvider>
-              <LanguageSwitcher />
-              <NetworkStatus />
+              <div className="top-bar">
+                <LanguageSwitcher />
+                <NetworkStatus />
+              </div>
               <MessageBar />
               {children}
             </PlansProvider>
