@@ -67,7 +67,7 @@ docker build -f Dockerfile.payments -t payments .
 docker run --env-file .env payments
 ```
 
-Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIVATE_KEY`. The container runs `scripts/process-due-payments.ts` and exits with a non-zero status when any payments fail if `FAIL_ON_FAILURE=true`. Pass `--daemon` to keep the process running and load a JSON or YAML config via `--config cfg.yaml`.
+Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIVATE_KEY`. Logging and metrics can be adjusted using the optional variables from [docs/env-vars.md](env-vars.md). The container runs `scripts/process-due-payments.ts` and exits with a non-zero status when any payments fail if `FAIL_ON_FAILURE=true`. Pass `--daemon` to keep the process running and load a JSON or YAML config via `--config cfg.yaml`.
 
 ## Health Checks
 

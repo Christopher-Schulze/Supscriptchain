@@ -14,6 +14,7 @@ The core of this repository is `Subscription.sol`. The contract lets merchants c
   - `subscribe` – user function that transfers the first payment and records the subscription.
   - `processPayment` – merchant function to charge recurring payments.
   - `cancelSubscription` – subscriber function to cancel an active plan.
+  - `recoverERC20` – owner function to retrieve tokens sent to the contract by mistake.
 
 The project also contains `MockToken.sol` and `MockV3Aggregator.sol` for local testing. These mocks emulate an ERC20 token and a Chainlink price feed.
 
@@ -22,6 +23,10 @@ The project also contains `MockToken.sol` and `MockV3Aggregator.sol` for local t
 `Subscription.sol` relies on OpenZeppelin's `AccessControl`. The deployer
 receives `DEFAULT_ADMIN_ROLE` and `PAUSER_ROLE`. Accounts with `PAUSER_ROLE`
 can pause or unpause the contract when needed.
+
+Ownership itself is handled via `Ownable2Step`, allowing transfers to be
+accepted in a second transaction. This prevents accidentally losing control of
+the contract when handing it over to another account.
 
 The contract also inherits from `ReentrancyGuard` and uses the `nonReentrant`
 modifier on subscription-related functions to protect against reentrant calls.
