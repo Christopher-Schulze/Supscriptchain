@@ -104,9 +104,9 @@ variables. Missing values can also be provided in `subgraph/graph.config.json`:
 - `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint consumed by the frontend
 
 Create `subgraph/graph.config.json` from `graph.config.example.json` and set
-`GRAPH_NODE_URL`, `IPFS_URL` and `SUBGRAPH_NAME` to avoid exporting these
-variables each time. Both `prepare-subgraph` and `deploy-subgraph` load this
-file automatically when present.
+`GRAPH_NODE_URL`, `IPFS_URL`, `SUBGRAPH_NAME` and optionally `SUBGRAPH_VERSION`
+to avoid exporting these variables each time. Both `prepare-subgraph` and
+`deploy-subgraph` load this file automatically when present.
 
 Export them in your shell or provide `--network` and `--address` on the command
 line. To connect the frontend create `frontend/.env.local` with:
@@ -122,7 +122,8 @@ synced.
 
 If you run a Graph Node on a remote server, set `GRAPH_NODE_URL` and
 `IPFS_URL` (or define them in `subgraph/graph.config.json`). Optionally set
-`GRAPH_ACCESS_TOKEN` and `SUBGRAPH_VERSION` and run:
+`GRAPH_ACCESS_TOKEN` and `SUBGRAPH_VERSION` (or pass `--version-label` on the
+command line) and run:
 
 ```bash
 npm run deploy-subgraph

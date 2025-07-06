@@ -21,8 +21,8 @@ function loadGraphConfig() {
  * Build and deploy the subgraph using `graph deploy`.
  *
  * Example remote deployment:
- * `GRAPH_NODE_URL=https://node.example.com:8020 IPFS_URL=https://node.example.com:5001 ts-node scripts/deploy-subgraph.ts --token <access> --version v1.0.0`
- */
+ * `GRAPH_NODE_URL=https://node.example.com:8020 IPFS_URL=https://node.example.com:5001 ts-node scripts/deploy-subgraph.ts --token <access> --version-label v1.0.0`
+*/
 
 function parseArgs() {
   const result: { version?: string; token?: string } = {};
@@ -30,6 +30,7 @@ function parseArgs() {
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     switch (arg) {
+      case '--version-label':
       case '--version':
       case '-v':
         result.version = args[++i];
@@ -39,7 +40,9 @@ function parseArgs() {
         result.token = args[++i];
         break;
       default:
-        if (arg.startsWith('--version=')) {
+        if (arg.startsWith('--version-label=')) {
+          result.version = arg.split('=')[1];
+        } else if (arg.startsWith('--version=')) {
           result.version = arg.split('=')[1];
         } else if (arg.startsWith('--token=')) {
           result.token = arg.split('=')[1];
