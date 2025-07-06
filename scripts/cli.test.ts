@@ -33,7 +33,15 @@ describe('cli.ts', function () {
 
   it('fails when subscription is missing', function () {
     const res = run(['list']);
-    expect(res.status).to.not.equal(0);
+    expect(res.status).to.equal(1);
     expect(res.stderr).to.match(/subscription address missing/i);
+  });
+
+  it('returns json error with --json', function () {
+    const res = run(['list', '--json']);
+    expect(res.status).to.equal(1);
+    const lines = res.stderr.trim().split(/\r?\n/);
+    const obj = JSON.parse(lines[lines.length - 1]);
+    expect(obj.error).to.match(/subscription address missing/i);
   });
 });

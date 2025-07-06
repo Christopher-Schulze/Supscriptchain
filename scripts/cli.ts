@@ -20,13 +20,13 @@ if (network) {
   process.env.HARDHAT_NETWORK = network;
 }
 
-dotenvConfig();
+dotenvConfig({ quiet: true });
 
 async function loadHardhat() {
   return await import('hardhat');
 }
 
-async function listPlans(opts: { subscription?: string }) {
+async function listPlans(opts: { subscription?: string; json?: boolean }) {
   const { ethers } = await loadHardhat();
   const address = opts.subscription ?? process.env.SUBSCRIPTION_ADDRESS;
   if (!address) {
@@ -35,6 +35,7 @@ async function listPlans(opts: { subscription?: string }) {
   const [signer] = await ethers.getSigners();
   const contract = await ethers.getContractAt('SubscriptionUpgradeable', address, signer);
   const nextId = await contract.nextPlanId();
+  const plans: any[] = [];
   for (let i = 0n; i < nextId; i++) {
     const p = await contract.plans(i);
     const info = {
@@ -49,55 +50,90 @@ async function listPlans(opts: { subscription?: string }) {
       priceFeedAddress: p.priceFeedAddress,
       active: p.active,
     };
-    console.log(JSON.stringify(info, null, 2));
+    if (opts.json) {
+      plans.push(info);
+    } else {
+      console.log(JSON.stringify(info, null, 2));
+    }
+  }
+  if (opts.json) {
+    console.log(JSON.stringify(plans, null, 2));
+  }
+}
+
+async function runTask(taskName: string, opts: any) {
+  const { run } = await loadHardhat();
+  if (!opts.json) {
+    await run(taskName, opts);
+    return;
+  }
+  const logs: string[] = [];
+  const orig = console.log;
+  console.log = (...args: any[]) => {
+    logs.push(args.join(' '));
+  };
+  try {
+    await run(taskName, opts);
+  } finally {
+    console.log = orig;
+  }
+  const output = logs.join('').trim();
+  try {
+    console.log(JSON.stringify(JSON.parse(output), null, 2));
+  } catch {
+    console.log(JSON.stringify({ message: output }, null, 2));
   }
 }
 
 async function createPlan(opts: any) {
-  const { run } = await loadHardhat();
-  await run('create-plan', opts);
+  await runTask('create-plan', opts);
 }
 
 async function updatePlan(opts: any) {
-  const { run } = await loadHardhat();
-  await run('update-plan', opts);
+  await runTask('update-plan', opts);
 }
 
 async function pauseContract(opts: any) {
-  const { run } = await loadHardhat();
-  await run('pause', opts);
+  await runTask('pause', opts);
 }
 
 async function unpauseContract(opts: any) {
-  const { run } = await loadHardhat();
-  await run('unpause', opts);
+  await runTask('unpause', opts);
 }
 
 async function disablePlan(opts: any) {
-  const { run } = await loadHardhat();
-  await run('disable-plan', opts);
+  await runTask('disable-plan', opts);
 }
 
 async function showStatus(opts: any) {
-  const { run } = await loadHardhat();
-  await run('status', opts);
+  await runTask('status', opts);
 }
 
 async function updateMerchant(opts: any) {
-  const { run } = await loadHardhat();
-  await run('update-merchant', opts);
+  await runTask('update-merchant', opts);
 }
 
 async function listSubs(opts: any) {
-  const { run } = await loadHardhat();
-  await run('list-subs', opts);
+  await runTask('list-subs', opts);
 }
 
 const program = new Command();
 program
   .name('supscript-cli')
   .description('Manage subscription plans')
-  .option('-n, --network <name>', 'Hardhat network');
+  .option('-n, --network <name>', 'Hardhat network')
+  .option('--json', 'Output results as JSON');
+
+process.on('unhandledRejection', (err) => {
+  const opts = program.opts();
+  const msg = err instanceof Error ? err.message : String(err);
+  if (opts.json) {
+    console.error(JSON.stringify({ error: msg }));
+  } else {
+    console.error(msg);
+  }
+  process.exit(1);
+});
 
 program
   .command('list')
@@ -182,7 +218,13 @@ const parsePromise = (program as any).parseAsync
   ? (program as any).parseAsync(process.argv)
   : Promise.resolve(program.parse(process.argv));
 parsePromise.catch((err: any) => {
-  console.error(err);
-  process.exitCode = 1;
+  const opts = program.opts();
+  const msg = err instanceof Error ? err.message : String(err);
+  if (opts.json) {
+    console.error(JSON.stringify({ error: msg }));
+  } else {
+    console.error(msg);
+  }
+  process.exit(1);
 });
 
