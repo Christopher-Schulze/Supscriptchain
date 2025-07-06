@@ -18,7 +18,7 @@ implemented in the current code base.
 
 ## Outstanding Issues
 
-The static analysis run on 2025‑07‑05 reported no high severity findings. Slither
+The most recent static analysis run reported no high severity findings. Slither
 highlighted various low or informational warnings (e.g. the
 "arbitrary-from" transfer pattern and naming conventions). Mythril reported no
 issues. Most of these warnings originate from upstream dependencies and remain

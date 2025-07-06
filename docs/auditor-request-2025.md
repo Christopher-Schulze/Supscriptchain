@@ -9,9 +9,7 @@ All Solidity contracts under `contracts/` plus accompanying TypeScript tests in 
 ## Materials Provided
 
 - Current repository commit with build artifacts and tests
-- Static analysis reports:
-  - `docs/slither-output-2025-07-05.txt`
-  - `docs/mythril-output-2025-07-05.txt`
+- Static analysis report: `docs/slither-output.txt`
 - Issue summary: `docs/issues-2025-07-05.md`
 
 Please review the code base and provide a detailed security audit report including recommendations. We estimate the effort to be similar to the 2‑4 week engagement described in `audit-plan.md`.

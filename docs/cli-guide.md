@@ -53,3 +53,18 @@ npx ts-node scripts/cli.ts update-merchant \
   --merchant <newMerchant> \
   --network hardhat
 ```
+
+## Show contract status
+
+```bash
+npx ts-node scripts/cli.ts status --subscription <address> --network hardhat
+```
+
+## List user subscriptions
+
+```bash
+npx ts-node scripts/cli.ts list-subs \
+  --subscription <address> \
+  --user <address> \
+  --network hardhat
+```

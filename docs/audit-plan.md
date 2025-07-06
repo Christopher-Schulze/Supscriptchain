@@ -4,9 +4,9 @@ This document outlines potential next steps for a full smart contract security a
 
 ## Slither review
 
-A run of `slither` was executed after installing dependencies (`pip install slither-analyzer && npm run slither`). The tool reported 167 findings, primarily related to naming conventions and minor code patterns. No high severity vulnerabilities were detected.
+A run of `slither` was executed after installing dependencies (`pip install slither-analyzer && npm run slither`). The tool reported only low and informational findings, mainly related to naming conventions and minor code patterns. No high severity vulnerabilities were detected.
 
-The raw output from the run is stored at `slither_output.txt`.
+The raw output from the run is stored at `slither-output.txt`.
 
 ## Potential auditors
 
