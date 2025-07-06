@@ -132,6 +132,8 @@ NEXT_PUBLIC_SUBGRAPH_URL=https://your-node.example.com/subgraphs/name/subscripti
 
 Monitoring the node can be automated with `npm run subgraph-server`, which
 restarts `graph-node` on failure and logs health check errors.
+For convenience the wrapper script `./scripts/start-subgraph.sh` loads an
+optional `.env` file before starting the daemon.
 
 `subgraph-server` accepts the following environment variables:
 
@@ -211,4 +213,24 @@ payments would be executed without sending any transactions. Set
 
 ```bash
 DRY_RUN=1 npx hardhat run scripts/process-due-payments.ts --network sepolia
+```
+
+## Using a config file
+
+Instead of environment variables you can provide a JSON or YAML file with
+settings. Pass the file with `--config` or set `PAYMENT_CONFIG`:
+
+```bash
+npx hardhat run scripts/process-due-payments.ts --network sepolia --config cfg.yaml
+# or
+PAYMENT_CONFIG=cfg.yaml npx hardhat run scripts/process-due-payments.ts --network sepolia
+```
+
+## Continuous daemon mode
+
+Add `--daemon` (or set `INTERVAL`) to run the script in a loop. Failed payments
+are retried based on `MAX_RETRIES` and `RETRY_BASE_DELAY_MS`.
+
+```bash
+npx hardhat run scripts/process-due-payments.ts --network sepolia --daemon
 ```

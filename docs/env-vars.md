@@ -53,6 +53,10 @@ Subgraph scripts look for these variables:
 
 - `SUBSCRIPTION_ADDRESS` – contract address to bill
 - `PLAN_ID` – default plan id when the input file omits one
+- `SUBSCRIBERS_FILE` – path to the subscribers list (JSON or YAML)
+- `MERCHANT_PRIVATE_KEY` – private key used to sign transactions
+- `PAYMENT_CONFIG` – optional JSON/YAML file with overrides
+- `CACHE_SUBSCRIBERS` – `true` to cache the parsed list between runs
 - `MAX_CONCURRENCY` – number of concurrent `processPayment` calls
 - `MAX_RETRIES` – retries per failed payment
 - `RETRY_BASE_DELAY_MS` – initial delay before a retry
@@ -80,3 +84,4 @@ Subgraph scripts look for these variables:
 - `LOG_FILE` – append log output to this file
 - `LOKI_URL` – stream logs to a Loki instance
 - `LOG_LEVEL` – minimum log level (`info`, `warn`, `error`)
+- `GRAPH_NODE_LOG` – log file path used when `LOG_FILE` is unset

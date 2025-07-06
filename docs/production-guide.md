@@ -55,6 +55,9 @@ NETWORK=<network> CONTRACT_ADDRESS=<deployed contract> npm run build-subgraph
 
 Deploy `subgraph/subgraph.local.yaml` using `graph deploy` to your Graph Node. See [docs/usage-examples.md](usage-examples.md#running-the-subgraph-locally) for a detailed walkthrough.
 
+For local experiments you can start the node together with a health monitoring
+daemon via `./scripts/start-subgraph.sh .env`.
+
 ## Running `process-due-payments.ts` in Docker
 
 The repository ships `Dockerfile.payments` for processing recurring payments. Build and run the container with your `.env` file:
@@ -64,7 +67,7 @@ docker build -f Dockerfile.payments -t payments .
 docker run --env-file .env payments
 ```
 
-Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIVATE_KEY`. The container runs `scripts/process-due-payments.ts` and exits with a non-zero status when any payments fail if `FAIL_ON_FAILURE=true`.
+Important variables include `SUBSCRIPTION_ADDRESS`, `PLAN_ID` and `MERCHANT_PRIVATE_KEY`. The container runs `scripts/process-due-payments.ts` and exits with a non-zero status when any payments fail if `FAIL_ON_FAILURE=true`. Pass `--daemon` to keep the process running and load a JSON or YAML config via `--config cfg.yaml`.
 
 ## Health Checks
 
