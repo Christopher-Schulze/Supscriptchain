@@ -6,11 +6,7 @@ import pLimit from 'p-limit';
 import yaml from 'js-yaml';
 import { loadEnv } from './env';
 import { createLogger, LogFn, LogLevel } from './log';
-import {
-  Counter,
-  Registry,
-  collectDefaultMetrics,
-} from 'prom-client';
+import { Counter, Registry, collectDefaultMetrics } from 'prom-client';
 
 let configPath: string | undefined;
 const argIdx = process.argv.indexOf('--config');
@@ -50,6 +46,12 @@ const metricsPort = env.METRICS_PORT ? parseInt(env.METRICS_PORT, 10) : 0;
 let register: Registry | null = null;
 let successCounter: Counter | null = null;
 let failureCounter: Counter | null = null;
+
+// When `METRICS_PORT` is set, expose Prometheus metrics.
+// The following metrics are registered:
+// - `payment_success_total{plan_id}`: number of successful payments
+// - `payment_failure_total{plan_id}`: number of failed payments
+// Default metrics from `prom-client` are also collected.
 if (metricsPort) {
   register = new Registry();
   collectDefaultMetrics({ register });
@@ -110,7 +112,10 @@ async function notifyFailure(failure: FailedPayment, log: LogFn) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(failure),
     });
-    log('info', `Sent failure notification for ${failure.user} plan ${failure.plan}`);
+    log(
+      'info',
+      `Sent failure notification for ${failure.user} plan ${failure.plan}`,
+    );
   } catch (err) {
     log(
       'error',
@@ -121,8 +126,7 @@ async function notifyFailure(failure: FailedPayment, log: LogFn) {
 
 async function runOnce(log: LogFn) {
   const failOnFailure =
-    env.FAIL_ON_FAILURE === 'true' ||
-    env.FAIL_ON_FAILURE === '1';
+    env.FAIL_ON_FAILURE === 'true' || env.FAIL_ON_FAILURE === '1';
   const dryRun = env.DRY_RUN === 'true' || env.DRY_RUN === '1';
   const failures: FailedPayment[] = [];
   const contractAddress = env.SUBSCRIPTION_ADDRESS;
@@ -197,16 +201,10 @@ async function runOnce(log: LogFn) {
   }
 
   const now = Math.floor(Date.now() / 1000);
-  const concurrency = Math.max(
-    parseInt(env.MAX_CONCURRENCY || '1', 10),
-    1,
-  );
+  const concurrency = Math.max(parseInt(env.MAX_CONCURRENCY || '1', 10), 1);
   const limit = pLimit(concurrency);
   const maxRetries = Math.max(parseInt(env.MAX_RETRIES || '1', 10), 1);
-  const baseDelay = Math.max(
-    parseInt(env.RETRY_BASE_DELAY_MS || '500', 10),
-    0,
-  );
+  const baseDelay = Math.max(parseInt(env.RETRY_BASE_DELAY_MS || '500', 10), 0);
   const failuresFile = env.FAILURES_FILE;
 
   async function processWithRetry(user: string, plan: number) {
@@ -216,7 +214,10 @@ async function runOnce(log: LogFn) {
     }
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        log('info', `Processing payment for ${user} plan ${plan} (attempt ${attempt})`);
+        log(
+          'info',
+          `Processing payment for ${user} plan ${plan} (attempt ${attempt})`,
+        );
         const tx = await subscription.processPayment(user, plan);
         await tx.wait();
         log('info', `Processed payment for ${user} plan ${plan}`);
