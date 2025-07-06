@@ -43,7 +43,7 @@ export default function CreatePlan() {
         feed || '0x0000000000000000000000000000000000000000'
       );
       await tx.wait();
-      setMessage({ text: `Plan created: ${tx.hash}`, type: 'success' });
+      setMessage({ text: t('messages.plan_created', { hash: tx.hash }), type: 'success' });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
@@ -53,8 +53,9 @@ export default function CreatePlan() {
   }
 
   return (
-    <div className="form">
+    <div className="form" aria-busy={loading}>
       <h1>{t('create.title')}</h1>
+      {loading && <p aria-live="polite">{t('manage.processing')}</p>}
       {error && <p className="error">{error}</p>}
       {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       <label htmlFor="merchant">{t('create.merchant')}</label>

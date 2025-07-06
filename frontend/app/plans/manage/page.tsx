@@ -33,7 +33,7 @@ export default function ManagePlans() {
         '0x0000000000000000000000000000000000000000',
       );
       await tx.wait();
-      setMessage({ text: 'Plan updated', type: 'success' });
+      setMessage({ text: t('messages.plan_updated'), type: 'success' });
       await reload();
     } catch (err) {
       console.error(err);
@@ -51,7 +51,7 @@ export default function ManagePlans() {
       validateAddress(merchant, 'Merchant');
       const tx = await updateMerchant(BigInt(selected), merchant);
       await tx.wait();
-      setMessage({ text: 'Merchant updated', type: 'success' });
+      setMessage({ text: t('messages.merchant_updated'), type: 'success' });
       await reload();
     } catch (err) {
       console.error(err);
@@ -68,7 +68,7 @@ export default function ManagePlans() {
     try {
       const tx = await disablePlan(BigInt(selected));
       await tx.wait();
-      setMessage({ text: 'Plan disabled', type: 'success' });
+      setMessage({ text: t('messages.plan_disabled'), type: 'success' });
       await reload();
     } catch (err) {
       console.error(err);
@@ -80,8 +80,9 @@ export default function ManagePlans() {
 
   const { t } = useTranslation();
   return (
-    <div className="form">
+    <div className="form" aria-busy={loading}>
       <h1>{t('manage_plans.title')}</h1>
+      {loading && <p aria-live="polite">{t('manage.processing')}</p>}
       {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       {error && <p className="error">{error}</p>}
       <label htmlFor="plan-select">{t('manage_plans.select_plan')}</label>

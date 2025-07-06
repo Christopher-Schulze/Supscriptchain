@@ -26,10 +26,10 @@ export default function Plans() {
 
   const { t } = useTranslation();
   return (
-    <div>
+    <div aria-busy={loading}>
       <h1>{t('plans.title')}</h1>
       {error && <p className="error">{error}</p>}
-      {loading && <p>{t('generic.loading')}</p>}
+      {loading && <p aria-live="polite">{t('generic.loading')}</p>}
       {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       <div style={{ marginBottom: 10 }}>
         <a href="/plans/create">{t('nav.create_plan')}</a> |{' '}
@@ -61,7 +61,11 @@ export default function Plans() {
       <ul className="list">
         {sorted.map((p) => (
           <li key={p.id.toString()}>
-            <button onClick={() => setSelected(p.id)}>
+            <button
+              onClick={() => setSelected(p.id)}
+              aria-expanded={selected === p.id}
+              aria-controls="plan-details"
+            >
               {`Plan ${p.id.toString()}: `}
               <Price amount={p.price} decimals={p.tokenDecimals} symbol={p.token} />
               {` alle ${
@@ -74,7 +78,7 @@ export default function Plans() {
         ))}
       </ul>
       {detail && (
-        <div data-testid="plan-details">
+        <div id="plan-details" data-testid="plan-details">
           <h2>{t('plans.details_title')}</h2>
           <ul className="list">
             <li>{t('plans.detail_id')}: {detail.id.toString()}</li>

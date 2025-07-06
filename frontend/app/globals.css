@@ -22,6 +22,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.4;
 }
 
 .form {
@@ -29,6 +30,7 @@ body {
   flex-direction: column;
   gap: 8px;
   max-width: 400px;
+  margin: 0 auto;
 }
 
 .form input[type="text"],
@@ -45,6 +47,10 @@ body {
   color: white;
   cursor: pointer;
   border-radius: 4px;
+}
+.form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .message-bar {
@@ -70,6 +76,8 @@ body {
 .list {
   margin-top: 12px;
   line-height: 1.5;
+  list-style: none;
+  padding-left: 0;
 }
 
 * {

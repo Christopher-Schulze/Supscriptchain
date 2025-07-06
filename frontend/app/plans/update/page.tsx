@@ -41,7 +41,7 @@ export default function UpdatePlan() {
         feed || '0x0000000000000000000000000000000000000000'
       );
       await tx.wait();
-      setMessage({ text: `Plan updated: ${tx.hash}`, type: 'success' });
+      setMessage({ text: t('messages.plan_updated_hash', { hash: tx.hash }), type: 'success' });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
@@ -51,8 +51,9 @@ export default function UpdatePlan() {
   }
 
   return (
-    <div className="form">
+    <div className="form" aria-busy={loading}>
       <h1>{t('update_plan.title')}</h1>
+      {loading && <p aria-live="polite">{t('manage.processing')}</p>}
       {error && <p className="error">{error}</p>}
       {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       <label htmlFor="update-plan-id">{t('update_plan.plan_id')}</label>

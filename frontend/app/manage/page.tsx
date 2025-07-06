@@ -33,7 +33,7 @@ export default function Manage() {
       if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
       const tx = await contractSubscribe(BigInt(planId));
       await tx.wait();
-      setMessage({ text: `Subscribed! Tx: ${tx.hash}`, type: 'success' });
+      setMessage({ text: t('messages.subscribed', { hash: tx.hash }), type: 'success' });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
@@ -49,7 +49,7 @@ export default function Manage() {
       if (!/^[0-9]+$/.test(planId)) throw new Error('invalid plan id');
       const tx = await contractCancel(BigInt(planId));
       await tx.wait();
-      setMessage({ text: `Cancelled! Tx: ${tx.hash}`, type: 'success' });
+      setMessage({ text: t('messages.cancelled', { hash: tx.hash }), type: 'success' });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));
@@ -127,7 +127,7 @@ export default function Manage() {
         s as `0x${string}`
       );
       await tx.wait();
-      setMessage({ text: `Subscribed with permit! Tx: ${tx.hash}`, type: 'success' });
+      setMessage({ text: t('messages.subscribed_permit', { hash: tx.hash }), type: 'success' });
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : String(err);
@@ -138,7 +138,7 @@ export default function Manage() {
   }
 
   return (
-    <div>
+    <div aria-busy={loading}>
       <h1>{t('manage.title')}</h1>
       {subs.length > 0 && (
         <ul className="list" data-testid="subs-list">
@@ -150,7 +150,7 @@ export default function Manage() {
         </ul>
       )}
       {error && <p className="error">{error}</p>}
-      {loading && <p>{t('manage.processing')}</p>}
+      {loading && <p aria-live="polite">{t('manage.processing')}</p>}
       {!account && <button onClick={connect}>{t('generic.connect_wallet')}</button>}
       <div>
         <label htmlFor="plan-id">{t('manage.plan_id')} </label>

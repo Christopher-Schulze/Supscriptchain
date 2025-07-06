@@ -78,5 +78,17 @@
   "analytics.plan_totals": "Plan Totals",
   "analytics.no_plans": "No plans",
   "analytics.payments": "Payments",
-  "analytics.no_payments": "No payments"
+  "analytics.no_payments": "No payments",
+  "messages.plan_created": "Plan created: {{hash}}",
+  "messages.plan_updated_hash": "Plan updated: {{hash}}",
+  "messages.plan_updated": "Plan updated",
+  "messages.merchant_updated_hash": "Merchant updated: {{hash}}",
+  "messages.merchant_updated": "Merchant updated",
+  "messages.plan_disabled": "Plan disabled",
+  "messages.subscribed": "Subscribed! Tx: {{hash}}",
+  "messages.subscribed_permit": "Subscribed with permit! Tx: {{hash}}",
+  "messages.cancelled": "Cancelled! Tx: {{hash}}",
+  "messages.payment_processed": "Payment processed! Tx: {{hash}}",
+  "messages.wallet_not_found": "Wallet not found",
+  "messages.failed_connect": "Failed to connect"
 }
