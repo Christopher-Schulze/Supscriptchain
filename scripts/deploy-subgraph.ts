@@ -1,5 +1,21 @@
 import { spawnSync } from 'child_process';
 import { config } from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+
+function loadGraphConfig() {
+  const cfg = path.join(__dirname, '../subgraph/graph.config.json');
+  if (fs.existsSync(cfg)) {
+    try {
+      const data = JSON.parse(fs.readFileSync(cfg, 'utf8')) as Record<string, string>;
+      for (const [key, value] of Object.entries(data)) {
+        if (!process.env[key]) process.env[key] = value;
+      }
+    } catch (err) {
+      console.warn(`Failed to parse ${cfg}: ${(err as Error).message}`);
+    }
+  }
+}
 
 /**
  * Build and deploy the subgraph using `graph deploy`.
@@ -77,5 +93,6 @@ function main() {
 
 if (require.main === module) {
   config();
+  loadGraphConfig();
   main();
 }
