@@ -59,4 +59,8 @@ MAINNET_PRIVATE_KEY=0x00
 
   const upgraded = await ethers.getContractAt('SubscriptionUpgradeableV2', await proxy.getAddress());
   expect(await upgraded.version()).to.equal('v2');
+
+  const manifest = path.resolve(__dirname, '..', 'subgraph', 'subgraph.local.yaml');
+  expect(fs.existsSync(manifest)).to.equal(true);
+  fs.unlinkSync(manifest);
 });

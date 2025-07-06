@@ -1,4 +1,6 @@
-import { ethers, upgrades } from 'hardhat';
+import { ethers, upgrades, network } from 'hardhat';
+import { spawnSync } from 'child_process';
+import path from 'path';
 import { loadEnv } from './env';
 
 async function main() {
@@ -40,6 +42,18 @@ async function main() {
     );
     await tx.wait();
     console.log('Initial plan created');
+  }
+
+  const net = process.env.NETWORK || process.env.HARDHAT_NETWORK || network.name;
+  const addr = await subscription.getAddress();
+  const childEnv = { ...process.env, NETWORK: net, CONTRACT_ADDRESS: addr };
+  const script = path.join(__dirname, 'prepare-subgraph.ts');
+  const res = spawnSync('node', ['-r', 'ts-node/register/transpile-only', script], {
+    stdio: 'inherit',
+    env: childEnv,
+  });
+  if (res.status !== 0) {
+    throw new Error('prepare-subgraph failed');
   }
 }
 
