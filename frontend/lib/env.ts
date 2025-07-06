@@ -5,6 +5,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_CHAIN_ID: z.coerce.number(),
   NEXT_PUBLIC_RPC_URL: z.string().url(),
   NEXT_PUBLIC_SUBGRAPH_URL: z.string().url(),
+  NEXT_PUBLIC_REFRESH_INTERVAL: z.coerce.number().default(30),
 });
 
 export const env = envSchema.parse({
@@ -12,6 +13,7 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_CHAIN_ID: process.env.NEXT_PUBLIC_CHAIN_ID,
   NEXT_PUBLIC_RPC_URL: process.env.NEXT_PUBLIC_RPC_URL,
   NEXT_PUBLIC_SUBGRAPH_URL: process.env.NEXT_PUBLIC_SUBGRAPH_URL,
+  NEXT_PUBLIC_REFRESH_INTERVAL: process.env.NEXT_PUBLIC_REFRESH_INTERVAL,
 });
 
 export type Env = typeof env;

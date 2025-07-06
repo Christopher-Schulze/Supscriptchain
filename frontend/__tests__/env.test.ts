@@ -8,10 +8,12 @@ beforeEach(() => {
 });
 
 test('exports validated env variables', async () => {
-  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS = '0x1111111111111111111111111111111111111111';
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS =
+    '0x1111111111111111111111111111111111111111';
   process.env.NEXT_PUBLIC_CHAIN_ID = '42';
   process.env.NEXT_PUBLIC_RPC_URL = 'https://example.com';
   process.env.NEXT_PUBLIC_SUBGRAPH_URL = 'https://example.com/subgraph';
+  process.env.NEXT_PUBLIC_REFRESH_INTERVAL = '15';
 
   const mod = await import('../lib/env');
   expect(mod.env).toEqual({
@@ -19,6 +21,7 @@ test('exports validated env variables', async () => {
     NEXT_PUBLIC_CHAIN_ID: 42,
     NEXT_PUBLIC_RPC_URL: 'https://example.com',
     NEXT_PUBLIC_SUBGRAPH_URL: 'https://example.com/subgraph',
+    NEXT_PUBLIC_REFRESH_INTERVAL: 15,
   });
 });
 

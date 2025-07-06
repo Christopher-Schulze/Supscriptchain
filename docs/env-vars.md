@@ -25,6 +25,7 @@ The Next.js app reads variables from `frontend/.env.local`:
 - `NEXT_PUBLIC_CHAIN_ID` – EVM chain id used when no wallet is connected
 - `NEXT_PUBLIC_RPC_URL` – RPC URL used when no wallet is connected
 - `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint for analytics
+- `NEXT_PUBLIC_REFRESH_INTERVAL` – reload interval for contract data in seconds (default `30`)
 
 Run `node frontend/scripts/check-env.js` to validate these values.
 
