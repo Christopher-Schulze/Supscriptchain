@@ -95,3 +95,15 @@ scrape_configs:
 ```
 
 Grafana can visualize these metrics using Prometheus as the data source. Alert on `graph_node_health_failures_total` or when `graph_node_health_status` stays `0` for several minutes.
+
+## Continuous Integration
+
+The repository includes a GitHub Actions workflow `ci.yml` which runs tests and
+static analysis automatically. After the `npm test` step the workflow executes
+`npm run coverage` and validates the results using `node
+scripts/check-coverage.js`. The minimum percentage can be configured via the
+`COVERAGE_THRESHOLD` environment variable.
+
+Slither executes in a separate job through `npm run slither`. The job uploads
+`docs/slither-output.txt` as an artifact so warnings can be reviewed in the
+GitHub interface.
