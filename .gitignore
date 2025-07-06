@@ -11,6 +11,8 @@ artifacts/
 dist/
 build/
 generated/
+!frontend/generated/
+!frontend/generated/graphql.ts
 
 # OS-specific
 .DS_Store

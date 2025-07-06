@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "generate": "graphql-codegen --config codegen.yaml"
+    "generate": "graphql-codegen --config codegen.yaml",
+    "codegen": "npm run generate"
   },
   "dependencies": {
     "@apollo/client": "^3.13.8",
