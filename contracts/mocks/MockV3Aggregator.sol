@@ -6,25 +6,25 @@ import "../interfaces/AggregatorV3Interface.sol";
 contract MockV3Aggregator is AggregatorV3Interface {
     int256 public latestAnswer;
     uint256 public latestTimestamp;
-    uint8 public _decimals;
+    uint8 public mockDecimals;
     uint256 public immutable version;
 
     constructor(uint8 decimals_, int256 initialAnswer) {
-        _decimals = decimals_;
+        mockDecimals = decimals_;
         latestAnswer = initialAnswer;
         latestTimestamp = block.timestamp;
         version = 0;
     }
 
     function decimals() external view override returns (uint8) {
-        return _decimals;
+        return mockDecimals;
     }
 
     function description() external pure override returns (string memory) {
         return "Mock V3 Aggregator";
     }
 
-    function getRoundData(uint80 _roundId)
+    function getRoundData(uint80 roundId_)
         external
         view
         override
@@ -36,7 +36,7 @@ contract MockV3Aggregator is AggregatorV3Interface {
             uint80 answeredInRound
         )
     {
-        return (_roundId, latestAnswer, latestTimestamp, latestTimestamp, _roundId);
+        return (roundId_, latestAnswer, latestTimestamp, latestTimestamp, roundId_);
     }
 
     function latestRoundData()
@@ -55,12 +55,12 @@ contract MockV3Aggregator is AggregatorV3Interface {
         return (1, latestAnswer, latestTimestamp, latestTimestamp, 1);
     }
 
-    function setLatestAnswer(int256 _newAnswer) external {
-        latestAnswer = _newAnswer;
+    function setLatestAnswer(int256 newAnswer) external {
+        latestAnswer = newAnswer;
         latestTimestamp = block.timestamp;
     }
-    
-    function setDecimals(uint8 _newDecimals) external {
-        _decimals = _newDecimals;
+
+    function setDecimals(uint8 newDecimals) external {
+        mockDecimals = newDecimals;
     }
 }

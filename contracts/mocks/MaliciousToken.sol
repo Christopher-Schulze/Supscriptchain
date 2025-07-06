@@ -28,10 +28,10 @@ contract MaliciousToken {
         emit Transfer(address(0), to, amount);
     }
 
-    function setReentrancy(address _target, bytes calldata _data) external {
-        require(_target != address(0), "target zero address");
-        target = _target;
-        data = _data;
+    function setReentrancy(address targetAddress, bytes calldata callData) external {
+        require(targetAddress != address(0), "target zero address");
+        target = targetAddress;
+        data = callData;
     }
 
     function approve(address spender, uint256 amount) public returns (bool) {
