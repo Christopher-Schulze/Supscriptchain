@@ -24,6 +24,9 @@ describe('cli.ts', function () {
     expect(run(['unpause', '--help']).stdout).to.contain('Unpause the subscription contract');
     expect(run(['disable', '--help']).stdout).to.contain('Disable a subscription plan');
     expect(run(['update-merchant', '--help']).stdout).to.contain('Update the merchant of a plan');
+    expect(run(['subscribe', '--help']).stdout).to.contain('Subscribe to a plan');
+    expect(run(['cancel', '--help']).stdout).to.contain('Cancel an active subscription');
+    expect(run(['process-payment', '--help']).stdout).to.contain('Process a subscription payment');
   });
 
   it('shows help for status command', function () {
@@ -35,5 +38,21 @@ describe('cli.ts', function () {
     const res = run(['list']);
     expect(res.status).to.not.equal(0);
     expect(res.stderr).to.match(/subscription address missing/i);
+
+    const resSub = run(['subscribe']);
+    expect(resSub.status).to.not.equal(0);
+    expect(resSub.stderr).to.match(/subscription address missing/i);
+
+    const resCancel = run(['cancel']);
+    expect(resCancel.status).to.not.equal(0);
+    expect(resCancel.stderr).to.match(/subscription address missing/i);
+
+    const resPay = run(['process-payment']);
+    expect(resPay.status).to.not.equal(0);
+    expect(resPay.stderr).to.match(/subscription address missing/i);
+
+    const resPayUser = run(['process-payment', '--subscription', '0x0000000000000000000000000000000000000000']);
+    expect(resPayUser.status).to.not.equal(0);
+    expect(resPayUser.stderr).to.match(/user address missing/i);
   });
 });

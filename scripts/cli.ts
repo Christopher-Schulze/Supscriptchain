@@ -88,6 +88,21 @@ async function updateMerchant(opts: any) {
   await run('update-merchant', opts);
 }
 
+async function subscribePlan(opts: any) {
+  const { run } = await loadHardhat();
+  await run('subscribe', opts);
+}
+
+async function cancelSubscription(opts: any) {
+  const { run } = await loadHardhat();
+  await run('cancel', opts);
+}
+
+async function processPayment(opts: any) {
+  const { run } = await loadHardhat();
+  await run('process-payment', opts);
+}
+
 const program = new Command();
 program
   .name('supscript-cli')
@@ -157,6 +172,28 @@ program
   .option('-s, --subscription <address>', 'Subscription contract address')
   .option('-i, --plan-id <id>', 'Plan ID')
   .action((opts) => disablePlan(opts));
+
+program
+  .command('subscribe')
+  .description('Subscribe to a plan')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .option('-i, --plan-id <id>', 'Plan ID')
+  .action((opts) => subscribePlan(opts));
+
+program
+  .command('cancel')
+  .description('Cancel an active subscription')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .option('-i, --plan-id <id>', 'Plan ID')
+  .action((opts) => cancelSubscription(opts));
+
+program
+  .command('process-payment')
+  .description('Process a subscription payment')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .option('-u, --user <address>', 'Subscriber address')
+  .option('-i, --plan-id <id>', 'Plan ID')
+  .action((opts) => processPayment(opts));
 
 program
   .command('update-merchant')

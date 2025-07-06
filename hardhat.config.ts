@@ -10,6 +10,9 @@ import './tasks/pause';
 import './tasks/disable-plan';
 import './tasks/update-merchant';
 import './tasks/status';
+import './tasks/subscribe';
+import './tasks/cancel';
+import './tasks/process-payment';
 
 import path from 'path';
 import * as dotenv from 'dotenv';
