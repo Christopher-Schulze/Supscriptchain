@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { usePlans } from '../../lib/plansStore';
 import useWallet from '../../lib/useWallet';
 import { useTranslation } from 'react-i18next';
+import Price from '../../lib/Price';
 
 export default function Plans() {
   const { account, connect } = useWallet();
@@ -61,7 +62,13 @@ export default function Plans() {
         {sorted.map((p) => (
           <li key={p.id.toString()}>
             <button onClick={() => setSelected(p.id)}>
-              {`Plan ${p.id.toString()}: token ${p.token} price ${p.price.toString()} billing ${p.billingCycle.toString()}s ${p.active ? t('plans.status_active') : t('plans.status_inactive')}`}
+              {`Plan ${p.id.toString()}: `}
+              <Price amount={p.price} decimals={p.tokenDecimals} symbol={p.token} />
+              {` alle ${
+                p.billingCycle % 86400n === 0n
+                  ? `${p.billingCycle / 86400n}\u202Fd`
+                  : `${p.billingCycle.toString()}s`
+              } ${p.active ? t('plans.status_active') : t('plans.status_inactive')}`}
             </button>
           </li>
         ))}
@@ -73,8 +80,16 @@ export default function Plans() {
             <li>{t('plans.detail_id')}: {detail.id.toString()}</li>
             <li>{t('plans.detail_merchant')}: {detail.merchant}</li>
             <li>{t('plans.detail_token')}: {detail.token}</li>
-            <li>{t('plans.detail_price')}: {detail.price.toString()}</li>
-            <li>{t('plans.detail_billing')}: {detail.billingCycle.toString()}s</li>
+            <li>
+              {t('plans.detail_price')}: 
+              <Price amount={detail.price} decimals={detail.tokenDecimals} symbol={detail.token} />
+            </li>
+            <li>
+              {t('plans.detail_billing')}: 
+              {detail.billingCycle % 86400n === 0n
+                ? `${detail.billingCycle / 86400n}\u202Fd`
+                : `${detail.billingCycle.toString()}s`}
+            </li>
             <li>{t('plans.detail_active')}: {detail.active ? 'true' : 'false'}</li>
           </ul>
         </div>

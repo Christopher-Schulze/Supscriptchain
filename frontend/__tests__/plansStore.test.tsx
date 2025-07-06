@@ -1,12 +1,12 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { PlansProvider, usePlans, Plan } from '../lib/plansStore';
+import { PlansProvider, usePlans } from '../lib/plansStore';
 import { getContract } from '../lib/contract';
 
 jest.mock('../lib/contract', () => ({ getContract: jest.fn() }));
 
 const mockedGetContract = getContract as jest.Mock;
 
-function makePlan(token: string): Plan {
+function makePlan(token: string) {
   return {
     id: 0n,
     merchant: '0x',
