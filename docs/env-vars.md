@@ -16,6 +16,8 @@ Copy `.env.example` to `.env` and provide values for:
 - `USD_PRICE` – USD cent price when `PRICE_IN_USD=true`
 - `SEPOLIA_RPC_URL` / `SEPOLIA_PRIVATE_KEY` – network credentials
 - `MAINNET_RPC_URL` / `MAINNET_PRIVATE_KEY` – mainnet credentials
+- `ETHERSCAN_API_KEY` – API key used by Hardhat to verify contracts
+- `IMPLEMENTATION_ADDRESS` – address of the implementation contract when running `scripts/verify.ts`
 
 ## Frontend
 
