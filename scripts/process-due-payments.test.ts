@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { loadFixture, time } from '@nomicfoundation/hardhat-network-helpers';
-import { spawnSync } from 'child_process';
+import { spawn, spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -92,6 +92,45 @@ describe('process-due-payments script', function () {
 
     const sub = await subscription.userSubscriptions(userSuccess.address, 0);
     expect(sub.nextPaymentDate).to.be.gt(BigInt(await time.latest()));
+  });
+
+  it('runs in daemon mode and stops on signal', function (done) {
+    loadFixture(deployFixture).then(({ merchant, userSuccess, subscription }) => {
+      const tmpJson = path.join(__dirname, 'subscribers.daemon.tmp.json');
+      fs.writeFileSync(tmpJson, JSON.stringify([userSuccess.address], null, 2));
+
+      const child = spawn(
+        'node',
+        ['-r', 'ts-node/register/transpile-only', 'scripts/process-due-payments.ts', '--daemon'],
+        {
+          env: {
+            ...process.env,
+            TS_NODE_TRANSPILE_ONLY: '1',
+            SUBSCRIPTION_ADDRESS: subscription.target,
+            PLAN_ID: '0',
+            SUBSCRIBERS_FILE: tmpJson,
+            MERCHANT_PRIVATE_KEY: merchant.privateKey,
+            INTERVAL: '1',
+          },
+          stdio: 'ignore',
+        },
+      );
+
+      child.on('exit', (code) => {
+        fs.unlinkSync(tmpJson);
+        try {
+          expect(code).to.equal(0);
+          expect(() => process.kill(child.pid!, 0)).to.throw();
+          done();
+        } catch (err) {
+          done(err as Error);
+        }
+      });
+
+      setTimeout(() => {
+        child.kill('SIGTERM');
+      }, 500);
+    }, done);
   });
 
   it('fails on invalid env vars', async function () {

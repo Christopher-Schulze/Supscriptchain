@@ -20,6 +20,8 @@ if (argIdx !== -1 && process.argv[argIdx + 1]) {
   configPath = process.env.PAYMENT_CONFIG;
 }
 
+const daemon = process.argv.includes('--daemon');
+
 if (configPath) {
   const resolved = path.resolve(configPath);
   const raw = fs.readFileSync(resolved, 'utf8');
@@ -266,13 +268,33 @@ async function runOnce(log: LogFn) {
   }
 }
 
+async function runDaemon(log: LogFn, interval: number) {
+  let stop = false;
+  function handle(sig: NodeJS.Signals) {
+    log('info', `Received ${sig}, shutting down...`);
+    stop = true;
+  }
+  process.once('SIGINT', handle);
+  process.once('SIGTERM', handle);
+
+  while (!stop) {
+    await runOnce(log);
+    if (stop) break;
+    if (interval > 0) {
+      await new Promise((res) => setTimeout(res, interval * 1000));
+    }
+  }
+}
+
 async function main() {
   const logFile = env.LOG_FILE;
   const lokiUrl = env.LOKI_URL;
   const logLevel = (env.LOG_LEVEL as LogLevel) || 'info';
   const log = createLogger({ logFile, lokiUrl, logLevel });
   const interval = parseInt(env.INTERVAL || '0', 10);
-  if (interval > 0) {
+  if (daemon) {
+    await runDaemon(log, interval);
+  } else if (interval > 0) {
     while (true) {
       await runOnce(log);
       await new Promise((res) => setTimeout(res, interval * 1000));
