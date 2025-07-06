@@ -1,12 +1,16 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --accent: #4a90e2;
+  --accent-alt: #356ac3;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --accent: #3399ff;
+    --accent-alt: #2277cc;
   }
 }
 
@@ -29,7 +33,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
   max-width: 400px;
+  padding: 0 1rem;
   margin: 0 auto;
 }
 
@@ -40,17 +46,33 @@ body {
   border-radius: 4px;
 }
 
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (min-width: 600px) {
+  .form {
+    max-width: 500px;
+  }
+}
+
 .form button {
   padding: 6px 12px;
   border: none;
-  background: #4a90e2;
+  background: var(--accent);
   color: white;
   cursor: pointer;
   border-radius: 4px;
+  transition: background 0.2s ease-in-out;
 }
 .form button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+.form button:not(:disabled):hover {
+  background: var(--accent-alt);
 }
 
 .message-bar {

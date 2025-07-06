@@ -42,6 +42,10 @@ function Wrapper() {
   );
 }
 
+beforeEach(() => {
+  mockUseSubs.mockReturnValue({ subs: [], reload: jest.fn() });
+});
+
 test('shows message when subscribe fails', async () => {
   mockedSubscribe.mockRejectedValue(new Error('fail'));
   render(<Wrapper />);
