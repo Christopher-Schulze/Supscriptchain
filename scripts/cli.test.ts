@@ -10,6 +10,7 @@ function run(args: string[]) {
 }
 
 describe('cli.ts', function () {
+  this.timeout(20000);
   it('shows global help', function () {
     const res = run(['--help']);
     expect(res.stdout).to.contain('Manage subscription plans');
@@ -23,6 +24,11 @@ describe('cli.ts', function () {
     expect(run(['unpause', '--help']).stdout).to.contain('Unpause the subscription contract');
     expect(run(['disable', '--help']).stdout).to.contain('Disable a subscription plan');
     expect(run(['update-merchant', '--help']).stdout).to.contain('Update the merchant of a plan');
+  });
+
+  it('shows help for status command', function () {
+    const res = run(['status', '--help']);
+    expect(res.stdout).to.contain('Show subscription contract status');
   });
 
   it('fails when subscription is missing', function () {

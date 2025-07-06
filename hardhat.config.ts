@@ -9,6 +9,7 @@ import './tasks/update-plan';
 import './tasks/pause';
 import './tasks/disable-plan';
 import './tasks/update-merchant';
+import './tasks/status';
 
 import path from 'path';
 import * as dotenv from 'dotenv';

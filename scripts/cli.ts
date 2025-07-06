@@ -78,6 +78,11 @@ async function disablePlan(opts: any) {
   await run('disable-plan', opts);
 }
 
+async function showStatus(opts: any) {
+  const { run } = await loadHardhat();
+  await run('status', opts);
+}
+
 async function updateMerchant(opts: any) {
   const { run } = await loadHardhat();
   await run('update-merchant', opts);
@@ -141,6 +146,12 @@ program
   .action((opts) => unpauseContract(opts));
 
 program
+  .command('status')
+  .description('Show subscription contract status')
+  .option('-s, --subscription <address>', 'Subscription contract address')
+  .action((opts) => showStatus(opts));
+
+program
   .command('disable')
   .description('Disable a subscription plan')
   .option('-s, --subscription <address>', 'Subscription contract address')
@@ -155,7 +166,10 @@ program
   .option('-m, --merchant <address>', 'New merchant address')
   .action((opts) => updateMerchant(opts));
 
-program.parseAsync().catch((err) => {
+const parsePromise = (program as any).parseAsync
+  ? (program as any).parseAsync(process.argv)
+  : Promise.resolve(program.parse(process.argv));
+parsePromise.catch((err: any) => {
   console.error(err);
   process.exitCode = 1;
 });
