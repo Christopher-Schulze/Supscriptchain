@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useContext, useEffect, useState } from 'react';
+import { formatUnits } from 'ethers';
 import { getContract } from './contract';
 import { env } from './env';
 
@@ -8,7 +9,7 @@ export interface Plan {
   merchant: string;
   token: string;
   tokenDecimals: bigint;
-  price: bigint;
+  price: string;
   billingCycle: bigint;
   priceInUsd: boolean;
   usdPrice: bigint;
@@ -33,7 +34,18 @@ export function PlansProvider({ children }: { children: React.ReactNode }) {
       const list: Plan[] = [];
       for (let i = 0n; i < nextId; i++) {
         const p = await contract.plans(i);
-        list.push({ id: i, ...(p as Plan) });
+        list.push({
+          id: i,
+          merchant: p.merchant,
+          token: p.token,
+          tokenDecimals: p.tokenDecimals,
+          price: formatUnits(p.price, Number(p.tokenDecimals)),
+          billingCycle: p.billingCycle,
+          priceInUsd: p.priceInUsd,
+          usdPrice: p.usdPrice,
+          priceFeedAddress: p.priceFeedAddress,
+          active: p.active,
+        });
       }
       setPlans(list);
     } catch (err) {

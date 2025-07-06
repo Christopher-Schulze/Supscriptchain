@@ -35,7 +35,7 @@ describe('ManagePlans page', () => {
     merchant: '0x',
     token: 'a',
     tokenDecimals: 18n,
-    price: 1n,
+    price: '0.000000000000000001',
     billingCycle: 1n,
     priceInUsd: false,
     usdPrice: 0n,

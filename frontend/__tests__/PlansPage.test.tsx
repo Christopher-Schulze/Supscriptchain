@@ -24,7 +24,7 @@ describe('Plans page', () => {
           merchant: '0x',
           token: 'a',
           tokenDecimals: 18n,
-          price: 1n,
+          price: '0.000000000000000001',
           billingCycle: 1n,
           priceInUsd: false,
           usdPrice: 0n,
@@ -35,9 +35,15 @@ describe('Plans page', () => {
       reload: jest.fn(),
     });
     render(<Wrapper />);
-    const btn = screen.getByText(/Plan 0/);
+    const btn = screen.getByText(
+      'Plan 0: 0.000000000000000001 a alle 1s (active)',
+    );
     expect(btn).toBeInTheDocument();
     await userEvent.click(btn);
     expect(await screen.findByTestId('plan-details')).toBeInTheDocument();
+    expect(
+      screen.getByText('Price: 0.000000000000000001 a'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Billing: 1s')).toBeInTheDocument();
   });
 });
