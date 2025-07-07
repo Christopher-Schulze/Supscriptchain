@@ -125,7 +125,9 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
     it("reverts when billingCycle is zero", async function () {
       const { owner, token, proxy } = await loadFixture(deployUpgradeableFixture);
       await expect(
-        proxy.connect(owner).createPlan(owner.address, token.address, 1, 0, false, 0, ethers.ZeroAddress)
+        proxy
+          .connect(owner)
+          .createPlan(owner.address, token.target, 1, 0, false, 0, ethers.ZeroAddress)
       ).to.be.revertedWith("Billing cycle must be > 0");
     });
   });
