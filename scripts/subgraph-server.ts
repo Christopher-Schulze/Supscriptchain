@@ -4,9 +4,6 @@ import { loadEnv } from './env';
 import { createLogger, LogFn, LogLevel } from './log';
 import { Counter, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
 
-type LogLevel = 'info' | 'error' | 'warn';
-type LogFn = (level: LogLevel, ...args: any[]) => void;
-
 const env = loadEnv();
 
 const cmd = env.GRAPH_NODE_CMD || 'graph-node';
