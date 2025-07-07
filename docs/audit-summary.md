@@ -1,8 +1,8 @@
 # Audit Summary
 
 This document provides a quick overview based on the checklists in
-[`audit-checklist.md`](audit-checklist.md) and the outstanding observations in
-[`issues-2025-07-05.md`](issues-2025-07-05.md).
+[`audit-checklist.md`](audit-checklist.md). Earlier issue logs have been
+archived and are no longer part of the repository.
 
 ## Key Checks
 
