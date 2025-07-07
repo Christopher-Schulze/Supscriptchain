@@ -9,8 +9,8 @@ contract MockV3Aggregator is AggregatorV3Interface {
     uint8 public mockDecimals;
     uint256 public immutable version;
 
-    constructor(uint8 decimals_, int256 initialAnswer) {
-        mockDecimals = decimals_;
+    constructor(uint8 decimalsValue, int256 initialAnswer) {
+        mockDecimals = decimalsValue;
         latestAnswer = initialAnswer;
         latestTimestamp = block.timestamp;
         version = 0;
@@ -24,7 +24,7 @@ contract MockV3Aggregator is AggregatorV3Interface {
         return "Mock V3 Aggregator";
     }
 
-    function getRoundData(uint80 roundId_)
+    function getRoundData(uint80 id)
         external
         view
         override
@@ -36,7 +36,7 @@ contract MockV3Aggregator is AggregatorV3Interface {
             uint80 answeredInRound
         )
     {
-        return (roundId_, latestAnswer, latestTimestamp, latestTimestamp, roundId_);
+        return (id, latestAnswer, latestTimestamp, latestTimestamp, id);
     }
 
     function latestRoundData()

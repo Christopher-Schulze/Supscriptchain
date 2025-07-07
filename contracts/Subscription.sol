@@ -39,13 +39,13 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @notice Creates a new subscription plan.
      * @dev Can only be called by the contract owner.
      * Fetches and stores token decimals. Merchant defaults to owner if _merchantAddress is address(0).
-     * @param _merchantAddress The address to receive payments. If address(0), defaults to contract owner.
-     * @param _token The ERC20 token for payments.
-     * @param _price Price in the smallest unit of the token (if not USD based).
-     * @param _billingCycle Duration of one billing cycle in seconds.
-     * @param _priceInUsd True if price is in USD cents.
-     * @param _usdPrice Price in USD cents (if _priceInUsd is true).
-     * @param _priceFeedAddress Chainlink price feed for token/USD (if _priceInUsd is true).
+     * @param merchantAddress The address to receive payments. If address(0), defaults to contract owner.
+     * @param tokenAddress The ERC20 token for payments.
+     * @param price Price in the smallest unit of the token (if not USD based).
+     * @param billingCycle Duration of one billing cycle in seconds.
+     * @param priceInUsd True if price is in USD cents.
+     * @param usdPrice Price in USD cents (if priceInUsd is true).
+     * @param priceFeedAddress Chainlink price feed for token/USD (if priceInUsd is true).
      */
     function createPlan(
         address merchantAddress,
@@ -70,12 +70,12 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
     /**
      * @notice Updates an existing subscription plan.
      * @dev Only the contract owner can call this function.
-     * @param _planId The ID of the plan to update.
-     * @param _billingCycle New billing cycle duration in seconds.
-     * @param _price New fixed token price (ignored if _priceInUsd is true).
-     * @param _priceInUsd Whether pricing is denominated in USD cents.
-     * @param _usdPrice New USD price in cents (if _priceInUsd is true).
-     * @param _priceFeedAddress Chainlink price feed address for USD pricing.
+     * @param planId The ID of the plan to update.
+     * @param billingCycle New billing cycle duration in seconds.
+     * @param price New fixed token price (ignored if priceInUsd is true).
+     * @param priceInUsd Whether pricing is denominated in USD cents.
+     * @param usdPrice New USD price in cents (if priceInUsd is true).
+     * @param priceFeedAddress Chainlink price feed address for USD pricing.
      */
     function updatePlan(
         uint256 planId,
@@ -106,14 +106,14 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
     /**
      * @notice Calculates the payment amount for a given plan.
      * @dev For USD-based plans, uses Chainlink price feed. Otherwise, uses fixed token price.
-     * @param _planId The ID of the subscription plan.
+     * @param planId The ID of the subscription plan.
      * @return amount The payment amount in the smallest unit of the plan's token.
      */
 
     /**
      * @notice Allows a user to subscribe to a plan.
      * @dev Transfers initial payment from user to merchant. User must approve contract for token spending.
-     * @param _planId The ID of the plan to subscribe to.
+     * @param planId The ID of the plan to subscribe to.
      */
     function subscribe(uint256 planId) public override whenNotPaused nonReentrant {
         super.subscribe(planId);
@@ -122,8 +122,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
     /**
      * @notice Allows a user to subscribe to a plan using an ERC20 permit.
      * @dev Calls permit on the token then transfers the payment.
-     * @param _planId The ID of the plan to subscribe to.
-     * @param _deadline Expiration time for the permit signature.
+     * @param planId The ID of the plan to subscribe to.
+     * @param deadline Expiration time for the permit signature.
      * @param v Signature v value.
      * @param r Signature r value.
      * @param s Signature s value.
@@ -142,8 +142,8 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
      * @notice Processes a recurring payment for a user's subscription.
      * @dev Can only be called by the plan's merchant. Transfers payment from user to merchant.
      * User must maintain token approval. Updates next payment date.
-     * @param _user The address of the subscriber whose payment is being processed.
-     * @param _planId The ID of the plan for which payment is processed.
+     * @param user The address of the subscriber whose payment is being processed.
+     * @param planId The ID of the plan for which payment is processed.
      */
     function processPayment(address user, uint256 planId) public override whenNotPaused nonReentrant {
         super.processPayment(user, planId);
@@ -152,7 +152,7 @@ contract Subscription is Ownable2Step, AccessControl, Pausable, ReentrancyGuard,
     /**
      * @notice Allows a subscriber to cancel their active subscription.
      * @dev Sets the subscription to inactive. No refunds for the current billing cycle.
-     * @param _planId The ID of the plan to cancel.
+     * @param planId The ID of the plan to cancel.
      */
     function cancelSubscription(uint256 planId) public override whenNotPaused nonReentrant {
         super.cancelSubscription(planId);

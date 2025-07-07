@@ -33,7 +33,6 @@ abstract contract BaseSubscription {
 
     struct UserSubscription {
         address subscriber;
-        uint256 planId;
         uint256 startTime;
         uint256 nextPaymentDate;
         bool isActive;
@@ -163,13 +162,7 @@ abstract contract BaseSubscription {
         if (plan.priceInUsd) {
             require(plan.priceFeedAddress != address(0), "Price feed not set for USD plan");
             AggregatorV3Interface priceFeed = AggregatorV3Interface(plan.priceFeedAddress);
-            (
-                ,
-                int256 latestPrice,
-                ,
-                uint256 updatedAt,
-                
-            ) = priceFeed.latestRoundData();
+            (, int256 latestPrice, , uint256 updatedAt, ) = priceFeed.latestRoundData();
             require(block.timestamp - updatedAt < MAX_STALE_TIME, "Price feed stale");
 
             uint8 tokenDecimals = plan.tokenDecimals;
@@ -218,7 +211,6 @@ abstract contract BaseSubscription {
         // Effects: store subscription before interacting with token contract
         userSubscriptions[subscriber][planId] = UserSubscription({
             subscriber: subscriber,
-            planId: planId,
             startTime: startTime,
             nextPaymentDate: nextPaymentDate,
             isActive: true
@@ -253,7 +245,6 @@ abstract contract BaseSubscription {
         // Effects
         userSubscriptions[subscriber][planId] = UserSubscription({
             subscriber: subscriber,
-            planId: planId,
             startTime: startTime,
             nextPaymentDate: nextPaymentDate,
             isActive: true
