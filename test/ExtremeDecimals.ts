@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
 import { expect } from "chai";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import type { Subscription } from "../typechain";
@@ -20,7 +21,7 @@ async function extremeDecimalsFixture() {
 
     const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
     const oracleDecimals = 38;
-    const price = ethers.BigNumber.from(2000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+    const price = 2000n * 10n ** BigInt(oracleDecimals);
     const feed = await Agg.deploy(oracleDecimals, price);
     await feed.waitForDeployment();
 
@@ -62,7 +63,7 @@ async function feedDecimalsTooLargeFixture() {
 
     const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
     const oracleDecimals = 39;
-    const price = ethers.BigNumber.from(2000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+    const price = 2000n * 10n ** BigInt(oracleDecimals);
     const feed = await Agg.deploy(oracleDecimals, price);
     await feed.waitForDeployment();
 
@@ -89,7 +90,7 @@ describe("Extreme decimals scenarios", function () {
         const before = await token.balanceOf(user.address);
         await subscription.connect(user).subscribe(0);
         const after = await token.balanceOf(user.address);
-        expect(before.sub(after)).to.be.gt(0);
+        expect(before - after).to.be.gt(0n);
     });
 
     it("reverts when exponent exceeds limit", async function () {
@@ -132,7 +133,7 @@ describe("Extreme decimals scenarios", function () {
     it("processPayment reverts when price feed stale with extreme decimals", async function () {
         const { owner, user, subscription } = await loadFixture(extremeDecimalsSubscribedFixture);
         const sub = await subscription.userSubscriptions(user.address, 0);
-        await time.increaseTo(sub.nextPaymentDate.add(1));
+        await time.increaseTo(sub.nextPaymentDate + 1n);
         await expect(subscription.connect(owner).processPayment(user.address, 0)).to.be.revertedWith(
             "Price feed stale"
         );

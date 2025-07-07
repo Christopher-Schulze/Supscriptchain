@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import { ethers, upgrades } from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import type {
   SubscriptionUpgradeable,
@@ -139,7 +140,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
       const domain = {
         name: await token.name(),
         version: "1",
-        chainId: await user.getChainId(),
+        chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract: await token.getAddress(),
       };
       const types = {
@@ -177,7 +178,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
       const domain = {
         name: await token.name(),
         version: "1",
-        chainId: await user.getChainId(),
+        chainId: (await ethers.provider.getNetwork()).chainId,
         verifyingContract: await token.getAddress(),
       };
       const types = {
@@ -281,7 +282,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
 
       const balBefore = await token.balanceOf(merchant.address);
       await expect(proxy.connect(merchant).processPayment(user.address, PLAN_ID)).to.emit(proxy, "PaymentProcessed");
-      expect(await token.balanceOf(merchant.address)).to.equal(balBefore.add(price));
+      expect(await token.balanceOf(merchant.address)).to.equal(balBefore + price);
     });
 
     it("non-owner cannot update merchant", async function () {
@@ -373,14 +374,13 @@ describe("recoverERC20", function () {
     await expect(
       proxy.connect(user).recoverERC20(await token.getAddress(), amount)
     )
-      .to.be.revertedWithCustomError(proxy, "OwnableUnauthorizedAccount")
-      .withArgs(user.address);
+      .to.be.revertedWith("Ownable: caller is not the owner");
 
     const balBefore = await token.balanceOf(owner.address);
 
     await expect(proxy.connect(owner).recoverERC20(await token.getAddress(), amount)).to.not.be.reverted;
 
-    expect(await token.balanceOf(owner.address)).to.equal(balBefore.add(amount));
+    expect(await token.balanceOf(owner.address)).to.equal(balBefore + amount);
   });
 });
 
@@ -413,12 +413,12 @@ describe("High decimal boundary", function () {
     const { owner, user, token, proxy, aggregator, tokenDecimals, oracleDecimals, oraclePrice } = await loadFixture(highDecimalFixture);
     const usdPrice = 10n ** 16n;
     await proxy.connect(owner).createPlan(owner.address, await token.getAddress(), 0, THIRTY_DAYS_IN_SECS, true, usdPrice, await aggregator.getAddress());
-    const expected = ethers.BigNumber.from(usdPrice)
-      .mul(ethers.BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
-      .div(ethers.BigNumber.from(100).mul(oraclePrice));
-    const before = await token.balanceOf(user.address);
+    const expected = BigNumber.from(usdPrice)
+      .mul(BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
+      .div(BigNumber.from(100).mul(oraclePrice));
+    const before = BigNumber.from(await token.balanceOf(user.address));
     await proxy.connect(user).subscribe(PLAN_ID);
-    const after = await token.balanceOf(user.address);
+    const after = BigNumber.from(await token.balanceOf(user.address));
     expect(before.sub(after)).to.equal(expected);
   });
 
@@ -440,12 +440,12 @@ describe("High decimal boundary", function () {
 
   it("processPayment at exponent limit", async function () {
     const { owner, user, token, proxy, oraclePrice, tokenDecimals, oracleDecimals, usdPrice } = await loadFixture(highDecimalSubscribedFixture);
-    const expected = ethers.BigNumber.from(usdPrice)
-      .mul(ethers.BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
-      .div(ethers.BigNumber.from(100).mul(oraclePrice));
-    const before = await token.balanceOf(user.address);
+    const expected = BigNumber.from(usdPrice)
+      .mul(BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
+      .div(BigNumber.from(100).mul(oraclePrice));
+    const before = BigNumber.from(await token.balanceOf(user.address));
     await proxy.connect(owner).processPayment(user.address, PLAN_ID);
-    const after = await token.balanceOf(user.address);
+    const after = BigNumber.from(await token.balanceOf(user.address));
     expect(before.sub(after)).to.equal(expected);
   });
 

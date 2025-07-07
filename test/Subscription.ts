@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+import { BigNumber } from "@ethersproject/bignumber";
 import { expect } from "chai";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { time } from "@nomicfoundation/hardhat-network-helpers";
@@ -7,39 +8,33 @@ import type { Subscription } from "../typechain";
 const ONE_DAY_IN_SECS = 24 * 60 * 60;
 const THIRTY_DAYS_IN_SECS = 30 * ONE_DAY_IN_SECS;
 
+async function deploySubscriptionFixture() {
+    const [owner, user1, merchant, anotherUser] = await ethers.getSigners();
+
+    const MockTokenFactory = await ethers.getContractFactory("MockToken", owner);
+    const mockToken = await MockTokenFactory.deploy("Mock Token", "MTK", 18);
+    await mockToken.waitForDeployment();
+
+    const initialUserBalance = ethers.parseUnits("1000", 18);
+    await mockToken.mint(user1.address, initialUserBalance);
+    await mockToken.mint(anotherUser.address, initialUserBalance);
+
+    const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner);
+    const subscriptionContract = (await SubscriptionFactory.deploy()) as Subscription;
+    await subscriptionContract.waitForDeployment();
+
+    await mockToken.connect(user1).approve(subscriptionContract.target, ethers.parseUnits("5000", 18));
+    await mockToken.connect(anotherUser).approve(subscriptionContract.target, ethers.parseUnits("5000", 18));
+
+    const MockAggregatorFactory = await ethers.getContractFactory("MockV3Aggregator", owner);
+    const initialOraclePrice = 2000n * 10n ** 8n;
+    const mockAggregator = await MockAggregatorFactory.deploy(8, initialOraclePrice);
+    await mockAggregator.waitForDeployment();
+
+    return { subscriptionContract, mockToken, mockAggregator, owner, user1, merchant, anotherUser, initialUserBalance, initialOraclePrice };
+}
+
 describe("Subscription Contract", function () {
-    async function deploySubscriptionFixture() {
-        const [owner, user1, merchant, anotherUser] = await ethers.getSigners();
-
-        // Deploy MockToken
-        const MockTokenFactory = await ethers.getContractFactory("MockToken", owner); // Deploy with owner
-        const mockToken = await MockTokenFactory.deploy("Mock Token", "MTK", 18);
-        await mockToken.waitForDeployment();
-
-        // Mint some tokens to user1 and anotherUser for testing
-        const initialUserBalance = ethers.parseUnits("1000", 18);
-        await mockToken.mint(user1.address, initialUserBalance);
-        await mockToken.mint(anotherUser.address, initialUserBalance);
-
-        // Deploy Subscription contract
-        const SubscriptionFactory = await ethers.getContractFactory("Subscription", owner); // Deploy with owner
-        const subscriptionContract = (await SubscriptionFactory.deploy()) as Subscription;
-        await subscriptionContract.waitForDeployment();
-        
-        // User1 approves the subscription contract to spend their mock tokens
-        // Approve a large amount for simplicity in tests
-        await mockToken.connect(user1).approve(subscriptionContract.target, ethers.parseUnits("5000", 18));
-        await mockToken.connect(anotherUser).approve(subscriptionContract.target, ethers.parseUnits("5000", 18));
-
-        // Deploy MockV3Aggregator
-        const MockAggregatorFactory = await ethers.getContractFactory("MockV3Aggregator", owner);
-        // 8 decimals for price feed (common for USD pairs), initial price $2000 / token
-        const initialOraclePrice = ethers.BigNumber.from("2000").mul(ethers.BigNumber.from("10").pow(8)); 
-        const mockAggregator = await MockAggregatorFactory.deploy(8, initialOraclePrice);
-        await mockAggregator.waitForDeployment();
-
-        return { subscriptionContract, mockToken, mockAggregator, owner, user1, merchant, anotherUser, initialUserBalance, initialOraclePrice };
-    }
 
     describe("Deployment", function () {
         it("Should deploy contracts successfully and set the right owner/values", async function () {
@@ -129,9 +124,17 @@ describe("Subscription Contract", function () {
 
         it("Should prevent non-owner from creating a plan", async function () {
             const { subscriptionContract, mockToken, user1, owner } = await loadFixture(deploySubscriptionFixture);
-            await expect(subscriptionContract.connect(user1).createPlan(owner.address, mockToken.target, 10, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress))
-                .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
-                .withArgs(user1.address);
+            await expect(
+                subscriptionContract.connect(user1).createPlan(
+                    owner.address,
+                    mockToken.target,
+                    10,
+                    THIRTY_DAYS_IN_SECS,
+                    false,
+                    0,
+                    ethers.ZeroAddress
+                )
+            ).to.be.revertedWith("Ownable: caller is not the owner");
         });
 
         it("Should revert if creating a USD plan with zero address for price feed", async function () {
@@ -240,19 +243,24 @@ describe("Subscription Contract", function () {
             const userBalBefore = await mockToken.balanceOf(user1.address);
             await subscriptionContract.connect(user1).subscribe(0);
             const userBalAfter = await mockToken.balanceOf(user1.address);
-            expect(userBalBefore.sub(userBalAfter)).to.equal(newPrice);
+            expect(userBalBefore - userBalAfter).to.equal(newPrice);
 
             const sub = await subscriptionContract.userSubscriptions(user1.address, 0);
-            expect(sub.nextPaymentDate).to.equal(sub.startTime.add(newBilling));
+            expect(sub.nextPaymentDate).to.equal(sub.startTime + BigInt(newBilling));
         });
 
         it("Non-owner cannot update plan", async function () {
             const { subscriptionContract, user1 } = await loadFixture(fixtureWithExistingPlan);
             await expect(
-                subscriptionContract.connect(user1).updatePlan(0, THIRTY_DAYS_IN_SECS, 0, false, 0, ethers.ZeroAddress)
-            )
-                .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
-                .withArgs(user1.address);
+                subscriptionContract.connect(user1).updatePlan(
+                    0,
+                    THIRTY_DAYS_IN_SECS,
+                    0,
+                    false,
+                    0,
+                    ethers.ZeroAddress
+                )
+            ).to.be.revertedWith("Ownable: caller is not the owner");
         });
 
         it("Reverts when enabling USD pricing without feed", async function () {
@@ -351,7 +359,7 @@ describe("Subscription Contract", function () {
         it("Owner can change merchant and new merchant processes payment", async function () {
             const { subscriptionContract, mockToken, owner, merchant, user1, price } = await loadFixture(fixtureWithActiveSubscription);
             let sub = await subscriptionContract.userSubscriptions(user1.address, 0);
-            await time.increaseTo(sub.nextPaymentDate.add(1));
+            await time.increaseTo(sub.nextPaymentDate + 1n);
             await expect(subscriptionContract.connect(owner).updateMerchant(0, merchant.address))
                 .to.emit(subscriptionContract, "MerchantUpdated")
                 .withArgs(0, owner.address, merchant.address);
@@ -362,14 +370,13 @@ describe("Subscription Contract", function () {
             const balBefore = await mockToken.balanceOf(merchant.address);
             await expect(subscriptionContract.connect(merchant).processPayment(user1.address, 0))
                 .to.emit(subscriptionContract, "PaymentProcessed");
-            expect(await mockToken.balanceOf(merchant.address)).to.equal(balBefore.add(price));
+            expect(await mockToken.balanceOf(merchant.address)).to.equal(balBefore + price);
         });
 
         it("Non-owner cannot update merchant", async function () {
             const { subscriptionContract, user1, merchant } = await loadFixture(fixtureWithActiveSubscription);
             await expect(subscriptionContract.connect(user1).updateMerchant(0, merchant.address))
-                .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
-                .withArgs(user1.address);
+                .to.be.revertedWith("Ownable: caller is not the owner");
         });
     });
 
@@ -452,8 +459,8 @@ describe("Subscription Contract", function () {
 
             const subscription = await subscriptionContract.userSubscriptions(user1.address, planId);
             expect(subscription.isActive).to.be.true;
-            expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore.sub(fixedPrice));
-            expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore.add(fixedPrice));
+            expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore - fixedPrice);
+            expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore + fixedPrice);
         });
 
         it("Should revert when subscribing to a non-existent plan", async function () {
@@ -515,7 +522,7 @@ describe("Subscription Contract", function () {
             const domain = {
                 name: await permitToken.name(),
                 version: "1",
-                chainId: await user1.getChainId(),
+                chainId: (await ethers.provider.getNetwork()).chainId,
                 verifyingContract: permitToken.target,
             };
             const types = {
@@ -540,7 +547,7 @@ describe("Subscription Contract", function () {
             const balBefore = await permitToken.balanceOf(user1.address);
             await expect(subscription.connect(user1).subscribeWithPermit(planId, deadline, v, r, s))
                 .to.emit(subscription, "Subscribed");
-            expect(await permitToken.balanceOf(user1.address)).to.equal(balBefore.sub(price));
+            expect(await permitToken.balanceOf(user1.address)).to.equal(balBefore - price);
         });
 
         it("Reverts with expired permit signature", async function () {
@@ -552,7 +559,7 @@ describe("Subscription Contract", function () {
             const domain = {
                 name: await permitToken.name(),
                 version: "1",
-                chainId: await user1.getChainId(),
+                chainId: (await ethers.provider.getNetwork()).chainId,
                 verifyingContract: permitToken.target,
             };
             const types = {
@@ -590,7 +597,7 @@ describe("Subscription Contract", function () {
             const domain = {
                 name: await permitToken.name(),
                 version: "1",
-                chainId: await user1.getChainId(),
+                chainId: (await ethers.provider.getNetwork()).chainId,
                 verifyingContract: permitToken.target,
             };
             const types = {
@@ -659,11 +666,11 @@ describe("Subscription Contract", function () {
             // (usdPriceCents * (10**tokenDecimals) * (10**oracleDecimals)) / (100 * oraclePrice)
             // (1000 * 10^18 * 10^8) / (100 * 2000 * 10^8)
             // = (1000 * 10^18) / (100 * 2000) = 10^18 / 200 = 0.005 * 10^18
-            const expectedTokenAmount = ethers.BigNumber.from(usdPriceCents)
-                .mul(ethers.BigNumber.from("10").pow(mockTokenDecimals))
-                .mul(ethers.BigNumber.from("10").pow(oracleDecimals))
+            const expectedTokenAmount = BigNumber.from(usdPriceCents)
+                .mul(BigNumber.from("10").pow(mockTokenDecimals))
+                .mul(BigNumber.from("10").pow(oracleDecimals))
                 .div(
-                    ethers.BigNumber.from(100)
+                    BigNumber.from(100)
                     .mul(await (await mockAggregator.latestRoundData()).answer)
                 );
             
@@ -676,8 +683,8 @@ describe("Subscription Contract", function () {
             const subscription = await subscriptionContract.userSubscriptions(user1.address, planId);
             expect(subscription.isActive).to.be.true;
 
-            expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore.sub(expectedTokenAmount));
-            expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore.add(expectedTokenAmount));
+            expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore - expectedTokenAmount);
+            expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore + expectedTokenAmount);
         });
 
         it("Should revert if oracle price is zero", async function () {
@@ -728,7 +735,7 @@ describe("Subscription Contract", function () {
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
             const originalNextPaymentDate = subDetails.nextPaymentDate;
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
 
             const user1BalanceBefore = await mockToken.balanceOf(user1.address);
             const merchantBalanceBefore = await mockToken.balanceOf(merchantAddress);
@@ -736,12 +743,12 @@ describe("Subscription Contract", function () {
             // Process payment by owner (who is the merchant for this plan)
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.emit(subscriptionContract, "PaymentProcessed")
-                .withArgs(user1.address, planId, fixedPrice, originalNextPaymentDate.add(billingCycle));
+                .withArgs(user1.address, planId, fixedPrice, originalNextPaymentDate + BigInt(billingCycle));
 
-            expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore.sub(fixedPrice));
-            expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore.add(fixedPrice));
+            expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore - fixedPrice);
+            expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore + fixedPrice);
             const newSubDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            expect(newSubDetails.nextPaymentDate).to.equal(originalNextPaymentDate.add(billingCycle));
+            expect(newSubDetails.nextPaymentDate).to.equal(originalNextPaymentDate + BigInt(billingCycle));
         });
 
         it("Should prevent non-merchant from processing fixed price payment", async function () {
@@ -749,7 +756,7 @@ describe("Subscription Contract", function () {
             // In fixtureWithActiveFixedSubscription, 'owner' is the merchant.
             // 'merchant' signer is a different entity here.
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
 
             await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
                 .to.be.revertedWith("Only plan merchant can process payment");
@@ -767,7 +774,7 @@ describe("Subscription Contract", function () {
             await mockToken.connect(user1).transfer(owner.address, user1Balance); // Transfer all to owner
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
 
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.reverted; // ERC20: transfer amount exceeds balance (or SafeERC20ex: TransactionExecutionError)
@@ -779,7 +786,7 @@ describe("Subscription Contract", function () {
             await mockToken.connect(user1).approve(subscriptionContract.target, 0);
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
 
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.reverted; // ERC20: insufficient allowance (or SafeERC20ex: TransactionExecutionError)
@@ -821,10 +828,10 @@ describe("Subscription Contract", function () {
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
             const originalNextPaymentDate = subDetails.nextPaymentDate;
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
 
             // Update oracle price: $2500 / MTK
-            const newOraclePrice = ethers.BigNumber.from("2500").mul(ethers.BigNumber.from("10").pow(oracleDecimals));
+            const newOraclePrice = BigNumber.from("2500").mul(BigNumber.from("10").pow(oracleDecimals));
             await mockAggregator.setLatestAnswer(newOraclePrice);
 
             const user1BalanceBefore = await mockToken.balanceOf(user1.address);
@@ -835,11 +842,11 @@ describe("Subscription Contract", function () {
             // = (usdPriceCents * 10**tokenDecimals) / (100 * oraclePriceInDollars)
             // Here, newOraclePrice is already price * 10**oracleDecimals
             // So, (usdPriceCents * 10**tokenDecimals * 10**oracleDecimals) / (100 * newOraclePrice)
-            const expectedTokenAmount = ethers.BigNumber.from(usdPriceCents)
-                .mul(ethers.BigNumber.from("10").pow(mockTokenDecimals))
-                .mul(ethers.BigNumber.from("10").pow(oracleDecimals)) // for consistency with contract formula
+            const expectedTokenAmount = BigNumber.from(usdPriceCents)
+                .mul(BigNumber.from("10").pow(mockTokenDecimals))
+                .mul(BigNumber.from("10").pow(oracleDecimals)) // for consistency with contract formula
                 .div(
-                    ethers.BigNumber.from(100) // To convert cents to dollars
+                    BigNumber.from(100) // To convert cents to dollars
                     .mul(newOraclePrice) // newOraclePrice is already price * 10^oracleDecimals
                 );
             expect(expectedTokenAmount).to.equal(ethers.parseUnits("0.004", tokenDecimals)); // 0.004 MTK for $10 at $2500/MTK
@@ -847,20 +854,20 @@ describe("Subscription Contract", function () {
             // Process payment by owner (who is the merchant for this plan)
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.emit(subscriptionContract, "PaymentProcessed")
-                .withArgs(user1.address, planId, expectedTokenAmount, originalNextPaymentDate.add(billingCycle));
+                .withArgs(user1.address, planId, expectedTokenAmount, originalNextPaymentDate + BigInt(billingCycle));
             
-            expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore.sub(expectedTokenAmount));
-            expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore.add(expectedTokenAmount));
+            expect(await mockToken.balanceOf(user1.address)).to.equal(user1BalanceBefore - expectedTokenAmount);
+            expect(await mockToken.balanceOf(merchantAddress)).to.equal(merchantBalanceBefore + expectedTokenAmount);
 
             const newSubDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            expect(newSubDetails.nextPaymentDate).to.equal(originalNextPaymentDate.add(billingCycle));
+            expect(newSubDetails.nextPaymentDate).to.equal(originalNextPaymentDate + BigInt(billingCycle));
         });
 
         it("Should prevent non-merchant from processing USD priced payment", async function () {
             const { subscriptionContract, user1, anotherUser, merchant } = await loadFixture(fixtureWithActiveUsdSubscription);
             // In fixtureWithActiveUsdSubscription, 'owner' is the merchant.
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
 
             await expect(subscriptionContract.connect(anotherUser).processPayment(user1.address, planId))
                 .to.be.revertedWith("Only plan merchant can process payment");
@@ -874,7 +881,7 @@ describe("Subscription Contract", function () {
             const { subscriptionContract, mockAggregator, user1, owner } = await loadFixture(fixtureWithActiveUsdSubscription);
             // 'owner' is the merchant for this plan
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
             await mockAggregator.setLatestAnswer(0);
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.revertedWith("Oracle price must be positive");
@@ -883,7 +890,7 @@ describe("Subscription Contract", function () {
         it("Should revert processPayment if price feed is stale", async function () {
             const { subscriptionContract, user1, owner } = await loadFixture(fixtureWithActiveUsdSubscription);
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.revertedWith("Price feed stale");
         });
@@ -894,7 +901,7 @@ describe("Subscription Contract", function () {
             await mockToken.connect(user1).transfer(owner.address, user1Balance);
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
 
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.reverted;
@@ -905,7 +912,7 @@ describe("Subscription Contract", function () {
             await mockToken.connect(user1).approve(subscriptionContract.target, 0);
 
             let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-            await time.increaseTo(subDetails.nextPaymentDate.add(1));
+            await time.increaseTo(subDetails.nextPaymentDate + 1n);
 
             await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
                 .to.be.reverted;
@@ -976,7 +983,7 @@ describe("cancelSubscription", function () {
         await subscriptionContract.connect(user1).cancelSubscription(planId);
 
         let subDetails = await subscriptionContract.userSubscriptions(user1.address, planId);
-        await time.increaseTo(subDetails.nextPaymentDate.add(1)); // Advance time to when payment would be due
+        await time.increaseTo(subDetails.nextPaymentDate + 1n); // Advance time to when payment would be due
 
         // Owner (merchant) tries to process payment
         await expect(subscriptionContract.connect(owner).processPayment(user1.address, planId))
@@ -1013,8 +1020,7 @@ describe("Ownable2Step Behavior", function () {
     it("Should prevent non-owner from initiating ownership transfer", async function () {
         const { subscriptionContract, user1, anotherUser } = await loadFixture(deploySubscriptionFixture);
         await expect(subscriptionContract.connect(user1).transferOwnership(anotherUser.address))
-            .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
-            .withArgs(user1.address);
+            .to.be.revertedWith("Ownable: caller is not the owner");
     });
 
     it("Should prevent non-pending-owner from accepting ownership", async function () {
@@ -1023,8 +1029,7 @@ describe("Ownable2Step Behavior", function () {
 
         // User1 (not pending owner) tries to accept
         await expect(subscriptionContract.connect(user1).acceptOwnership())
-            .to.be.revertedWithCustomError(subscriptionContract, "OwnableInvalidAccount")
-            .withArgs(user1.address);
+            .to.be.revertedWith("Ownable2Step: caller is not the new owner");
     });
 
     it("Owner should still be able to call onlyOwner functions while ownership transfer is pending", async function () {
@@ -1050,8 +1055,7 @@ describe("Ownable2Step Behavior", function () {
         // Old owner cannot
         await expect(subscriptionContract.connect(owner).createPlan(
             owner.address, mockToken.target, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress
-        )).to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
-        .withArgs(owner.address);
+        )).to.be.revertedWith("Ownable: caller is not the owner");
     });
 });
 
@@ -1172,15 +1176,13 @@ describe("recoverERC20", function () {
 
         await expect(
             subscriptionContract.connect(user1).recoverERC20(mockToken.target, amount)
-        )
-            .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
-            .withArgs(user1.address);
+        ).to.be.revertedWith("Ownable: caller is not the owner");
 
         const ownerBalBefore = await mockToken.balanceOf(owner.address);
 
         await expect(subscriptionContract.connect(owner).recoverERC20(mockToken.target, amount)).to.not.be.reverted;
 
-        expect(await mockToken.balanceOf(owner.address)).to.equal(ownerBalBefore.add(amount));
+        expect(await mockToken.balanceOf(owner.address)).to.equal(ownerBalBefore + amount);
     });
 });
 
@@ -1201,7 +1203,7 @@ describe("getPaymentAmount with uncommon decimals", function () {
 
         const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
         const oracleDecimals = 10;
-        const price = ethers.BigNumber.from(2000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+        const price = 2000n * 10n ** BigInt(oracleDecimals);
         const feed = await Agg.deploy(oracleDecimals, price);
         await feed.waitForDeployment();
 
@@ -1212,13 +1214,13 @@ describe("getPaymentAmount with uncommon decimals", function () {
         const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price } = await loadFixture(fixtureDecimals6);
         const usdPrice = 1234;
         await subscription.connect(owner).createPlan(owner.address, token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, feed.target);
-        const expected = ethers.BigNumber.from(usdPrice)
-            .mul(ethers.BigNumber.from(10).pow(tokenDecimals))
-            .mul(ethers.BigNumber.from(10).pow(oracleDecimals))
-            .div(ethers.BigNumber.from(100).mul(price));
-        const before = await token.balanceOf(user1.address);
+        const expected = BigNumber.from(usdPrice)
+            .mul(BigNumber.from(10).pow(tokenDecimals))
+            .mul(BigNumber.from(10).pow(oracleDecimals))
+            .div(BigNumber.from(100).mul(price));
+        const before = BigNumber.from(await token.balanceOf(user1.address));
         await subscription.connect(user1).subscribe(0);
-        const after = await token.balanceOf(user1.address);
+        const after = BigNumber.from(await token.balanceOf(user1.address));
         expect(before.sub(after)).to.equal(expected);
     });
 
@@ -1238,7 +1240,7 @@ describe("getPaymentAmount with uncommon decimals", function () {
 
         const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
         const oracleDecimals = 12;
-        const price = ethers.BigNumber.from(3000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+        const price = 3000n * 10n ** BigInt(oracleDecimals);
         const feed = await Agg.deploy(oracleDecimals, price);
         await feed.waitForDeployment();
 
@@ -1249,13 +1251,13 @@ describe("getPaymentAmount with uncommon decimals", function () {
         const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price } = await loadFixture(fixtureDecimals30);
         const usdPrice = 1000;
         await subscription.connect(owner).createPlan(owner.address, token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, feed.target);
-        const expected = ethers.BigNumber.from(usdPrice)
-            .mul(ethers.BigNumber.from(10).pow(tokenDecimals))
-            .mul(ethers.BigNumber.from(10).pow(oracleDecimals))
-            .div(ethers.BigNumber.from(100).mul(price));
-        const before = await token.balanceOf(user1.address);
+        const expected = BigNumber.from(usdPrice)
+            .mul(BigNumber.from(10).pow(tokenDecimals))
+            .mul(BigNumber.from(10).pow(oracleDecimals))
+            .div(BigNumber.from(100).mul(price));
+        const before = BigNumber.from(await token.balanceOf(user1.address));
         await subscription.connect(user1).subscribe(0);
-        const after = await token.balanceOf(user1.address);
+        const after = BigNumber.from(await token.balanceOf(user1.address));
         expect(before.sub(after)).to.equal(expected);
     });
 
@@ -1274,13 +1276,13 @@ describe("getPaymentAmount with uncommon decimals", function () {
         const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price, usdPrice } = await loadFixture(
             fixtureDecimals6Subscribed
         );
-        const expected = ethers.BigNumber.from(usdPrice)
-            .mul(ethers.BigNumber.from(10).pow(tokenDecimals))
-            .mul(ethers.BigNumber.from(10).pow(oracleDecimals))
-            .div(ethers.BigNumber.from(100).mul(price));
-        const before = await token.balanceOf(user1.address);
+        const expected = BigNumber.from(usdPrice)
+            .mul(BigNumber.from(10).pow(tokenDecimals))
+            .mul(BigNumber.from(10).pow(oracleDecimals))
+            .div(BigNumber.from(100).mul(price));
+        const before = BigNumber.from(await token.balanceOf(user1.address));
         await subscription.connect(owner).processPayment(user1.address, 0);
-        const after = await token.balanceOf(user1.address);
+        const after = BigNumber.from(await token.balanceOf(user1.address));
         expect(before.sub(after)).to.equal(expected);
     });
 
@@ -1299,13 +1301,13 @@ describe("getPaymentAmount with uncommon decimals", function () {
         const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price, usdPrice } = await loadFixture(
             fixtureDecimals30Subscribed
         );
-        const expected = ethers.BigNumber.from(usdPrice)
-            .mul(ethers.BigNumber.from(10).pow(tokenDecimals))
-            .mul(ethers.BigNumber.from(10).pow(oracleDecimals))
-            .div(ethers.BigNumber.from(100).mul(price));
-        const before = await token.balanceOf(user1.address);
+        const expected = BigNumber.from(usdPrice)
+            .mul(BigNumber.from(10).pow(tokenDecimals))
+            .mul(BigNumber.from(10).pow(oracleDecimals))
+            .div(BigNumber.from(100).mul(price));
+        const before = BigNumber.from(await token.balanceOf(user1.address));
         await subscription.connect(owner).processPayment(user1.address, 0);
-        const after = await token.balanceOf(user1.address);
+        const after = BigNumber.from(await token.balanceOf(user1.address));
         expect(before.sub(after)).to.equal(expected);
     });
 
@@ -1325,7 +1327,7 @@ describe("getPaymentAmount with uncommon decimals", function () {
 
         const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
         const oracleDecimals = 20;
-        const price = ethers.BigNumber.from(2000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+        const price = 2000n * 10n ** BigInt(oracleDecimals);
         const feed = await Agg.deploy(oracleDecimals, price);
         await feed.waitForDeployment();
 
@@ -1355,7 +1357,7 @@ describe("getPaymentAmount with uncommon decimals", function () {
 
         const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
         const oracleDecimals = 38;
-        const price = ethers.BigNumber.from(2000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+        const price = 2000n * 10n ** BigInt(oracleDecimals);
         const feed = await Agg.deploy(oracleDecimals, price);
         await feed.waitForDeployment();
 
@@ -1366,9 +1368,9 @@ describe("getPaymentAmount with uncommon decimals", function () {
         const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price } = await loadFixture(fixtureMaxDecimals);
         const usdPrice = 1;
         await subscription.connect(owner).createPlan(owner.address, token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, feed.target);
-        const expected = ethers.BigNumber.from(usdPrice)
-            .mul(ethers.BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
-            .div(ethers.BigNumber.from(100).mul(price));
+        const expected = BigNumber.from(usdPrice)
+            .mul(BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
+            .div(BigNumber.from(100).mul(price));
         const before = await token.balanceOf(user1.address);
         await subscription.connect(user1).subscribe(0);
         const after = await token.balanceOf(user1.address);
@@ -1402,7 +1404,7 @@ describe("High decimal boundary", function () {
 
         const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
         const oracleDecimals = 30;
-        const price = ethers.BigNumber.from(2000).mul(ethers.BigNumber.from(10).pow(oracleDecimals));
+        const price = 2000n * 10n ** BigInt(oracleDecimals);
         const feed = await Agg.deploy(oracleDecimals, price);
         await feed.waitForDeployment();
 
@@ -1413,9 +1415,9 @@ describe("High decimal boundary", function () {
         const { owner, user1, token, subscription, feed, tokenDecimals, oracleDecimals, price } = await loadFixture(fixtureHighDecimals);
         const usdPrice = ethers.toBigInt("10000000000000000");
         await subscription.connect(owner).createPlan(owner.address, token.target, 0, THIRTY_DAYS_IN_SECS, true, usdPrice, feed.target);
-        const expected = ethers.BigNumber.from(usdPrice)
-            .mul(ethers.BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
-            .div(ethers.BigNumber.from(100).mul(price));
+        const expected = BigNumber.from(usdPrice)
+            .mul(BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
+            .div(BigNumber.from(100).mul(price));
         const before = await token.balanceOf(user1.address);
         await subscription.connect(user1).subscribe(0);
         const after = await token.balanceOf(user1.address);
@@ -1440,9 +1442,9 @@ describe("High decimal boundary", function () {
 
     it("processPayment at exponent limit", async function () {
         const { owner, user1, token, subscription, price, tokenDecimals, oracleDecimals, usdPrice } = await loadFixture(fixtureHighDecimalsSubscribed);
-        const expected = ethers.BigNumber.from(usdPrice)
-            .mul(ethers.BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
-            .div(ethers.BigNumber.from(100).mul(price));
+        const expected = BigNumber.from(usdPrice)
+            .mul(BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
+            .div(BigNumber.from(100).mul(price));
         const before = await token.balanceOf(user1.address);
         await subscription.connect(owner).processPayment(user1.address, 0);
         const after = await token.balanceOf(user1.address);
