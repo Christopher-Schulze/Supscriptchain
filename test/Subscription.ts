@@ -155,7 +155,7 @@ describe("Subscription Contract", function () {
             const { subscriptionContract, mockToken, owner } = await loadFixture(deploySubscriptionFixture);
             await expect(subscriptionContract.connect(owner).createPlan(
                 owner.address,
-                mockToken.address,
+                mockToken.target,
                 1,
                 0,
                 false,
@@ -536,7 +536,7 @@ describe("Subscription Contract", function () {
             };
             const values = {
                 owner: user1.address,
-                spender: subscription.address,
+                spender: await subscription.getAddress(),
                 value: price,
                 nonce,
                 deadline,
@@ -573,7 +573,7 @@ describe("Subscription Contract", function () {
             };
             const values = {
                 owner: user1.address,
-                spender: subscription.address,
+                spender: await subscription.getAddress(),
                 value: price,
                 nonce,
                 deadline,
@@ -612,7 +612,7 @@ describe("Subscription Contract", function () {
             // Sign with wrong value to invalidate signature
             const values = {
                 owner: user1.address,
-                spender: subscription.address,
+                spender: await subscription.getAddress(),
                 value: price + 1n,
                 nonce,
                 deadline,
