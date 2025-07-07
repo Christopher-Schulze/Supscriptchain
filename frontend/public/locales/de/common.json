@@ -93,5 +93,7 @@
   "messages.failed_connect": "Verbindung fehlgeschlagen",
   "messages.wallet_connected": "Wallet verbunden: {{account}}",
   "messages.transaction_failed": "Transaktion fehlgeschlagen: {{error}}",
-  "messages.dismiss": "Nachricht schließen"
+  "messages.dismiss": "Nachricht schließen",
+  "theme.light": "Hell",
+  "theme.dark": "Dunkel"
 }

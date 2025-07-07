@@ -1,3 +1,19 @@
+.light {
+  --background: #ffffff;
+  --foreground: #171717;
+  --accent: #4a90e2;
+  --accent-alt: #356ac3;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --accent: #3399ff;
+  --accent-alt: #2277cc;
+  color-scheme: dark;
+}
+
 .container {
   width: 100%;
   max-width: 800px;
@@ -49,7 +65,8 @@
 }
 
 .language-switcher,
-.network-status {
+.network-status,
+.theme-toggle {
   margin-left: 0.5rem;
 }
 

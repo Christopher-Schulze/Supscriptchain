@@ -93,5 +93,7 @@
   "messages.failed_connect": "Failed to connect",
   "messages.wallet_connected": "Wallet connected: {{account}}",
   "messages.transaction_failed": "Transaction failed: {{error}}",
-  "messages.dismiss": "Dismiss message"
+  "messages.dismiss": "Dismiss message",
+  "theme.light": "Light",
+  "theme.dark": "Dark"
 }
