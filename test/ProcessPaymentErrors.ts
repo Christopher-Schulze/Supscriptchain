@@ -45,7 +45,7 @@ describe("processPayment error scenarios", function () {
         const { owner, user1, sub } = await loadFixture(fixtureWithActiveSubscription);
         await time.increase(THIRTY_DAYS_IN_SECS + 1);
         await expect(sub.connect(owner).processPayment(user1.address, 999)).to.be.revertedWith(
-            "Plan does not exist"
+            "Subscription is not active"
         );
     });
 
