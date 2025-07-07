@@ -19,6 +19,10 @@ Copy `.env.example` to `.env` and provide values for:
 - `ETHERSCAN_API_KEY` – API key used by Hardhat to verify contracts
 - `IMPLEMENTATION_ADDRESS` – address of the implementation contract when running `scripts/verify.ts`
 
+Optional settings such as `NOTIFY_WEBHOOK`, `GRAPH_NODE_HEALTH` or
+`GRAPH_NODE_ARGS` are checked by `scripts/check-env.ts` when present.
+The script prints a warning if a value does not match the expected format.
+
 ## Frontend
 
 The Next.js app reads variables from `frontend/.env.local`:
@@ -29,7 +33,8 @@ The Next.js app reads variables from `frontend/.env.local`:
 - `NEXT_PUBLIC_SUBGRAPH_URL` – GraphQL endpoint for analytics
 - `NEXT_PUBLIC_REFRESH_INTERVAL` – reload interval for contract data in seconds (default `30`)
 
-Run `node frontend/scripts/check-env.js` to validate these values.
+Run `node frontend/scripts/check-env.js` to validate these values. The script
+also warns when `NEXT_PUBLIC_REFRESH_INTERVAL` is present but not a number.
 
 ## Subgraph
 
