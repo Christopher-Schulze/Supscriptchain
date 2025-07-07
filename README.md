@@ -2,7 +2,26 @@
 
 [![CI](https://github.com/Christopher-Schulze/Supscriptchain/actions/workflows/ci.yml/badge.svg)](https://github.com/Christopher-Schulze/Supscriptchain/actions/workflows/ci.yml)
 
-This project contains a simple subscription smart contract written in Solidity along with TypeScript tests using Hardhat. It allows merchants to create subscription plans that can be paid in ERC20 tokens or in USD via a Chainlink price feed.
+Supscriptchain is a full subscription payments stack.  At its core is a Solidity
+contract that lets merchants offer recurring services.  Plans can bill users in
+an ERC20 token or be priced in USD and converted on-chain via a Chainlink price
+feed.  The contract is upgradeable through a transparent proxy so features can
+evolve without losing state.  A command line interface simplifies creating and
+managing plans while monitoring scripts expose health metrics.  A Next.js
+frontend under [`frontend/`](frontend/) provides a simple user interface.
+
+More details on the contract layout and components are available in
+[docs/architecture.md](docs/architecture.md).  For a production ready setup see
+[docs/production-guide.md](docs/production-guide.md).
+
+## Architecture Overview
+
+Subscriptions are managed by merchants who deploy `Subscription` or
+`SubscriptionUpgradeable`.  Subscribers opt into a plan and are charged every
+billing cycle.  The upgradeable variant runs behind a transparent proxy so the
+implementation can be swapped without migrating data.  Events are indexed by a
+subgraph allowing the frontend and monitoring scripts to query plan and payment
+history.
 
 ## Requirements
 
@@ -353,12 +372,12 @@ The repository also contains a simple Next.js application under
 
 ## CI/CD
 
-Automated workflows under `.github/workflows` handle contract and frontend deployments. Secrets provide all required keys.
+Automated workflows under `.github/workflows` ensure code quality and handle deployments.  The main **ci.yml** workflow runs on every push and pull request.  It installs dependencies, runs unit, subgraph and e2e tests, executes linting and static analysis and checks coverage thresholds.  Separate workflows deploy contracts and the frontend when changes land on `main` or when a tagged release is created.
 
-- **deploy-testnet.yml** deploys to Sepolia on pushes to `main` or via "Run workflow".
-- **deploy-mainnet.yml** deploys to mainnet when a version tag `v*.*.*` is pushed.
-- **deploy-frontend.yml** builds the Next.js app and deploys it to Vercel.
-- **release.yml** builds artifacts, generates a changelog with commit and pull request titles and attaches `CHANGELOG.md` to the GitHub release.
+- **deploy-testnet.yml** – deploys to Sepolia on pushes to `main` or via "Run workflow".
+- **deploy-mainnet.yml** – deploys to mainnet when a version tag `v*.*.*` is pushed.
+- **deploy-frontend.yml** – builds the Next.js app and deploys it to Vercel.
+- **release.yml** – builds artifacts, generates a changelog with commit and pull request titles and attaches `CHANGELOG.md` to the GitHub release.
 
 Example environment variables are listed in `deploy.env.example`. See `vercel.json.example` for a basic rewrite setup.
 
