@@ -117,6 +117,78 @@ async function listSubs(opts: any) {
   await runTask('list-subs', opts);
 }
 
+async function fetchText(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await res.text();
+  } catch {
+    return null;
+  }
+}
+
+function parseNumber(text: string, re: RegExp): number {
+  const m = text.match(re);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+function parsePaymentMetrics(text: string): Record<string, { success: number; failure: number }> {
+  const result: Record<string, { success: number; failure: number }> = {};
+  const successRe = /payment_success_total\{[^}]*plan_id="(\d+)"[^}]*\}\s+(\d+(?:\.\d+)?)/g;
+  const failureRe = /payment_failure_total\{[^}]*plan_id="(\d+)"[^}]*\}\s+(\d+(?:\.\d+)?)/g;
+  for (const m of text.matchAll(successRe)) {
+    const plan = m[1];
+    result[plan] = result[plan] || { success: 0, failure: 0 };
+    result[plan].success = parseFloat(m[2]);
+  }
+  for (const m of text.matchAll(failureRe)) {
+    const plan = m[1];
+    result[plan] = result[plan] || { success: 0, failure: 0 };
+    result[plan].failure = parseFloat(m[2]);
+  }
+  return result;
+}
+
+function parseSubgraphMetrics(text: string) {
+  return {
+    restarts: parseNumber(text, /graph_node_restarts_total\s+(\d+(?:\.\d+)?)/),
+    healthFailures: parseNumber(
+      text,
+      /graph_node_health_failures_total\s+(\d+(?:\.\d+)?)/,
+    ),
+  };
+}
+
+async function showMetrics(opts: { subgraph?: string; payments?: string }) {
+  const subgraphUrl =
+    opts.subgraph || process.env.SUBGRAPH_METRICS_URL || 'http://localhost:9091/metrics';
+  const paymentsUrl =
+    opts.payments || process.env.PAYMENTS_METRICS_URL || 'http://localhost:9092/metrics';
+
+  const subgraphText = await fetchText(subgraphUrl);
+  if (subgraphText) {
+    const { restarts, healthFailures } = parseSubgraphMetrics(subgraphText);
+    console.log('Subgraph Server:');
+    console.log(`  restarts: ${restarts}`);
+    console.log(`  health failures: ${healthFailures}`);
+  } else {
+    console.log('Subgraph metrics unavailable');
+  }
+
+  const paymentsText = await fetchText(paymentsUrl);
+  if (paymentsText) {
+    const data = parsePaymentMetrics(paymentsText);
+    console.log('\nPayment Processor:');
+    const plans = Object.keys(data).sort((a, b) => Number(a) - Number(b));
+    for (const id of plans) {
+      const { success, failure } = data[id];
+      console.log(`  plan ${id}: ${success} success, ${failure} failure`);
+    }
+  } else {
+    console.log('\nPayment processor metrics unavailable');
+  }
+}
+
 const program = new Command();
 program
   .name('supscript-cli')
@@ -213,6 +285,13 @@ program
   .option('-i, --plan-id <id>', 'Plan ID')
   .option('-m, --merchant <address>', 'New merchant address')
   .action((opts) => updateMerchant(opts));
+
+program
+  .command('metrics')
+  .description('Summarize Prometheus metrics')
+  .option('--subgraph <url>', 'Subgraph metrics URL')
+  .option('--payments <url>', 'Payment processor metrics URL')
+  .action((opts) => showMetrics(opts));
 
 const parsePromise = (program as any).parseAsync
   ? (program as any).parseAsync(process.argv)

@@ -115,6 +115,28 @@ npx ts-node scripts/cli.ts list-subs \
   --network hardhat
 ```
 
+### `metrics`
+
+| Option        | Description                                   |
+|---------------|-----------------------------------------------|
+| `--subgraph`  | URL of the subgraph metrics endpoint          |
+| `--payments`  | URL of the payment processor metrics endpoint |
+
+```bash
+npx ts-node scripts/cli.ts metrics
+```
+
+Example output:
+
+```text
+Subgraph Server:
+  restarts: 0
+  health failures: 0
+
+Payment Processor:
+  plan 0: 1 success, 0 failure
+```
+
 ## Deployment Scripts
 
 ### `deploy.ts`
