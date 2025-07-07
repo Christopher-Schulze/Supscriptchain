@@ -93,5 +93,8 @@
   "messages.failed_connect": "Failed to connect",
   "messages.wallet_connected": "Wallet connected: {{account}}",
   "messages.transaction_failed": "Transaction failed: {{error}}",
-  "messages.dismiss": "Dismiss message"
+  "messages.dismiss": "Dismiss message",
+  "not_found.title": "Page not found",
+  "not_found.description": "The requested page could not be found.",
+  "not_found.link_home": "Back to home"
 }
