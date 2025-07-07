@@ -134,7 +134,8 @@ describe("Subscription Contract", function () {
                     0,
                     ethers.ZeroAddress
                 )
-            ).to.be.revertedWith("Ownable: caller is not the owner");
+            ).to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+                .withArgs(user1.address);
         });
 
         it("Should revert if creating a USD plan with zero address for price feed", async function () {
@@ -260,7 +261,8 @@ describe("Subscription Contract", function () {
                     0,
                     ethers.ZeroAddress
                 )
-            ).to.be.revertedWith("Ownable: caller is not the owner");
+            ).to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+                .withArgs(user1.address);
         });
 
         it("Reverts when enabling USD pricing without feed", async function () {
@@ -376,7 +378,8 @@ describe("Subscription Contract", function () {
         it("Non-owner cannot update merchant", async function () {
             const { subscriptionContract, user1, merchant } = await loadFixture(fixtureWithActiveSubscription);
             await expect(subscriptionContract.connect(user1).updateMerchant(0, merchant.address))
-                .to.be.revertedWith("Ownable: caller is not the owner");
+                .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+                .withArgs(user1.address);
         });
     });
 
@@ -1020,7 +1023,8 @@ describe("Ownable2Step Behavior", function () {
     it("Should prevent non-owner from initiating ownership transfer", async function () {
         const { subscriptionContract, user1, anotherUser } = await loadFixture(deploySubscriptionFixture);
         await expect(subscriptionContract.connect(user1).transferOwnership(anotherUser.address))
-            .to.be.revertedWith("Ownable: caller is not the owner");
+            .to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+            .withArgs(user1.address);
     });
 
     it("Should prevent non-pending-owner from accepting ownership", async function () {
@@ -1055,7 +1059,8 @@ describe("Ownable2Step Behavior", function () {
         // Old owner cannot
         await expect(subscriptionContract.connect(owner).createPlan(
             owner.address, mockToken.target, 100, THIRTY_DAYS_IN_SECS, false, 0, ethers.ZeroAddress
-        )).to.be.revertedWith("Ownable: caller is not the owner");
+        )).to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+            .withArgs(owner.address);
     });
 });
 
@@ -1176,7 +1181,8 @@ describe("recoverERC20", function () {
 
         await expect(
             subscriptionContract.connect(user1).recoverERC20(mockToken.target, amount)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        ).to.be.revertedWithCustomError(subscriptionContract, "OwnableUnauthorizedAccount")
+            .withArgs(user1.address);
 
         const ownerBalBefore = await mockToken.balanceOf(owner.address);
 

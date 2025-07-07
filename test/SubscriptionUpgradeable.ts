@@ -377,7 +377,8 @@ describe("recoverERC20", function () {
     await expect(
       proxy.connect(user).recoverERC20(await token.getAddress(), amount)
     )
-      .to.be.revertedWith("Ownable: caller is not the owner");
+      .to.be.revertedWithCustomError(proxy, "OwnableUnauthorizedAccount")
+      .withArgs(user.address);
 
     const balBefore = await token.balanceOf(owner.address);
 
