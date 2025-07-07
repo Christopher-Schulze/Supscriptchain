@@ -10,4 +10,4 @@ Optimization applied in `BaseSubscription` to reduce repeated storage reads. `_g
 - `subscribe` avg: 176,652 gas (Subscription) / 181,597 gas (SubscriptionUpgradeable)
 - `processPayment` avg: 101,071 gas (SubscriptionUpgradeable) / 83,971 gas (SubscriptionUpgradeableV2)
 
-See `gas-report-before.txt` and `gas-report-after.txt` for full details.
+Run `npm run gas > gas-report.txt` to regenerate this report.
