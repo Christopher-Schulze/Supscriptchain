@@ -7,7 +7,13 @@ export function checkEnv(): void {
   const envPath = path.resolve(__dirname, '..', '.env');
   config({ path: envPath, quiet: true });
 
-  const optionalKeys = new Set(['METRICS_PORT', 'LOKI_URL']);
+  const optionalKeys = new Set([
+    'METRICS_PORT',
+    'LOKI_URL',
+    'NOTIFY_WEBHOOK',
+    'GRAPH_NODE_HEALTH',
+    'GRAPH_NODE_ARGS',
+  ]);
 
   const envExamplePath = path.resolve(__dirname, '..', '.env.example');
   const lines = fs.readFileSync(envExamplePath, 'utf-8').split(/\r?\n/);
@@ -49,6 +55,25 @@ export function checkEnv(): void {
       .map((i) => `${i.path.join('.')}: ${i.message}`)
       .join(', ');
     throw new Error(`Invalid environment variables: ${issues}`);
+  }
+
+  const optional = {
+    NOTIFY_WEBHOOK: z.string().url(),
+    GRAPH_NODE_HEALTH: z.string().url(),
+    GRAPH_NODE_ARGS: z.string().nonempty(),
+  } as const;
+
+  for (const [key, schema] of Object.entries(optional)) {
+    const val = process.env[key];
+    if (val) {
+      const res = schema.safeParse(val);
+      if (!res.success) {
+        const issue = res.error.issues
+          .map((i) => `${i.path.join('.')}: ${i.message}`)
+          .join(', ');
+        console.warn(`Warning: optional variable ${key} has invalid value: ${issue}`);
+      }
+    }
   }
 }
 
