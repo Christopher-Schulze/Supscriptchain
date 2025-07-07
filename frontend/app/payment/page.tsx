@@ -25,7 +25,7 @@ export default function Payment() {
         throw new Error('invalid plan id');
       const tx = await contractProcessPayment(user, BigInt(planId));
       await tx.wait();
-      setMessage({ text: `Payment processed! Tx: ${tx.hash}`, type: 'success' });
+      setMessage({ text: t('messages.payment_processed', { hash: tx.hash }), type: 'success' });
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : String(err));

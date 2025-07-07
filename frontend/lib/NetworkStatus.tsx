@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ethers } from 'ethers';
 import { env } from './env';
 import { useStore } from './store';
@@ -8,6 +9,7 @@ export default function NetworkStatus() {
   const [name, setName] = useState('');
   const [block, setBlock] = useState<number | null>(null);
   const { setMessage } = useStore();
+  const { t } = useTranslation();
 
   useEffect(() => {
     let cancelled = false;
@@ -26,7 +28,7 @@ export default function NetworkStatus() {
         }
       } catch (err) {
         if (!cancelled) {
-          const msg = err instanceof Error ? err.message : 'Failed to connect';
+          const msg = err instanceof Error ? err.message : t('messages.failed_connect');
           setMessage({ text: msg, type: 'error' });
         }
       }
