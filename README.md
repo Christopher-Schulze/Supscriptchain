@@ -162,6 +162,12 @@ Estimate gas consumption during tests:
 npm run gas
 ```
 
+To generate a fresh report file:
+
+```bash
+npm run gas > gas-report.txt
+```
+
 The command sets `REPORT_GAS=true` and prints a table similar to:
 
 ```
