@@ -8,15 +8,15 @@ async function main() {
   if (!env.MERCHANT_ADDRESS) {
     console.error('MERCHANT_ADDRESS not set, using zero address');
   }
-  const merchant = env.MERCHANT_ADDRESS || ethers.constants.AddressZero;
+  const merchant = env.MERCHANT_ADDRESS || ethers.ZeroAddress;
   if (!env.TOKEN_ADDRESS) {
     console.error('TOKEN_ADDRESS not set, using zero address');
   }
-  const token = env.TOKEN_ADDRESS || ethers.constants.AddressZero;
+  const token = env.TOKEN_ADDRESS || ethers.ZeroAddress;
   if (!env.PRICE_FEED) {
     console.error('PRICE_FEED not set, using zero address');
   }
-  const priceFeed = env.PRICE_FEED || ethers.constants.AddressZero;
+  const priceFeed = env.PRICE_FEED || ethers.ZeroAddress;
   if (!env.BILLING_CYCLE) {
     console.error('BILLING_CYCLE not set, using default 2592000');
   }
@@ -51,7 +51,7 @@ async function main() {
     await subscription.getAddress(),
   );
 
-  if (token !== ethers.constants.AddressZero) {
+  if (token !== ethers.ZeroAddress) {
     const tx = await subscription.createPlan(
       merchant,
       token,

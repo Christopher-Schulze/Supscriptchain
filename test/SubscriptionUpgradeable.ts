@@ -128,6 +128,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
         proxy
           .connect(owner)
           .createPlan(owner.address, token.target, 1, 0, false, 0, ethers.ZeroAddress)
+
       ).to.be.revertedWith("Billing cycle must be > 0");
     });
   });
