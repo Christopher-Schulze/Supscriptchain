@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { spawnSync } from 'child_process';
+import { spawnSync, spawn } from 'child_process';
 import http from 'http';
 
 function run(args: string[]) {
@@ -52,24 +52,30 @@ describe('cli.ts', function () {
       'payment_success_total{plan_id="0"} 3\n' +
       'payment_failure_total{plan_id="0"} 1\n' +
       'payment_success_total{plan_id="1"} 2\n';
-    const subServer = http.createServer((req, res) => {
-      if (req.url === '/metrics') {
-        res.end(subMetrics);
-      } else {
-        res.statusCode = 404;
-        res.end();
-      }
-    });
-    const payServer = http.createServer((req, res) => {
-      if (req.url === '/metrics') {
-        res.end(payMetrics);
-      } else {
-        res.statusCode = 404;
-        res.end();
-      }
-    });
-    await new Promise((r) => subServer.listen(9101, r));
-    await new Promise((r) => payServer.listen(9102, r));
+
+    function startServer(port: number, body: string) {
+      const child = spawn(
+        'node',
+        [
+          '-e',
+          `const http=require('http');\n` +
+            `const metrics=${JSON.stringify(body)};\n` +
+            `const server=http.createServer((req,res)=>{\n` +
+            `  if(req.url==='/metrics') res.end(metrics);\n` +
+            `  else {res.statusCode=404; res.end();}\n` +
+            `});\n` +
+            `server.listen(${port},()=>{console.log('ready');});\n` +
+            `process.on('SIGTERM',()=>server.close(()=>process.exit(0)));`,
+        ],
+        { stdio: ['ignore', 'pipe', 'inherit'] },
+      );
+      return new Promise<{ proc: ReturnType<typeof spawn> }>((resolve) => {
+        child.stdout.once('data', () => resolve({ proc: child }));
+      });
+    }
+
+    const sub = await startServer(9101, subMetrics);
+    const pay = await startServer(9102, payMetrics);
 
     const res = run([
       'metrics',
@@ -79,8 +85,8 @@ describe('cli.ts', function () {
       'http://localhost:9102/metrics',
     ]);
 
-    subServer.close();
-    payServer.close();
+    sub.proc.kill();
+    pay.proc.kill();
 
     expect(res.status).to.equal(0);
     expect(res.stdout).to.match(/restarts:\s*2/);
