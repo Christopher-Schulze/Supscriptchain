@@ -18,11 +18,11 @@ implemented in the current code base.
 
 ## Outstanding Issues
 
-The most recent static analysis run reported no high severity findings. Slither
-highlighted various low or informational warnings (e.g. the
-"arbitrary-from" transfer pattern and naming conventions). Mythril reported no
-issues. Most of these warnings originate from upstream dependencies and remain
-open for future cleanup but do not block deployment.
+The most recent static analysis run reported no high severity findings. Previous
+warnings around the transfer pattern and variable naming have been addressed in
+the core contracts. Remaining Slither messages stem from upstream OpenZeppelin
+libraries and are kept for reference but do not block deployment. Mythril
+reported no issues.
 
 ## Status
 
