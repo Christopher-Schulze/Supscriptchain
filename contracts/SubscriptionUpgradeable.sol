@@ -127,6 +127,6 @@ contract SubscriptionUpgradeable is
     }
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[50] private __gap;
+    uint256[50] private _gap;
 }
 

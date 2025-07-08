@@ -162,6 +162,7 @@ abstract contract BaseSubscription {
         if (plan.priceInUsd) {
             require(plan.priceFeedAddress != address(0), "Price feed not set for USD plan");
             AggregatorV3Interface priceFeed = AggregatorV3Interface(plan.priceFeedAddress);
+            // slither-disable-next-line unused-return
             (, int256 latestPrice, , uint256 updatedAt, ) = priceFeed.latestRoundData();
             require(block.timestamp - updatedAt < MAX_STALE_TIME, "Price feed stale");
 
@@ -218,7 +219,7 @@ abstract contract BaseSubscription {
 
         // Interactions
         require(token.allowance(subscriber, address(this)) >= amountToPay, "Insufficient allowance");
-        // slither-disable-next-line reentrancy-benign
+        // slither-disable-next-line arbitrary-from-in-transferfrom,reentrancy-benign
         token.safeTransferFrom(subscriber, plan.merchant, amountToPay);
 
         emit Subscribed(subscriber, planId, nextPaymentDate);
@@ -255,7 +256,7 @@ abstract contract BaseSubscription {
         permitToken.permit(subscriber, address(this), amountToPay, deadline, v, r, s);
 
         IERC20 token = IERC20(plan.token);
-        // slither-disable-next-line reentrancy-benign
+        // slither-disable-next-line arbitrary-from-in-transferfrom,reentrancy-benign
         token.safeTransferFrom(subscriber, plan.merchant, amountToPay);
 
         emit Subscribed(subscriber, planId, nextPaymentDate);
