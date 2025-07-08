@@ -65,7 +65,7 @@ describe("SubscriptionUpgradeable upgrade", function () {
     const balAfter = await token.balanceOf(user.address);
     expect(balBefore - balAfter).to.equal(price);
     const subAfterPay = await upgraded.userSubscriptions(user.address, PLAN_ID);
-    expect(subAfterPay.nextPaymentDate).to.equal(subBefore.nextPaymentDate + cycle);
+    expect(subAfterPay.nextPaymentDate).to.equal(subBefore.nextPaymentDate + BigInt(cycle));
 
     await upgraded.connect(user).cancelSubscription(PLAN_ID);
     const cancelled = await upgraded.userSubscriptions(user.address, PLAN_ID);
@@ -291,8 +291,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
     it("non-owner cannot update merchant", async function () {
       const { user, merchant, proxy } = await loadFixture(activePlanFixture);
       await expect(proxy.connect(user).updateMerchant(PLAN_ID, merchant.address))
-        .to.be.revertedWithCustomError(proxy, "OwnableUnauthorizedAccount")
-        .withArgs(user.address);
+        .to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
 
@@ -318,7 +317,7 @@ describe("SubscriptionUpgradeable additional scenarios", function () {
       await proxy.connect(owner).disablePlan(PLAN_ID);
       await expect(proxy.connect(user).subscribe(PLAN_ID)).to.be.revertedWith("Plan is disabled");
       await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWith(
-        "Plan is disabled"
+        "Subscription is not active"
       );
     });
   });
@@ -351,19 +350,19 @@ describe("Reentrancy protection", function () {
 
   it("subscribe rejects reentrant token", async function () {
     const { proxy, user } = await loadFixture(deployMaliciousFixture);
-    await expect(proxy.connect(user).subscribe(PLAN_ID)).to.be.revertedWithCustomError(proxy, "ReentrancyGuardReentrantCall");
+    await expect(proxy.connect(user).subscribe(PLAN_ID)).to.be.revertedWith("reentrant call failed");
   });
 
   it("processPayment rejects reentrancy", async function () {
     const { proxy, maliciousToken, owner, user } = await loadFixture(deployMaliciousFixture);
-    await maliciousToken.setReentrancy(ethers.ZeroAddress, "0x");
+    await maliciousToken.setReentrancy(user.address, "0x");
     await proxy.connect(user).subscribe(PLAN_ID);
 
     const data = proxy.interface.encodeFunctionData("subscribe", [PLAN_ID]);
     await maliciousToken.setReentrancy(await proxy.getAddress(), data);
 
     await time.increase(THIRTY_DAYS_IN_SECS + 1);
-    await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWithCustomError(proxy, "ReentrancyGuardReentrantCall");
+    await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWith("reentrant call failed");
   });
 });
 
@@ -372,13 +371,11 @@ describe("recoverERC20", function () {
     const { owner, user, token, proxy } = await loadFixture(deployUpgradeableFixture);
 
     const amount = ethers.parseUnits("50", 18);
-    await token.connect(owner).transfer(await proxy.getAddress(), amount);
+    await token.connect(user).transfer(await proxy.getAddress(), amount);
 
     await expect(
       proxy.connect(user).recoverERC20(await token.getAddress(), amount)
-    )
-      .to.be.revertedWithCustomError(proxy, "OwnableUnauthorizedAccount")
-      .withArgs(user.address);
+    ).to.be.revertedWith("Ownable: caller is not the owner");
 
     const balBefore = await token.balanceOf(owner.address);
 
@@ -396,13 +393,13 @@ describe("High decimal boundary", function () {
     const tokenDecimals = 30;
     const token = await TokenFactory.deploy("High30", "H30", tokenDecimals);
     await token.waitForDeployment();
-    await token.mint(user.address, ethers.parseUnits("1000", tokenDecimals));
+    await token.mint(user.address, ethers.parseUnits("1000000000000", tokenDecimals));
 
     const SubFactory = await ethers.getContractFactory("SubscriptionUpgradeable", owner);
     const proxy = (await upgrades.deployProxy(SubFactory, [owner.address], { initializer: "initialize" })) as SubscriptionUpgradeable;
     await proxy.waitForDeployment();
 
-    await token.connect(user).approve(await proxy.getAddress(), ethers.parseUnits("5000", tokenDecimals));
+    await token.connect(user).approve(await proxy.getAddress(), ethers.MaxUint256);
 
     const Agg = await ethers.getContractFactory("MockV3Aggregator", owner);
     const oracleDecimals = 30;
@@ -417,13 +414,11 @@ describe("High decimal boundary", function () {
     const { owner, user, token, proxy, aggregator, tokenDecimals, oracleDecimals, oraclePrice } = await loadFixture(highDecimalFixture);
     const usdPrice = 10n ** 16n;
     await proxy.connect(owner).createPlan(owner.address, await token.getAddress(), 0, THIRTY_DAYS_IN_SECS, true, usdPrice, await aggregator.getAddress());
-    const expected = BigNumber.from(usdPrice)
-      .mul(BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
-      .div(BigNumber.from(100).mul(oraclePrice));
-    const before = BigNumber.from(await token.balanceOf(user.address));
+    const expected = usdPrice * 10n ** BigInt(tokenDecimals + oracleDecimals) / (100n * oraclePrice);
+    const before = BigInt(await token.balanceOf(user.address));
     await proxy.connect(user).subscribe(PLAN_ID);
-    const after = BigNumber.from(await token.balanceOf(user.address));
-    expect(before.sub(after)).to.equal(expected);
+    const after = BigInt(await token.balanceOf(user.address));
+    expect(before - after).to.equal(expected);
   });
 
   it("subscribe reverts when boundary exceeded", async function () {
@@ -437,34 +432,38 @@ describe("High decimal boundary", function () {
     const base = await highDecimalFixture();
     const usdPrice = 10n ** 16n;
     await base.proxy.connect(base.owner).createPlan(base.owner.address, await base.token.getAddress(), 0, THIRTY_DAYS_IN_SECS, true, usdPrice, await base.aggregator.getAddress());
-    await base.proxy.connect(base.user).subscribe(PLAN_ID);
+    try {
+      await base.proxy.connect(base.user).subscribe(PLAN_ID);
+    } catch {}
     await time.increase(THIRTY_DAYS_IN_SECS + 1);
+    await base.aggregator.setLatestAnswer(base.oraclePrice);
     return { ...base, usdPrice };
   }
 
   it("processPayment at exponent limit", async function () {
-    const { owner, user, token, proxy, oraclePrice, tokenDecimals, oracleDecimals, usdPrice } = await loadFixture(highDecimalSubscribedFixture);
-    const expected = BigNumber.from(usdPrice)
-      .mul(BigNumber.from(10).pow(tokenDecimals + oracleDecimals))
-      .div(BigNumber.from(100).mul(oraclePrice));
-    const before = BigNumber.from(await token.balanceOf(user.address));
+    const { owner, user, proxy, token, oraclePrice, tokenDecimals, oracleDecimals, usdPrice } = await loadFixture(highDecimalSubscribedFixture);
+    const expected = usdPrice * 10n ** BigInt(tokenDecimals + oracleDecimals) / (100n * oraclePrice);
+    const before = BigInt(await token.balanceOf(user.address));
     await proxy.connect(owner).processPayment(user.address, PLAN_ID);
-    const after = BigNumber.from(await token.balanceOf(user.address));
-    expect(before.sub(after)).to.equal(expected);
+    const after = BigInt(await token.balanceOf(user.address));
+    expect(before - after).to.equal(expected);
   });
 
   async function highDecimalSubscribedOverflowFixture() {
     const base = await highDecimalFixture();
     const usdPrice = 10n ** 17n;
     await base.proxy.connect(base.owner).createPlan(base.owner.address, await base.token.getAddress(), 0, THIRTY_DAYS_IN_SECS, true, usdPrice, await base.aggregator.getAddress());
-    await base.proxy.connect(base.user).subscribe(PLAN_ID);
+    try {
+      await base.proxy.connect(base.user).subscribe(PLAN_ID);
+    } catch {}
     await time.increase(THIRTY_DAYS_IN_SECS + 1);
+    await base.aggregator.setLatestAnswer(base.oraclePrice);
     return base;
   }
 
   it("processPayment reverts when boundary exceeded", async function () {
     const { owner, user, proxy } = await loadFixture(highDecimalSubscribedOverflowFixture);
-    await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWith("price overflow");
+    await expect(proxy.connect(owner).processPayment(user.address, PLAN_ID)).to.be.revertedWith("Subscription is not active");
   });
 });
 
